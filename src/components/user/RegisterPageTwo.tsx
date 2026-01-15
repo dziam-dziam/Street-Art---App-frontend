@@ -8,6 +8,8 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Divider } from "primereact/divider";
 import streetArtBrown from "../images/streetArtBrown.jpeg";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
+
 
 <img
   src={streetArtBrown}
@@ -66,6 +68,8 @@ export const RegisterPage2: React.FC<RegisterPage2Props> = ({
   onBack,
   onRegister,
 }) => {
+  const navigate = useNavigate();
+
   const [commuteForm, setCommuteForm] = useState<AddCommuteDto>({
     commuteThroughDistrictName: "",
     commuteTripsPerWeek: 1,
@@ -148,6 +152,7 @@ export const RegisterPage2: React.FC<RegisterPage2Props> = ({
     console.log("FINAL REGISTER BODY (JSON):\n", JSON.stringify(payload, null, 2));
 
     onRegister?.(payload);
+    navigate("/app", { replace: true });
   };
 
   const isAddDisabled =
@@ -161,7 +166,7 @@ export const RegisterPage2: React.FC<RegisterPage2Props> = ({
         display: "grid",
         placeItems: "center",
         padding: 24,
-        background: "#f4f5f7",
+        background: "#7d98cd",
       }}
     >
       <Card
@@ -190,7 +195,7 @@ export const RegisterPage2: React.FC<RegisterPage2Props> = ({
             }}
           >
             <img
-              src="{streetArtBrown}"
+              src={streetArtBrown}
               alt="art"
               style={{
                 width: "100%",

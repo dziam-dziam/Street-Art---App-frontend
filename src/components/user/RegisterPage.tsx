@@ -1,12 +1,25 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from "react";
+import { Card } from "primereact/card";
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
 import { MultiSelect } from "primereact/multiselect";
 import { Button } from "primereact/button";
-import { Card } from "primereact/card";
-import { RegisterDto } from '../dto/RegisterDto';
+import { useNavigate } from "react-router-dom";
+import streetArtBlue from "../images/streetArtBlue.jpeg"; // dopasuj nazwę pliku jeśli inna
+
+export type RegisterDto = {
+  appUserName: string;
+  appUserEmail: string;
+  appUserPassword: string;
+  appUserNationality: string;
+  appUserLanguagesSpoken: string[];
+  appUserCity: string;
+  appUserLiveInDistrict: string;
+};
 
 export const RegisterPage: React.FC = () => {
+  const navigate = useNavigate();
+
   const [form, setForm] = useState<RegisterDto>({
     appUserName: "",
     appUserEmail: "",
@@ -17,113 +30,166 @@ export const RegisterPage: React.FC = () => {
     appUserLiveInDistrict: "",
   });
 
-  const languageOptions = [
-    { label: "English", value: "English" },
-    { label: "Polish", value: "Polish" },
-    { label: "Spanish", value: "Spanish" },
-    { label: "German", value: "German" },
-    { label: "French", value: "French" },
-  ];
+  const languageOptions = useMemo(
+    () => [
+      { label: "English", value: "English" },
+      { label: "Polish", value: "Polish" },
+      { label: "Spanish", value: "Spanish" },
+      { label: "German", value: "German" },
+      { label: "French", value: "French" },
+    ],
+    []
+  );
 
+  const canGoNext =
+    form.appUserName.trim() &&
+    form.appUserEmail.trim() &&
+    form.appUserPassword.trim();
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onNext = (e: React.FormEvent) => {
     e.preventDefault();
-
-    const body = JSON.stringify(form, null, 2);
-
-    console.log("REQUEST BODY (JSON):\n", body);
+    console.log("PAGE 1 BODY:\n", JSON.stringify(form, null, 2));
+    navigate("/register/2", { state: form });
   };
 
   return (
-    <div style={{ display: "grid", placeItems: "center", minHeight: "100vh", padding: 24 }}>
-      <Card title="Register" style={{ width: "min(640px, 95vw)" }}>
-        <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <span className="p-float-label">
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "grid",
+        placeItems: "center",
+        padding: 24,
+        background: "#7d98cd",
+      }}
+    >
+      <Card
+        title="Register Page - 1"
+        style={{
+          width: "min(980px, 96vw)",
+          background: "#4b55a3",
+          color: "white",
+          borderRadius: 14,
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.05fr 1fr",
+            gap: 18,
+            alignItems: "start",
+          }}
+        >
+          {/* LEFT: image */}
+          <div
+            style={{
+              background: "rgba(255,255,255,0.12)",
+              borderRadius: 12,
+              padding: 12,
+              minHeight: 460,
+            }}
+          >
+            <img
+              src={streetArtBlue}
+              alt="street art"
+              style={{
+                width: "100%",
+                height: 460,
+                objectFit: "cover",
+                borderRadius: 10,
+                display: "block",
+              }}
+            />
+          </div>
+
+          {/* RIGHT: form like in mock */}
+          <form
+            onSubmit={onNext}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+              paddingRight: 6,
+            }}
+          >
             <InputText
-              id="name"
               value={form.appUserName}
               onChange={(e) => setForm((p) => ({ ...p, appUserName: e.target.value }))}
-              style={{ width: "100%" }}
+              placeholder="Name"
+              style={{ width: "100%", borderRadius: 10 }}
             />
-            <label htmlFor="name">Name</label>
-          </span>
 
-          <span className="p-float-label">
             <InputText
-              id="email"
               value={form.appUserEmail}
               onChange={(e) => setForm((p) => ({ ...p, appUserEmail: e.target.value }))}
-              style={{ width: "100%" }}
+              placeholder="Email"
+              style={{ width: "100%", borderRadius: 10 }}
             />
-            <label htmlFor="email">Email</label>
-          </span>
 
-          <span className="p-float-label">
             <Password
-              id="password"
               value={form.appUserPassword}
               onChange={(e) => setForm((p) => ({ ...p, appUserPassword: e.target.value }))}
+              placeholder="Password"
               toggleMask
               feedback={false}
               inputStyle={{ width: "100%" }}
               style={{ width: "100%" }}
             />
-            <label htmlFor="password">Password</label>
-          </span>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <span className="p-float-label">
+            {/* 2 small fields like in mock */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <InputText
-                id="nationality"
-                value={form.appUserNationality}
-                onChange={(e) => setForm((p) => ({ ...p, appUserNationality: e.target.value }))}
-                style={{ width: "100%" }}
-              />
-              <label htmlFor="nationality">Nationality</label>
-            </span>
-
-            <span className="p-float-label">
-              <InputText
-                id="city"
                 value={form.appUserCity}
                 onChange={(e) => setForm((p) => ({ ...p, appUserCity: e.target.value }))}
-                style={{ width: "100%" }}
+                placeholder="City"
+                style={{ width: "100%", borderRadius: 10 }}
               />
-              <label htmlFor="city">City</label>
-            </span>
-          </div>
+              <InputText
+                value={form.appUserNationality}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, appUserNationality: e.target.value }))
+                }
+                placeholder="Nationality"
+                style={{ width: "100%", borderRadius: 10 }}
+              />
+            </div>
 
-          <span className="p-float-label">
+            <InputText
+              value={form.appUserLiveInDistrict}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, appUserLiveInDistrict: e.target.value }))
+              }
+              placeholder="Live in district"
+              style={{ width: "100%", borderRadius: 10 }}
+            />
+
+            {/* dropdown field at the bottom (like mock) */}
             <MultiSelect
-              id="languages"
               value={form.appUserLanguagesSpoken}
               options={languageOptions}
               onChange={(e) => setForm((p) => ({ ...p, appUserLanguagesSpoken: e.value }))}
               display="chip"
-              placeholder="Select languages"
+              placeholder="Languages spoken (dropdown)"
               style={{ width: "100%" }}
             />
-            <label htmlFor="languages">Languages spoken</label>
-          </span>
 
-          <span className="p-float-label">
-            <InputText
-              id="district"
-              value={form.appUserLiveInDistrict}
-              onChange={(e) => setForm((p) => ({ ...p, appUserLiveInDistrict: e.target.value }))}
-              style={{ width: "100%" }}
-            />
-            <label htmlFor="district">Live in district</label>
-          </span>
-
-          <Button type="submit" label="Register" icon="pi pi-check" />
-
-        </form>
+            {/* Next button bottom-right */}
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6 }}>
+              <Button
+                type="submit"
+                label="Next"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                disabled={!canGoNext}
+                style={{
+                  borderRadius: 10,
+                  fontWeight: 700,
+                  paddingInline: 18,
+                }}
+              />
+            </div>
+          </form>
+        </div>
       </Card>
     </div>
   );
 };
-
-function useMemo(arg0: () => string, arg1: RegisterDto[]) {
-    throw new Error('Function not implemented.');
-}

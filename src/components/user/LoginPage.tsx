@@ -4,6 +4,8 @@ import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
 import { Button } from "primereact/button";
 import { useNavigate } from "react-router-dom";
+import streetArtGreen from "../images/streetArtGreen.jpeg"; 
+
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -16,6 +18,7 @@ export const LoginPage: React.FC = () => {
 
     const body = { email, password };
     console.log("LOGIN BODY:\n", JSON.stringify(body, null, 2));
+    navigate("/app", { replace: true });
 
     // TODO: tu zrobisz request do backendu
     // na razie przykładowo:
@@ -29,7 +32,7 @@ export const LoginPage: React.FC = () => {
         display: "grid",
         placeItems: "center",
         padding: 24,
-        background: "#f4f5f7",
+        background: "#7d98cd",
       }}
     >
       <Card
@@ -57,7 +60,7 @@ export const LoginPage: React.FC = () => {
             }}
           >
             <img
-              src="https://via.placeholder.com/520x420.png?text=StreetArt+Image"
+              src={streetArtGreen}
               alt="street art"
               style={{
                 width: "100%",
