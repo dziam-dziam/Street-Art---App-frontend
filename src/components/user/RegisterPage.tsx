@@ -48,8 +48,25 @@ export const RegisterPage: React.FC = () => {
 
   const onNext = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("PAGE 1 BODY:\n", JSON.stringify(form, null, 2));
-    navigate("/register/2", { state: form });
+      fetch("http://localhost:8080/auth/register", {
+        method: "POST",
+        body: JSON.stringify(form, null, 2),
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+      }).then(response => {
+          if (!response.ok) {
+            alert(`Błąd ${response.status}: ${response.statusText}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+      })
+      .then(data => {
+        console.log("Response from server:\n", data);
+        navigate("/register/2", { state: form });
+      })
+      .catch((err) => {
+        console.error("Fetch error:", err);
+      });
   };
 
   return (
