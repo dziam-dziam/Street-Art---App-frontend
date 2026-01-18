@@ -149,7 +149,7 @@ export const RegisterPageTwo: React.FC = () => {
     const data = await res.json().catch(() => null);
     console.log("Response from server:\n", data);
 
-    navigate("/app", { replace: true });
+    navigate("/login", { replace: true });
   } catch (err) {
     console.error("Fetch error:", err);
   }

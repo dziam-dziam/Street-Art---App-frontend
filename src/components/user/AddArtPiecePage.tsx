@@ -29,7 +29,7 @@ type AddArtPieceDto = {
 export const AddArtPiecePage: React.FC = () => {
   const navigate = useNavigate();
 
-  const [form, setForm] = useState<AddArtPieceDto>({
+  const [addArtPieceForm, setForm] = useState<AddArtPieceDto>({
     artPieceAddress: "",
     artPieceName: "",
     artPieceContainsText: false,
@@ -54,27 +54,36 @@ export const AddArtPiecePage: React.FC = () => {
     []
   );
 
-  const typeOptions = useMemo(
-    () => [
-      { label: "Mural", value: "MURAL" },
-      { label: "Graffiti", value: "GRAFFITI" },
-      { label: "Sticker", value: "STICKER" },
-      { label: "Paste-up", value: "PASTE_UP" },
-      { label: "Tag", value: "TAG" },
-    ],
-    []
-  );
+const typeOptions = useMemo(
+  () => [
+    { label: "Graffiti tag", value: "GRAFFITI_TAG" },
+    { label: "Graffiti piece", value: "GRAFFITI_PIECE" },
+    { label: "Stencil", value: "STENCIL" },
+    { label: "Wheat paste poster", value: "WHEAT_PASTE_POSTER" },
+    { label: "Sticker", value: "STICKER" },
+    { label: "Mural", value: "MURAL" },
+    { label: "3D installation", value: "INSTALLATION_3D" },
+  ],
+  []
+);
 
-  const styleOptions = useMemo(
-    () => [
-      { label: "Realism", value: "REALISM" },
-      { label: "Abstract", value: "ABSTRACT" },
-      { label: "Typography", value: "TYPOGRAPHY" },
-      { label: "Character", value: "CHARACTER" },
-      { label: "Other", value: "OTHER" },
-    ],
-    []
-  );
+
+const styleOptions = useMemo(
+  () => [
+    { label: "Political", value: "POLITICAL" },
+    { label: "Religious", value: "RELIGIOUS" },
+    { label: "Social commentary", value: "SOCIAL_COMMENTARY" },
+    { label: "Humor", value: "HUMOR" },
+    { label: "Love / romance", value: "LOVE_ROMANCE" },
+    { label: "Homesickness", value: "HOMESICKNESS" },
+    { label: "Philosophical", value: "PHILOSOPHICAL" },
+    { label: "Activism", value: "ACTIVISM" },
+    { label: "Anti-consumerism", value: "ANTI_CONSUMERISM" },
+    { label: "Commercial", value: "COMMERCIAL" },
+  ],
+  []
+);
+
 
   const languageOptions = useMemo(
     () => [
@@ -88,20 +97,35 @@ export const AddArtPiecePage: React.FC = () => {
   );
 
   const isValid =
-    form.artPieceName.trim() &&
-    form.artPieceAddress.trim() &&
-    form.artPieceDistrict.trim() &&
-    form.artPieceCity.trim();
+    addArtPieceForm.artPieceName.trim() &&
+    addArtPieceForm.artPieceAddress.trim() &&
+    addArtPieceForm.artPieceDistrict.trim() &&
+    addArtPieceForm.artPieceCity.trim();
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
+    console.log("ADD ART PIECE BODY (JSON):\n", JSON.stringify(addArtPieceForm, null, 2));
     e.preventDefault();
-
-    // Body które wyślesz do backendu:
-    console.log("ADD ART PIECE BODY (JSON):\n", JSON.stringify(form, null, 2));
-
-    // TODO: POST do backendu
-    // navigate("/app"); // np. powrót na mapę
+    const url = new URL("http://localhost:8080/addNew/addArtPiece")
+    try{
+      const res = await fetch (url.toString(), {
+        method: "POST",
+        headers: {"Content-Type": "application/json; charset=UTF-8" },
+        body: JSON.stringify(addArtPieceForm),
+        credentials: "include",
+      });
+      if (!res.ok){
+        alert ("Failed to add art piece");
+        throw new Error ("Failed to add art piece");
+      }
+    const data = await res.json().catch(() => null);
+    console.log("Response from server:\n", data); 
+      navigate("/app", { replace: true });
+    alert("Art piece added successfully!");
+   }
+    catch (error) {
+    console.error("Error during adding art piece:", error);
   };
+}
 
   return (
     <div
@@ -191,7 +215,7 @@ export const AddArtPiecePage: React.FC = () => {
           >
             {/* Name */}
             <InputText
-              value={form.artPieceName}
+              value={addArtPieceForm.artPieceName}
               onChange={(e) => setForm((p) => ({ ...p, artPieceName: e.target.value }))}
               placeholder="Art piece name"
               style={{ width: "100%", borderRadius: 10 }}
@@ -202,7 +226,7 @@ export const AddArtPiecePage: React.FC = () => {
               <div style={{ fontWeight: 700, minWidth: 170 }}>Contains text?</div>
 
               <ToggleButton
-                checked={form.artPieceContainsText}
+                checked={addArtPieceForm.artPieceContainsText}
                 onChange={(e) => setForm((p) => ({ ...p, artPieceContainsText: e.value }))}
                 onLabel="Tak"
                 offLabel="Nie"
@@ -214,7 +238,7 @@ export const AddArtPiecePage: React.FC = () => {
 
             {/* Address */}
             <InputText
-              value={form.artPieceAddress}
+              value={addArtPieceForm.artPieceAddress}
               onChange={(e) => setForm((p) => ({ ...p, artPieceAddress: e.target.value }))}
               placeholder="Address (for geocoding)"
               style={{ width: "100%", borderRadius: 10 }}
@@ -222,7 +246,7 @@ export const AddArtPiecePage: React.FC = () => {
 
             {/* Position */}
             <InputText
-              value={form.artPiecePosition}
+              value={addArtPieceForm.artPiecePosition}
               onChange={(e) => setForm((p) => ({ ...p, artPiecePosition: e.target.value }))}
               placeholder="Position (e.g. wall, tunnel, under bridge)"
               style={{ width: "100%", borderRadius: 10 }}
@@ -231,14 +255,14 @@ export const AddArtPiecePage: React.FC = () => {
             {/* District + City */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <Dropdown
-                value={form.artPieceDistrict}
+                value={addArtPieceForm.artPieceDistrict}
                 options={districtOptions}
                 onChange={(e) => setForm((p) => ({ ...p, artPieceDistrict: e.value }))}
                 placeholder="District"
                 style={{ width: "100%" }}
               />
               <InputText
-                value={form.artPieceCity}
+                value={addArtPieceForm.artPieceCity}
                 onChange={(e) => setForm((p) => ({ ...p, artPieceCity: e.target.value }))}
                 placeholder="City"
                 style={{ width: "100%", borderRadius: 10 }}
@@ -247,7 +271,7 @@ export const AddArtPiecePage: React.FC = () => {
 
             {/* Types */}
             <MultiSelect
-              value={form.artPieceTypes}
+              value={addArtPieceForm.artPieceTypes}
               options={typeOptions}
               onChange={(e) => setForm((p) => ({ ...p, artPieceTypes: e.value }))}
               placeholder="Art piece types"
@@ -257,7 +281,7 @@ export const AddArtPiecePage: React.FC = () => {
 
             {/* Styles */}
             <MultiSelect
-              value={form.artPieceStyles}
+              value={addArtPieceForm.artPieceStyles}
               options={styleOptions}
               onChange={(e) => setForm((p) => ({ ...p, artPieceStyles: e.value }))}
               placeholder="Art piece styles"
@@ -267,18 +291,18 @@ export const AddArtPiecePage: React.FC = () => {
 
             {/* Languages of text (only relevant if containsText = true) */}
             <MultiSelect
-              value={form.artPieceTextLanguages}
+              value={addArtPieceForm.artPieceTextLanguages}
               options={languageOptions}
               onChange={(e) => setForm((p) => ({ ...p, artPieceTextLanguages: e.value }))}
               placeholder="Text languages"
               display="chip"
-              disabled={!form.artPieceContainsText}
+              disabled={!addArtPieceForm.artPieceContainsText}
               style={{ width: "100%" }}
             />
 
             {/* User description */}
             <InputTextarea
-              value={form.artPieceUserDescription}
+              value={addArtPieceForm.artPieceUserDescription}
               onChange={(e) => setForm((p) => ({ ...p, artPieceUserDescription: e.target.value }))}
               rows={4}
               placeholder="User description"

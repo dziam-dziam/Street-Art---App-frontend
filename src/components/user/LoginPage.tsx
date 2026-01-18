@@ -10,20 +10,35 @@ import streetArtGreen from "../images/streetArtGreen.jpeg";
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [appUserEmail, setEmail] = useState("");
+  const [appUserPassword, setPassword] = useState("");
 
-  const onLogin = (e: React.FormEvent) => {
+  const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const body = { email, password };
+    const body = { appUserEmail: appUserEmail, appUserPassword: appUserPassword };
     console.log("LOGIN BODY:\n", JSON.stringify(body, null, 2));
+    const url = new URL("http://localhost:8080/auth/login");
+    try{
+      const res = await fetch(url.toString(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=UTF-8"},
+        body: JSON.stringify(body),
+        credentials: "include",
+      });
+      if (!res.ok) {
+        alert("Login failed. Please check your credentials and try again.");
+        throw new Error(`HTTP error by login! status: ${res.status}`);
+      }
+        const data = await res.json().catch(() => null);
+    console.log("Response from server:\n", data);
     navigate("/app", { replace: true });
+    alert("Login successful!");
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
+  }
 
-    // TODO: tu zrobisz request do backendu
-    // na razie przykładowo:
-    // navigate("/admin");
-  };
 
   return (
     <div
@@ -85,7 +100,7 @@ export const LoginPage: React.FC = () => {
               style={{ marginTop: 18, display: "flex", flexDirection: "column", gap: 12 }}
             >
               <InputText
-                value={email}
+                value={appUserEmail}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email"
                 style={{
@@ -95,7 +110,7 @@ export const LoginPage: React.FC = () => {
               />
 
               <Password
-                value={password}
+                value={appUserPassword}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 toggleMask
