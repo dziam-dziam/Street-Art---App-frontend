@@ -6,6 +6,7 @@ import { MultiSelect } from "primereact/multiselect";
 import { Button } from "primereact/button";
 import { useNavigate } from "react-router-dom";
 import streetArtBlue from "../images/streetArtBlue.jpeg"; // dopasuj nazwę pliku jeśli inna
+import { RegisterPageTwo } from "./RegisterPageTwo";
 
 export type RegisterDto = {
   appUserName: string;
@@ -118,7 +119,6 @@ export const RegisterPage: React.FC = () => {
             />
           </div>
 
-          {/* RIGHT: form like in mock */}
           <form
             onSubmit={onNext}
             style={{

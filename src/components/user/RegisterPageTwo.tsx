@@ -8,23 +8,8 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Divider } from "primereact/divider";
 import streetArtBrown from "../images/streetArtBrown.jpeg";
-import { useNavigate, useLocation, Navigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
-
-<img
-  src={streetArtBrown}
-  alt="art"
-  style={{
-    width: "100%",
-    height: 420,
-    objectFit: "cover",
-    borderRadius: 10,
-    display: "block",
-  }}
-/>
-
-
-/** Dopasuj do swojego DTO z Page 1 */
 export type RegisterDto = {
   appUserName: string;
   appUserEmail: string;
@@ -52,23 +37,13 @@ export type AddCommuteDto = {
   commuteMeansOfTransport: MeansOfTransport[];
 };
 
-type RegisterPage2Props = {
-  /** dane z Register Page 1 */
-  registerData: RegisterDto;
-
-  /** opcjonalnie: np. żeby wrócić do Page 1 */
-  onBack?: () => void;
-
-  /** opcjonalnie: callback po finalnym submit */
-  onRegister?: (payload: { register: RegisterDto; commutes: AddCommuteDto[] }) => void;
-};
-
-export const RegisterPage2: React.FC<RegisterPage2Props> = ({
-  registerData,
-  onBack,
-  onRegister,
-}) => {
+export const RegisterPageTwo: React.FC = () => { 
+  
   const navigate = useNavigate();
+    const location = useLocation();
+
+    const registerData = location.state as RegisterDto | undefined;
+
 
   const [commuteForm, setCommuteForm] = useState<AddCommuteDto>({
     commuteThroughDistrictName: "",
@@ -94,17 +69,17 @@ export const RegisterPage2: React.FC<RegisterPage2Props> = ({
   );
 
   const previewRows = useMemo(() => {
-    const maskedPassword = registerData.appUserPassword ? "••••••••" : "";
+    const maskedPassword = registerData?.appUserPassword ? "••••••••" : "";
     return [
-      { label: "Name", value: registerData.appUserName },
-      { label: "Email", value: registerData.appUserEmail },
+      { label: "Name", value: registerData?.appUserName },
+      { label: "Email", value: registerData?.appUserEmail },
       { label: "Password", value: maskedPassword },
-      { label: "Nationality", value: registerData.appUserNationality },
-      { label: "City", value: registerData.appUserCity },
-      { label: "Live in district", value: registerData.appUserLiveInDistrict },
+      { label: "Nationality", value: registerData?.appUserNationality },
+      { label: "City", value: registerData?.appUserCity },
+      { label: "Live in district", value: registerData?.appUserLiveInDistrict },
       {
         label: "Languages",
-        value: (registerData.appUserLanguagesSpoken ?? []).join(", "),
+        value: (registerData?.appUserLanguagesSpoken ?? []).join(", "),
       },
     ];
   }, [registerData]);
@@ -113,7 +88,6 @@ export const RegisterPage2: React.FC<RegisterPage2Props> = ({
     const d = commuteForm.commuteThroughDistrictName.trim();
     if (!d) return;
 
-    // minimalna walidacja
     const start = Math.max(0, Math.min(23, commuteForm.commuteStartHour ?? 0));
     const stop = Math.max(0, Math.min(23, commuteForm.commuteStopHour ?? 0));
     const trips = Math.max(0, Math.min(50, commuteForm.commuteTripsPerWeek ?? 0));
@@ -130,7 +104,6 @@ export const RegisterPage2: React.FC<RegisterPage2Props> = ({
 
     setCommutes((prev) => [...prev, cleaned]);
 
-    // reset lekki
     setCommuteForm((p) => ({
       ...p,
       commuteThroughDistrictName: "",
@@ -145,15 +118,42 @@ export const RegisterPage2: React.FC<RegisterPage2Props> = ({
     setCommutes((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const finalSubmit = () => {
-    const payload = { register: registerData, commutes };
+  const finalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!registerData?.appUserEmail) {
+      alert("Brak appUserEmail (nie przeszedł ze strony 1).");
+      return;
+    }
 
-    // to co chciałeś: body w konsoli
-    console.log("FINAL REGISTER BODY (JSON):\n", JSON.stringify(payload, null, 2));
+    if (commutes.length === 0) {
+    alert("Dodaj przynajmniej jeden commute (kliknij Add commute).");
+    return;
+  }
 
-    onRegister?.(payload);
+  const lastCommute = commutes[commutes.length - 1];
+    
+    const url = new URL("http://localhost:8080/auth/addCommute");
+    url.searchParams.set("appUserEmail", registerData.appUserEmail);
+    try {
+    const res = await fetch(url.toString(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=UTF-8" },
+      body: JSON.stringify(lastCommute),
+    });
+
+    if (!res.ok) {
+      alert(`Błąd ${res.status}: ${res.statusText}`);
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const data = await res.json().catch(() => null);
+    console.log("Response from server:\n", data);
+
     navigate("/app", { replace: true });
-  };
+  } catch (err) {
+    console.error("Fetch error:", err);
+  }
+}
 
   const isAddDisabled =
     !commuteForm.commuteThroughDistrictName.trim() ||
@@ -371,7 +371,7 @@ export const RegisterPage2: React.FC<RegisterPage2Props> = ({
                 </div>
 
                 <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                  {onBack && (
+                  {/* {onBack && (
                     <Button
                       type="button"
                       label="Back"
@@ -379,7 +379,7 @@ export const RegisterPage2: React.FC<RegisterPage2Props> = ({
                       severity="secondary"
                       onClick={onBack}
                     />
-                  )}
+                  )} */}
                   <Button
                     type="button"
                     label="Add commute"

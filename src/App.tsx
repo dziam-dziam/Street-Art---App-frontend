@@ -4,7 +4,7 @@ import { AdminPage } from "./components/user/AdminPage";
 import { LoginPage } from "./components/user/LoginPage";
 import { ProtectedRoute } from "./components/user/ProtectedRoute";
 import { RegisterPage } from "./components/user/RegisterPage";
-import { RegisterPage2 } from "./components/user/RegisterPageTwo";
+import { RegisterPageTwo } from "./components/user/RegisterPageTwo";
 import { AppView } from "./components/user/AppView";
 import { AddArtPiecePage } from "./components/user/AddArtPiecePage";
 
@@ -19,16 +19,7 @@ function App() {
       <Route
         path="/register/2"
         element={
-          <RegisterPage2
-            registerData={{
-              appUserName: "",
-              appUserEmail: "",
-              appUserPassword: "",
-              appUserNationality: "",
-              appUserLanguagesSpoken: [],
-              appUserCity: "",
-              appUserLiveInDistrict: "",
-            }}
+          <RegisterPageTwo
           />
         }
       />
