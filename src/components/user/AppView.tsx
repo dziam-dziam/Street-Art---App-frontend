@@ -9,6 +9,12 @@ import { Menu } from "primereact/menu";
 import { Dialog } from "primereact/dialog";
 import { Tag } from "primereact/tag";
 import { useNavigate } from "react-router-dom";
+import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
+import L from "leaflet";
+import { GeoJSON, useMap } from "react-leaflet";
+import poz from "../assets/poznan.json";
+
+
 
 /**
  * W tej wersji:
@@ -72,46 +78,7 @@ function projectToCanvas(lat: number, lng: number, width: number, height: number
   return { x, y };
 }
 
-// InPost-style: im mniejszy zoom, tym większe grupowanie
-function clusterPoints(points: ArtPoint[], zoom: number): (Cluster | ArtPoint)[] {
-  // zoom: 1..5 (1 = daleko, 5 = blisko)
-  const cellSize = zoom <= 2 ? 0.02 : zoom === 3 ? 0.012 : zoom === 4 ? 0.007 : 0.004;
 
-  const grid = new Map<string, ArtPoint[]>();
-
-  for (const p of points) {
-    const gx = Math.floor(p.lng / cellSize);
-    const gy = Math.floor(p.lat / cellSize);
-    const key = `${gx}_${gy}`;
-    const bucket = grid.get(key) ?? [];
-    bucket.push(p);
-    grid.set(key, bucket);
-  }
-
-  const out: (Cluster | ArtPoint)[] = [];
-  for (const [key, bucket] of grid.entries()) {
-    if (bucket.length === 1 && zoom >= 4) {
-      out.push(bucket[0]);
-      continue;
-    }
-
-    const lat = bucket.reduce<number>((s, b) => s + b.lat, 0) / bucket.length;
-    const lng = bucket.reduce<number>((s, b) => s + b.lng, 0) / bucket.length;
-
-    out.push({
-      id: `c_${key}`,
-      count: bucket.length,
-      lat,
-      lng,
-      points: bucket,
-    });
-  }
-
-  if (zoom >= 5) return points;
-  return out;
-}
-
-// Jeżeli nazwy dzielnic z backendu nie są 1:1 takie jak w UI — normalizujemy.
 function normalizeDistrict(d: string): DistrictName {
   const x = (d ?? "").trim().toLowerCase();
 
@@ -122,7 +89,60 @@ function normalizeDistrict(d: string): DistrictName {
   return "Nowe Miasto";
 }
 
+function FitAndLockToGeoJson({ data }: { data: any }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!data) return;
+
+    try {
+      const layer = L.geoJSON(data);
+      const bounds = layer.getBounds();
+
+      if (!bounds.isValid()) return;
+
+      // 1) dopasuj widok do Poznania
+      map.fitBounds(bounds, { padding: [20, 20] });
+
+      // 2) ustaw maxBounds (lekki margines, żeby nie “przyklejało” do krawędzi)
+      const padded = bounds.pad(0.05);
+      map.setMaxBounds(padded);
+
+      // 3) “lepkość” — im bliżej 1, tym bardziej blokuje uciekanie
+      // (w TS czasem trzeba rzutować)
+      (map as any).options.maxBoundsViscosity = 1.0;
+
+      // opcjonalnie: ogranicz zoom
+      map.setMinZoom(11);
+      map.setMaxZoom(18);
+    } catch (e) {
+      console.error("Error fitting/locking GeoJSON bounds:", e);
+    }
+  }, [data, map]);
+
+  return null;
+}
+
+function pickPoznanBoundary(fc: any) {
+  if (!fc || fc.type !== "FeatureCollection" || !Array.isArray(fc.features)) return fc;
+
+  const boundary = fc.features.find((f: any) => {
+    const t = f?.geometry?.type;
+    const name = (f?.properties?.name ?? "").toString().toLowerCase();
+    const isPoly = t === "Polygon" || t === "MultiPolygon";
+    return isPoly && name.includes("pozna");
+  });
+
+  if (!boundary) return fc;
+
+  return { type: "FeatureCollection", features: [boundary] };
+}
+
+
+
 export const AppView: React.FC = () => {
+  const pozBoundary = useMemo(() => pickPoznanBoundary(poz as any), []);
+
   const navigate = useNavigate();
 
   const [sidebarVisible, setSidebarVisible] = useState(true);
@@ -194,8 +214,6 @@ export const AppView: React.FC = () => {
     };
   }, []);
 
-  const clustered = useMemo(() => clusterPoints(points, zoom), [points, zoom]);
-
   const onZoomIn = () => setZoom((z) => Math.min(5, z + 1));
   const onZoomOut = () => setZoom((z) => Math.max(1, z - 1));
 
@@ -219,7 +237,6 @@ export const AppView: React.FC = () => {
         }}
       >
         <div style={{ display: "grid", gridTemplateColumns: "72px 1fr", gap: 14 }}>
-          {/* LEFT MINI SIDEBAR (ikonki) */}
           <div
             style={{
               background: "rgba(255,255,255,0.12)",
@@ -246,7 +263,6 @@ export const AppView: React.FC = () => {
             <Button icon="pi pi-sign-out" rounded text style={{ color: "white" }} />
           </div>
 
-          {/* MAP AREA */}
           <div
             style={{
               position: "relative",
@@ -258,7 +274,6 @@ export const AppView: React.FC = () => {
               overflow: "hidden",
             }}
           >
-            {/* ZOOM CONTROLS */}
             <div style={{ position: "absolute", top: 14, right: 14, display: "flex", gap: 8, zIndex: 5 }}>
               <Button icon="pi pi-minus" onClick={onZoomOut} rounded />
               <Button icon="pi pi-plus" onClick={onZoomIn} rounded />
@@ -268,51 +283,53 @@ export const AppView: React.FC = () => {
               {!loadingPoints && !pointsError && <Tag value={`${points.length} pts`} severity="success" />}
             </div>
 
-            {/* MAP PLACEHOLDER (dzielnice) */}
-            <div style={{ position: "relative", height: 480, borderRadius: 12 }}>
-              <svg
-                width="100%"
-                height="100%"
-                viewBox="0 0 800 480"
-                style={{ borderRadius: 12, background: "rgba(255,255,255,0.08)" }}
-              >
-                {/* prosta "mapa" dzielnic: placeholder shapes */}
-                <path d="M120 120 L260 90 L300 170 L210 230 L120 200 Z" fill="#d6f1ff" opacity="0.95" />
-                <text x="170" y="160" fill="#1b1b1b" fontSize="16" fontWeight="700">
-                  JEŻYCE
-                </text>
+            <div style={{ position: "relative", height: 480, borderRadius: 12, overflow: "hidden" }}>
+              <MapContainer
+  center={[52.4064, 16.9252] as [number, number]}
+  zoom={12}
+  style={{ height: "100%", width: "100%", borderRadius: 12 }}
+  worldCopyJump={false}
+>
 
-                <path d="M280 70 L420 70 L450 160 L330 190 Z" fill="#ffe4e9" opacity="0.95" />
-                <text x="320" y="120" fill="#1b1b1b" fontSize="16" fontWeight="700">
-                  STARE MIASTO
-                </text>
+                <TileLayer
+                  attribution='&copy; OpenStreetMap contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                                <GeoJSON
+data={pozBoundary as any}
+                  style={() => ({
+                    color: "#ffffff",
+                    weight: 3,
+                    fillOpacity: 0.08,
+                  })}
+                />
 
-                <path d="M240 210 L360 200 L420 290 L290 340 L220 280 Z" fill="#fff2c9" opacity="0.95" />
-                <text x="260" y="280" fill="#1b1b1b" fontSize="16" fontWeight="700">
-                  WILDA
-                </text>
+                <FitAndLockToGeoJson data={pozBoundary} />
 
-                <path d="M120 240 L210 220 L240 330 L140 360 L90 300 Z" fill="#e6ffe6" opacity="0.95" />
-                <text x="120" y="300" fill="#1b1b1b" fontSize="16" fontWeight="700">
-                  GRUNWALD
-                </text>
 
-                <path d="M460 160 L720 150 L740 360 L520 410 L430 280 Z" fill="#e9edff" opacity="0.95" />
-                <text x="560" y="260" fill="#1b1b1b" fontSize="16" fontWeight="700">
-                  NOWE MIASTO
-                </text>
-              </svg>
 
-              {/* MARKERS / CLUSTERS overlay */}
-              <MarkerLayer
-                zoom={zoom}
-                items={clustered}
-                onClusterClick={() => onZoomIn()}
-                onPointClick={(p) => setSelected(p)}
-              />
+                {points.map((p) => (
+                  <CircleMarker
+                    key={p.id}
+                    center={[p.lat, p.lng]}
+                    radius={7}
+                    eventHandlers={{
+                      click: () => setSelected(p),
+                    }}
+                  >
+                    <Popup>
+                      <b>{p.title}</b>
+                      <br />
+                      {p.address}
+                      <br />
+                      {p.district}
+                    </Popup>
+                  </CircleMarker>
+                ))}
+              </MapContainer>
             </div>
 
-            {/* ADD NEW BUTTON bottom-right like mock */}
+
             <div style={{ position: "absolute", right: 18, bottom: 18 }}>
               <Button
                 label="Add New"
@@ -326,7 +343,6 @@ export const AppView: React.FC = () => {
         </div>
       </Card>
 
-      {/* FULL SIDEBAR */}
       <Sidebar visible={sidebarVisible} onHide={() => setSidebarVisible(false)} position="left" style={{ width: 320 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <Avatar icon="pi pi-user" size="large" shape="circle" />
@@ -341,7 +357,6 @@ export const AppView: React.FC = () => {
         <Menu model={items} style={{ width: "100%" }} />
       </Sidebar>
 
-      {/* DETAILS DIALOG */}
       <Dialog
         header={selected ? selected.title : "Details"}
         visible={!!selected}
@@ -378,7 +393,6 @@ function MarkerLayer(props: {
 }) {
   const { zoom, items, onClusterClick, onPointClick } = props;
 
-  // marker area size — dopasowane do svg viewBox 800x480
   const W = 800;
   const H = 480;
 
@@ -447,5 +461,6 @@ function MarkerLayer(props: {
         );
       })}
     </div>
-  );
+      );
+
 }

@@ -5,8 +5,7 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { PrimeReactProvider } from "primereact/api";
 import { BrowserRouter } from "react-router-dom";
-
-
+import "leaflet/dist/leaflet.css";
 import "primereact/resources/themes/lara-light-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
