@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+// AppView.tsx
+import React, { useMemo, useState, useEffect } from "react";
 import { Sidebar } from "primereact/sidebar";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
@@ -11,12 +12,16 @@ import { useNavigate } from "react-router-dom";
 
 /**
  * W tej wersji:
- * - mapa to placeholder (SVG) dzielnic
- * - punkty/klastry są liczone "na sucho" po zoomie
+ * - markery pobierane z backendu: GET http://localhost:8080/map/artPieces
+ * - klastrowanie jak wcześniej
  * - klik w klaster -> zoom in
- * - klik w punkt -> pokazuje szczegóły
+ * - klik w punkt -> dialog szczegółów
+ *
+ * Jeśli endpoint jest chroniony JWT:
+ * - odkomentuj Authorization w fetch()
+ * Jeśli używasz cookies/session:
+ * - credentials: "include" zostaw włączone
  */
-
 
 type DistrictName =
   | "Jeżyce"
@@ -30,7 +35,7 @@ type ArtPoint = {
   title: string;
   address: string;
   district: DistrictName;
-  lat: number; // docelowo z geokodowania
+  lat: number;
   lng: number;
 };
 
@@ -40,27 +45,27 @@ type Cluster = {
   lat: number;
   lng: number;
   district?: DistrictName;
-  points?: ArtPoint[]; // opcjonalnie
+  points?: ArtPoint[];
 };
 
-const POZNAN_CENTER = { lat: 52.4064, lng: 16.9252 };
+type ArtPieceMapPointDto = {
+  id: number;
+  title: string;
+  address: string;
+  district: string;
+  lat: number;
+  lng: number;
+};
 
-// DEMO dane (zastąpisz backendem)
-const DEMO_POINTS: ArtPoint[] = [
-  { id: "a1", title: "Mural 1", address: "Jeżyce 12", district: "Jeżyce", lat: 52.412, lng: 16.915 },
-  { id: "a2", title: "Sticker wall", address: "Jeżyce 5", district: "Jeżyce", lat: 52.409, lng: 16.912 },
-  { id: "a3", title: "Mural Wilda", address: "Wilda 33", district: "Wilda", lat: 52.397, lng: 16.928 },
-  { id: "a4", title: "Graffiti spot", address: "Grunwald 7", district: "Grunwald", lat: 52.392, lng: 16.899 },
-  { id: "a5", title: "Old Town piece", address: "Stare Miasto 1", district: "Stare Miasto", lat: 52.409, lng: 16.934 },
-  { id: "a6", title: "Bridge tags", address: "Nowe Miasto 21", district: "Nowe Miasto", lat: 52.405, lng: 16.955 },
-  { id: "a7", title: "Corner mural", address: "Nowe Miasto 9", district: "Nowe Miasto", lat: 52.401, lng: 16.948 },
-];
+const BASE_URL = "http://localhost:8080";
 
 // mała funkcja do "mapowania" lat/lng -> pozycja na canvasie (placeholder)
 function projectToCanvas(lat: number, lng: number, width: number, height: number) {
-  // tylko symulacja: weźmy prosty bounding box wokół Poznania
-  const latMin = 52.385, latMax = 52.425;
-  const lngMin = 16.885, lngMax = 16.975;
+  // tylko symulacja: prosty bounding box wokół Poznania
+  const latMin = 52.385,
+    latMax = 52.425;
+  const lngMin = 16.885,
+    lngMax = 16.975;
 
   const x = ((lng - lngMin) / (lngMax - lngMin)) * width;
   const y = (1 - (lat - latMin) / (latMax - latMin)) * height;
@@ -70,7 +75,6 @@ function projectToCanvas(lat: number, lng: number, width: number, height: number
 // InPost-style: im mniejszy zoom, tym większe grupowanie
 function clusterPoints(points: ArtPoint[], zoom: number): (Cluster | ArtPoint)[] {
   // zoom: 1..5 (1 = daleko, 5 = blisko)
-  // cellSize rośnie gdy zoom jest mniejszy => więcej punktów w klastrze
   const cellSize = zoom <= 2 ? 0.02 : zoom === 3 ? 0.012 : zoom === 4 ? 0.007 : 0.004;
 
   const grid = new Map<string, ArtPoint[]>();
@@ -91,10 +95,8 @@ function clusterPoints(points: ArtPoint[], zoom: number): (Cluster | ArtPoint)[]
       continue;
     }
 
-    // centroid
-const lat = bucket.reduce<number>((s, b) => s + b.lat, 0) / bucket.length;
-const lng = bucket.reduce<number>((s, b) => s + b.lng, 0) / bucket.length;
-
+    const lat = bucket.reduce<number>((s, b) => s + b.lat, 0) / bucket.length;
+    const lng = bucket.reduce<number>((s, b) => s + b.lng, 0) / bucket.length;
 
     out.push({
       id: `c_${key}`,
@@ -105,18 +107,31 @@ const lng = bucket.reduce<number>((s, b) => s + b.lng, 0) / bucket.length;
     });
   }
 
-  // gdy zoom jest duży, pokazuj więcej “pojedynczych”
   if (zoom >= 5) return points;
   return out;
 }
 
+// Jeżeli nazwy dzielnic z backendu nie są 1:1 takie jak w UI — normalizujemy.
+function normalizeDistrict(d: string): DistrictName {
+  const x = (d ?? "").trim().toLowerCase();
+
+  if (x === "jeżyce" || x === "jezyce") return "Jeżyce";
+  if (x === "stare miasto" || x === "staremiasto") return "Stare Miasto";
+  if (x === "grunwald") return "Grunwald";
+  if (x === "wilda") return "Wilda";
+  return "Nowe Miasto";
+}
+
 export const AppView: React.FC = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [zoom, setZoom] = useState(3); // 1..5
   const [selected, setSelected] = useState<ArtPoint | null>(null);
-  
 
+  const [points, setPoints] = useState<ArtPoint[]>([]);
+  const [loadingPoints, setLoadingPoints] = useState(false);
+  const [pointsError, setPointsError] = useState<string | null>(null);
 
   const items = useMemo(
     () => [
@@ -129,7 +144,57 @@ export const AppView: React.FC = () => {
     []
   );
 
-  const clustered = useMemo(() => clusterPoints(DEMO_POINTS, zoom), [zoom]);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPoints() {
+      setLoadingPoints(true);
+      setPointsError(null);
+
+      try {
+        const res = await fetch(`${BASE_URL}/map/artPieces`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            // Jeśli masz JWT:
+            // "Authorization": `Bearer ${localStorage.getItem("token") ?? ""}`,
+          },
+          credentials: "include", // jeśli cookies/session; nie szkodzi też przy permitAll
+        });
+
+        if (!res.ok) {
+          const body = await res.text().catch(() => "");
+          throw new Error(`GET /map/artPieces failed: ${res.status}. ${body}`);
+        }
+
+        const data: ArtPieceMapPointDto[] = await res.json();
+
+        const mapped: ArtPoint[] = (data ?? [])
+          .filter((d) => Number.isFinite(d.lat) && Number.isFinite(d.lng))
+          .map((d) => ({
+            id: String(d.id),
+            title: d.title ?? "(no title)",
+            address: d.address ?? "",
+            district: normalizeDistrict(d.district),
+            lat: d.lat,
+            lng: d.lng,
+          }));
+
+        if (!cancelled) setPoints(mapped);
+      } catch (e: any) {
+        if (!cancelled) setPointsError(e?.message ?? "Unknown error");
+      } finally {
+        if (!cancelled) setLoadingPoints(false);
+      }
+    }
+
+    loadPoints();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const clustered = useMemo(() => clusterPoints(points, zoom), [points, zoom]);
 
   const onZoomIn = () => setZoom((z) => Math.min(5, z + 1));
   const onZoomOut = () => setZoom((z) => Math.max(1, z - 1));
@@ -138,7 +203,7 @@ export const AppView: React.FC = () => {
     <div
       style={{
         minHeight: "100vh",
-        background: "#7b83cf", // jaśniejsze tło niż okno
+        background: "#7b83cf",
         padding: 24,
         display: "grid",
         placeItems: "center",
@@ -180,7 +245,7 @@ export const AppView: React.FC = () => {
             <Divider style={{ width: "100%", opacity: 0.35 }} />
             <Button icon="pi pi-sign-out" rounded text style={{ color: "white" }} />
           </div>
-                
+
           {/* MAP AREA */}
           <div
             style={{
@@ -198,26 +263,44 @@ export const AppView: React.FC = () => {
               <Button icon="pi pi-minus" onClick={onZoomOut} rounded />
               <Button icon="pi pi-plus" onClick={onZoomIn} rounded />
               <Tag value={`Zoom: ${zoom}`} severity="info" />
+              {loadingPoints && <Tag value="Loading points..." severity="warning" />}
+              {pointsError && <Tag value={`Error: ${pointsError}`} severity="danger" />}
+              {!loadingPoints && !pointsError && <Tag value={`${points.length} pts`} severity="success" />}
             </div>
 
             {/* MAP PLACEHOLDER (dzielnice) */}
             <div style={{ position: "relative", height: 480, borderRadius: 12 }}>
-              <svg width="100%" height="100%" viewBox="0 0 800 480" style={{ borderRadius: 12, background: "rgba(255,255,255,0.08)" }}>
+              <svg
+                width="100%"
+                height="100%"
+                viewBox="0 0 800 480"
+                style={{ borderRadius: 12, background: "rgba(255,255,255,0.08)" }}
+              >
                 {/* prosta "mapa" dzielnic: placeholder shapes */}
                 <path d="M120 120 L260 90 L300 170 L210 230 L120 200 Z" fill="#d6f1ff" opacity="0.95" />
-                <text x="170" y="160" fill="#1b1b1b" fontSize="16" fontWeight="700">JEŻYCE</text>
+                <text x="170" y="160" fill="#1b1b1b" fontSize="16" fontWeight="700">
+                  JEŻYCE
+                </text>
 
                 <path d="M280 70 L420 70 L450 160 L330 190 Z" fill="#ffe4e9" opacity="0.95" />
-                <text x="320" y="120" fill="#1b1b1b" fontSize="16" fontWeight="700">STARE MIASTO</text>
+                <text x="320" y="120" fill="#1b1b1b" fontSize="16" fontWeight="700">
+                  STARE MIASTO
+                </text>
 
                 <path d="M240 210 L360 200 L420 290 L290 340 L220 280 Z" fill="#fff2c9" opacity="0.95" />
-                <text x="260" y="280" fill="#1b1b1b" fontSize="16" fontWeight="700">WILDA</text>
+                <text x="260" y="280" fill="#1b1b1b" fontSize="16" fontWeight="700">
+                  WILDA
+                </text>
 
                 <path d="M120 240 L210 220 L240 330 L140 360 L90 300 Z" fill="#e6ffe6" opacity="0.95" />
-                <text x="120" y="300" fill="#1b1b1b" fontSize="16" fontWeight="700">GRUNWALD</text>
+                <text x="120" y="300" fill="#1b1b1b" fontSize="16" fontWeight="700">
+                  GRUNWALD
+                </text>
 
                 <path d="M460 160 L720 150 L740 360 L520 410 L430 280 Z" fill="#e9edff" opacity="0.95" />
-                <text x="560" y="260" fill="#1b1b1b" fontSize="16" fontWeight="700">NOWE MIASTO</text>
+                <text x="560" y="260" fill="#1b1b1b" fontSize="16" fontWeight="700">
+                  NOWE MIASTO
+                </text>
               </svg>
 
               {/* MARKERS / CLUSTERS overlay */}
@@ -244,12 +327,7 @@ export const AppView: React.FC = () => {
       </Card>
 
       {/* FULL SIDEBAR */}
-      <Sidebar
-        visible={sidebarVisible}
-        onHide={() => setSidebarVisible(false)}
-        position="left"
-        style={{ width: 320 }}
-      >
+      <Sidebar visible={sidebarVisible} onHide={() => setSidebarVisible(false)} position="left" style={{ width: 320 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <Avatar icon="pi pi-user" size="large" shape="circle" />
           <div>
@@ -272,11 +350,18 @@ export const AppView: React.FC = () => {
       >
         {selected && (
           <div style={{ display: "grid", gap: 10 }}>
-            <div><b>District:</b> {selected.district}</div>
-            <div><b>Address:</b> {selected.address}</div>
-            <div><b>Lat/Lng:</b> {selected.lat.toFixed(4)} / {selected.lng.toFixed(4)}</div>
+            <div>
+              <b>District:</b> {selected.district}
+            </div>
+            <div>
+              <b>Address:</b> {selected.address}
+            </div>
+            <div>
+              <b>Lat/Lng:</b> {selected.lat.toFixed(4)} / {selected.lng.toFixed(4)}
+            </div>
             <small style={{ opacity: 0.8 }}>
-              Docelowo tu pokażesz zdjęcia dzieła + opis, a marker będzie z backendu (geokodowany adres).
+              Dane markerów lecą z backendu (/map/artPieces). Jeśli widzisz 403, endpoint jest chroniony — dodaj permitAll
+              albo Authorization header w fetch().
             </small>
           </div>
         )}
