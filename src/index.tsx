@@ -3,20 +3,30 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { BrowserRouter } from 'react-router-dom';
+import { PrimeReactProvider } from "primereact/api";
+import { BrowserRouter } from "react-router-dom";
+
+
 import "primereact/resources/themes/lara-light-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 
 
-const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
-);
+const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
+
+
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <PrimeReactProvider
+      value={{
+        ripple: true,
+        hideOverlaysOnDocumentScrolling: true, // albo false, jak nie chcesz chowania overlay przy scrollu
+      }}
+    >
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </PrimeReactProvider>
   </React.StrictMode>
 );
 

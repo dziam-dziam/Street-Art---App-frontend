@@ -1,3 +1,28 @@
+/* AdminPage: tło i tekst w DataTable */
+.p-datatable,
+.p-datatable .p-datatable-tbody > tr,
+.p-datatable .p-datatable-tbody > tr > td {
+  background: transparent !important;
+  color: white !important;
+}
+
+/* hover na wierszu */
+.p-datatable .p-datatable-tbody > tr:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* zaznaczony wiersz */
+.p-datatable .p-datatable-tbody > tr.p-highlight {
+  background: rgba(126, 224, 129, 0.35) !important;
+  color: white !important;
+}
+
+/* ramki/linie między komórkami (opcjonalnie) */
+.p-datatable .p-datatable-tbody > tr > td {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+
 .App {
   text-align: center;
 }
