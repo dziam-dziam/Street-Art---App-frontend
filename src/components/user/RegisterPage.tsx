@@ -5,7 +5,8 @@ import { Password } from "primereact/password";
 import { MultiSelect } from "primereact/multiselect";
 import { Button } from "primereact/button";
 import { useNavigate } from "react-router-dom";
-import streetArtBlue from "../images/streetArtBlue.jpeg"; // dopasuj nazwę pliku jeśli inna
+import streetArtBlue from "../images/streetArtBlue.jpeg";
+import { Dropdown } from "primereact/dropdown";
 import { RegisterPageTwo } from "./RegisterPageTwo";
 
 export type RegisterDto = {
@@ -21,13 +22,39 @@ export type RegisterDto = {
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
 
+  const districtOptions = useMemo(
+  () => [
+    { label: "Jeżyce", value: "Jeżyce" },
+    { label: "Grunwald", value: "Grunwald" },
+    { label: "Stare Miasto", value: "Stare Miasto" },
+    { label: "Nowe Miasto", value: "Nowe Miasto" },
+    { label: "Wilda", value: "Wilda" },
+  ],
+  []
+);
+
+const nationalityOptions = useMemo(
+  () => [
+    { label: "Polish", value: "Polish" },
+    { label: "German", value: "German" },
+    { label: "Spanish", value: "Spanish" },
+    { label: "French", value: "French" },
+    { label: "English", value: "English" },
+    { label: "Ukrainian", value: "Ukrainian" },
+    { label: "Other", value: "Other" },
+  ],
+  []
+);
+
+
+
   const [form, setForm] = useState<RegisterDto>({
     appUserName: "",
     appUserEmail: "",
     appUserPassword: "",
     appUserNationality: "",
     appUserLanguagesSpoken: [],
-    appUserCity: "",
+    appUserCity: "Poznań",
     appUserLiveInDistrict: "",
   });
 
@@ -155,31 +182,39 @@ export const RegisterPage: React.FC = () => {
             {/* 2 small fields like in mock */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <InputText
-                value={form.appUserCity}
-                onChange={(e) => setForm((p) => ({ ...p, appUserCity: e.target.value }))}
-                placeholder="City"
-                style={{ width: "100%", borderRadius: 10 }}
-              />
-              <InputText
-                value={form.appUserNationality}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, appUserNationality: e.target.value }))
-                }
-                placeholder="Nationality"
-                style={{ width: "100%", borderRadius: 10 }}
-              />
+                  value={form.appUserCity}
+                  disabled
+                  placeholder="City"
+                  style={{ width: "100%", borderRadius: 10, opacity: 0.9 }}
+                />
+
+              <Dropdown
+  value={form.appUserNationality}
+  options={nationalityOptions}
+  onChange={(e) =>
+    setForm((p) => ({ ...p, appUserNationality: e.value ?? "" }))
+  }
+  placeholder="Nationality"
+  style={{ width: "100%" }}
+  filter
+  showClear
+/>
+
             </div>
 
-            <InputText
+                        <Dropdown
               value={form.appUserLiveInDistrict}
+              options={districtOptions}
               onChange={(e) =>
-                setForm((p) => ({ ...p, appUserLiveInDistrict: e.target.value }))
+                setForm((p) => ({ ...p, appUserLiveInDistrict: e.value ?? "" }))
               }
               placeholder="Live in district"
-              style={{ width: "100%", borderRadius: 10 }}
+              style={{ width: "100%" }}
+              filter
+              showClear
             />
 
-            {/* dropdown field at the bottom (like mock) */}
+
             <MultiSelect
               value={form.appUserLanguagesSpoken}
               options={languageOptions}

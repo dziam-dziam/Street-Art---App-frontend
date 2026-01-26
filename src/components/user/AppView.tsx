@@ -15,20 +15,6 @@ import { GeoJSON, useMap } from "react-leaflet";
 import poz from "../assets/poznan.json";
 
 
-
-/**
- * W tej wersji:
- * - markery pobierane z backendu: GET http://localhost:8080/map/artPieces
- * - klastrowanie jak wcześniej
- * - klik w klaster -> zoom in
- * - klik w punkt -> dialog szczegółów
- *
- * Jeśli endpoint jest chroniony JWT:
- * - odkomentuj Authorization w fetch()
- * Jeśli używasz cookies/session:
- * - credentials: "include" zostaw włączone
- */
-
 type DistrictName =
   | "Jeżyce"
   | "Stare Miasto"
@@ -153,16 +139,16 @@ export const AppView: React.FC = () => {
   const [loadingPoints, setLoadingPoints] = useState(false);
   const [pointsError, setPointsError] = useState<string | null>(null);
 
-  const items = useMemo(
-    () => [
-      { label: "Mój profil", icon: "pi pi-user" },
-      { label: "Moje dzieła", icon: "pi pi-images" },
-      { label: "Ustawienia", icon: "pi pi-cog" },
-      { separator: true },
-      { label: "Wyloguj", icon: "pi pi-sign-out" },
-    ],
-    []
-  );
+const items = useMemo(
+  () => [
+    { label: "Mój profil", icon: "pi pi-user", command: () => navigate("/profile") },
+    { label: "Moje dzieła", icon: "pi pi-images", command: () => navigate("/my-artpieces") },
+    { label: "Ustawienia", icon: "pi pi-cog", command: () => navigate("/settings") },
+    { separator: true },
+    { label: "Wyloguj", icon: "pi pi-sign-out", command: () => navigate("/logout") },
+  ],
+  [navigate]
+);
 
   useEffect(() => {
     let cancelled = false;
@@ -238,30 +224,26 @@ export const AppView: React.FC = () => {
       >
         <div style={{ display: "grid", gridTemplateColumns: "72px 1fr", gap: 14 }}>
           <div
-            style={{
-              background: "rgba(255,255,255,0.12)",
-              borderRadius: 14,
-              padding: 10,
-              display: "flex",
-              flexDirection: "column",
-              gap: 10,
-              alignItems: "center",
-            }}
-          >
-            <Button
-              icon="pi pi-bars"
-              rounded
-              text
-              aria-label="menu"
-              onClick={() => setSidebarVisible(true)}
-              style={{ color: "white" }}
-            />
-            <Button icon="pi pi-user" rounded text style={{ color: "white" }} />
-            <Button icon="pi pi-images" rounded text style={{ color: "white" }} />
-            <Button icon="pi pi-cog" rounded text style={{ color: "white" }} />
-            <Divider style={{ width: "100%", opacity: 0.35 }} />
-            <Button icon="pi pi-sign-out" rounded text style={{ color: "white" }} />
-          </div>
+  style={{
+    background: "rgba(255,255,255,0.12)",
+    borderRadius: 14,
+    padding: 10,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "flex-start",
+  }}
+>
+  <Button
+    icon="pi pi-bars"
+    rounded
+    text
+    aria-label="menu"
+    onClick={() => setSidebarVisible(true)}
+    style={{ color: "white" }}
+  />
+</div>
+
 
           <div
             style={{
@@ -283,7 +265,7 @@ export const AppView: React.FC = () => {
               {!loadingPoints && !pointsError && <Tag value={`${points.length} pts`} severity="success" />}
             </div>
 
-            <div style={{ position: "relative", height: 480, borderRadius: 12, overflow: "hidden" }}>
+            <div style={{ position: "relative", height: 480, borderRadius: 12, overflow: "hidden", zIndex: 1 }}>
               <MapContainer
   center={[52.4064, 16.9252] as [number, number]}
   zoom={12}
@@ -330,32 +312,43 @@ data={pozBoundary as any}
             </div>
 
 
-            <div style={{ position: "absolute", right: 18, bottom: 18 }}>
+            <div style={{ position: "absolute", right: 18, bottom: 18, zIndex: 9999, pointerEvents  : "auto" }}>
               <Button
-                label="Add New"
-                icon="pi pi-plus"
-                iconPos="right"
-                onClick={() => navigate("/artpieces/add")}
-                style={{ borderRadius: 12, fontWeight: 700 }}
-              />
+  label="Add New"
+  icon="pi pi-plus"
+  iconPos="right"
+  onClick={() => navigate("/artpieces/add")}
+  style={{
+    borderRadius: 12,
+    fontWeight: 700,
+    boxShadow: "0 10px 24px rgba(0,0,0,0.25)",
+  }}
+/>
+
             </div>
           </div>
         </div>
       </Card>
 
-      <Sidebar visible={sidebarVisible} onHide={() => setSidebarVisible(false)} position="left" style={{ width: 320 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <Avatar icon="pi pi-user" size="large" shape="circle" />
-          <div>
-            <div style={{ fontWeight: 800 }}>Użytkownik</div>
-            <small style={{ opacity: 0.75 }}>user@email.com</small>
-          </div>
-        </div>
+      <Sidebar
+  visible={sidebarVisible}
+  onHide={() => setSidebarVisible(false)}
+  position="left"
+  style={{ width: 320 }}
+>
+  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+    <Avatar icon="pi pi-user" size="large" shape="circle" />
+    <div>
+      <div style={{ fontWeight: 800 }}>Użytkownik</div>
+      <small style={{ opacity: 0.75 }}>user@email.com</small>
+    </div>
+  </div>
 
-        <Divider />
+  <Divider />
 
-        <Menu model={items} style={{ width: "100%" }} />
-      </Sidebar>
+  <Menu model={items} style={{ width: "100%" }} />
+</Sidebar>
+
 
       <Dialog
         header={selected ? selected.title : "Details"}

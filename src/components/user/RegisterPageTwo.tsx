@@ -9,6 +9,8 @@ import { Column } from "primereact/column";
 import { Divider } from "primereact/divider";
 import streetArtBrown from "../images/streetArtBrown.jpeg";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Dropdown } from "primereact/dropdown";
+
 
 export type RegisterDto = {
   appUserName: string;
@@ -38,6 +40,17 @@ export type AddCommuteDto = {
 };
 
 export const RegisterPageTwo: React.FC = () => { 
+
+  const districtOptions = useMemo(
+  () => [
+    { label: "Jeżyce", value: "Jeżyce" },
+    { label: "Grunwald", value: "Grunwald" },
+    { label: "Stare Miasto", value: "Stare Miasto" },
+    { label: "Nowe Miasto", value: "Nowe Miasto" },
+    { label: "Wilda", value: "Wilda" },
+  ],
+  []
+);
   
   const navigate = useNavigate();
     const location = useLocation();
@@ -54,6 +67,16 @@ export const RegisterPageTwo: React.FC = () => {
   });
 
   const [commutes, setCommutes] = useState<AddCommuteDto[]>([]);
+
+const hourOptions = useMemo(
+  () =>
+    Array.from({ length: 24 }, (_, h) => ({
+      label: `${String(h).padStart(2, "0")}:00`,
+      value: h,
+    })),
+  []
+);
+
 
   const transportOptions = useMemo(
     () => [
@@ -253,7 +276,7 @@ export const RegisterPageTwo: React.FC = () => {
               </div>
             </div>
 
-            {/* commute form */}
+                       {/* commute form */}
             <div
               style={{
                 background: "rgba(255,255,255,0.10)",
@@ -266,22 +289,30 @@ export const RegisterPageTwo: React.FC = () => {
                 Dodaj przejazd (Commute)
               </div>
 
+              {/* FIELDS */}
               <div style={{ display: "grid", gap: 12 }}>
-                <span className="p-float-label">
-                  <InputText
-                    id="districtThrough"
+                {/* District */}
+                <div style={{ display: "grid", gap: 6 }}>
+                  <label style={{ fontSize: 12, opacity: 0.9 }}>
+                    Commute through district
+                  </label>
+                  <Dropdown
                     value={commuteForm.commuteThroughDistrictName}
+                    options={districtOptions}
                     onChange={(e) =>
                       setCommuteForm((p) => ({
                         ...p,
-                        commuteThroughDistrictName: e.target.value,
+                        commuteThroughDistrictName: e.value ?? "",
                       }))
                     }
+                    placeholder="Select district"
                     style={{ width: "100%" }}
+                    filter
+                    showClear
                   />
-                  <label htmlFor="districtThrough">Commute through district</label>
-                </span>
+                </div>
 
+                {/* Trips + Transport */}
                 <div
                   style={{
                     display: "grid",
@@ -289,9 +320,11 @@ export const RegisterPageTwo: React.FC = () => {
                     gap: 12,
                   }}
                 >
-                  <span className="p-float-label">
+                  <div style={{ display: "grid", gap: 6 }}>
+                    <label style={{ fontSize: 12, opacity: 0.9 }}>
+                      Trips per week
+                    </label>
                     <InputNumber
-                      id="trips"
                       value={commuteForm.commuteTripsPerWeek}
                       onValueChange={(e) =>
                         setCommuteForm((p) => ({
@@ -304,12 +337,13 @@ export const RegisterPageTwo: React.FC = () => {
                       style={{ width: "100%" }}
                       inputStyle={{ width: "100%" }}
                     />
-                    <label htmlFor="trips">Trips per week</label>
-                  </span>
+                  </div>
 
-                  <span className="p-float-label">
+                  <div style={{ display: "grid", gap: 6 }}>
+                    <label style={{ fontSize: 12, opacity: 0.9 }}>
+                      Means of transport
+                    </label>
                     <MultiSelect
-                      id="transport"
                       value={commuteForm.commuteMeansOfTransport}
                       options={transportOptions}
                       onChange={(e) =>
@@ -322,10 +356,10 @@ export const RegisterPageTwo: React.FC = () => {
                       placeholder="Select transport"
                       style={{ width: "100%" }}
                     />
-                    <label htmlFor="transport">Means of transport</label>
-                  </span>
+                  </div>
                 </div>
 
+                {/* Start + Stop time as dropdowns */}
                 <div
                   style={{
                     display: "grid",
@@ -333,53 +367,44 @@ export const RegisterPageTwo: React.FC = () => {
                     gap: 12,
                   }}
                 >
-                  <span className="p-float-label">
-                    <InputNumber
-                      id="startHour"
+                  <div style={{ display: "grid", gap: 6 }}>
+                    <label style={{ fontSize: 12, opacity: 0.9 }}>
+                      Start time
+                    </label>
+                    <Dropdown
                       value={commuteForm.commuteStartHour}
-                      onValueChange={(e) =>
+                      options={hourOptions}
+                      onChange={(e) =>
                         setCommuteForm((p) => ({
                           ...p,
                           commuteStartHour: Number(e.value ?? 0),
                         }))
                       }
-                      min={0}
-                      max={23}
+                      placeholder="00:00"
                       style={{ width: "100%" }}
-                      inputStyle={{ width: "100%" }}
                     />
-                    <label htmlFor="startHour">Start hour (0-23)</label>
-                  </span>
+                  </div>
 
-                  <span className="p-float-label">
-                    <InputNumber
-                      id="stopHour"
+                  <div style={{ display: "grid", gap: 6 }}>
+                    <label style={{ fontSize: 12, opacity: 0.9 }}>
+                      Stop time
+                    </label>
+                    <Dropdown
                       value={commuteForm.commuteStopHour}
-                      onValueChange={(e) =>
+                      options={hourOptions}
+                      onChange={(e) =>
                         setCommuteForm((p) => ({
                           ...p,
                           commuteStopHour: Number(e.value ?? 0),
                         }))
                       }
-                      min={0}
-                      max={23}
+                      placeholder="00:00"
                       style={{ width: "100%" }}
-                      inputStyle={{ width: "100%" }}
                     />
-                    <label htmlFor="stopHour">Stop hour (0-23)</label>
-                  </span>
+                  </div>
                 </div>
 
                 <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                  {/* {onBack && (
-                    <Button
-                      type="button"
-                      label="Back"
-                      icon="pi pi-arrow-left"
-                      severity="secondary"
-                      onClick={onBack}
-                    />
-                  )} */}
                   <Button
                     type="button"
                     label="Add commute"
@@ -389,9 +414,10 @@ export const RegisterPageTwo: React.FC = () => {
                   />
                 </div>
 
-                {(commuteForm.commuteStopHour ?? 0) < (commuteForm.commuteStartHour ?? 0) && (
+                {(commuteForm.commuteStopHour ?? 0) <
+                  (commuteForm.commuteStartHour ?? 0) && (
                   <small style={{ color: "#ffd6d6" }}>
-                    Stop hour nie może być mniejszy niż Start hour.
+                    Stop time nie może być wcześniejszy niż Start time.
                   </small>
                 )}
               </div>
@@ -460,3 +486,4 @@ export const RegisterPageTwo: React.FC = () => {
     </div>
   );
 };
+
