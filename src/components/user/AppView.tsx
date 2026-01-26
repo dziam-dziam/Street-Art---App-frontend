@@ -1,5 +1,4 @@
-// AppView.tsx
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback  } from "react";
 import { Sidebar } from "primereact/sidebar";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
@@ -20,7 +19,7 @@ type DistrictName =
   | "Stare Miasto"
   | "Grunwald"
   | "Wilda"
-  | "Nowe Miasto";
+  | "Łazarz";
 
 type ArtPoint = {
   id: string;
@@ -51,9 +50,7 @@ type ArtPieceMapPointDto = {
 
 const BASE_URL = "http://localhost:8080";
 
-// mała funkcja do "mapowania" lat/lng -> pozycja na canvasie (placeholder)
 function projectToCanvas(lat: number, lng: number, width: number, height: number) {
-  // tylko symulacja: prosty bounding box wokół Poznania
   const latMin = 52.385,
     latMax = 52.425;
   const lngMin = 16.885,
@@ -65,6 +62,8 @@ function projectToCanvas(lat: number, lng: number, width: number, height: number
 }
 
 
+
+
 function normalizeDistrict(d: string): DistrictName {
   const x = (d ?? "").trim().toLowerCase();
 
@@ -72,7 +71,8 @@ function normalizeDistrict(d: string): DistrictName {
   if (x === "stare miasto" || x === "staremiasto") return "Stare Miasto";
   if (x === "grunwald") return "Grunwald";
   if (x === "wilda") return "Wilda";
-  return "Nowe Miasto";
+  if (x === "łazarz") return "Łazarz";
+  return "Jeżyce";
 }
 
 function FitAndLockToGeoJson({ data }: { data: any }) {
@@ -87,18 +87,13 @@ function FitAndLockToGeoJson({ data }: { data: any }) {
 
       if (!bounds.isValid()) return;
 
-      // 1) dopasuj widok do Poznania
       map.fitBounds(bounds, { padding: [20, 20] });
 
-      // 2) ustaw maxBounds (lekki margines, żeby nie “przyklejało” do krawędzi)
       const padded = bounds.pad(0.05);
       map.setMaxBounds(padded);
 
-      // 3) “lepkość” — im bliżej 1, tym bardziej blokuje uciekanie
-      // (w TS czasem trzeba rzutować)
       (map as any).options.maxBoundsViscosity = 1.0;
 
-      // opcjonalnie: ogranicz zoom
       map.setMinZoom(11);
       map.setMaxZoom(18);
     } catch (e) {
@@ -124,12 +119,62 @@ function pickPoznanBoundary(fc: any) {
   return { type: "FeatureCollection", features: [boundary] };
 }
 
-
-
 export const AppView: React.FC = () => {
+
+  const [isAdmin, setIsAdmin] = useState(false);
+
+useEffect(() => {
+  let cancelled = false;
+
+  (async () => {
+    try {
+      const res = await fetch("http://localhost:8080/auth/me", {
+        method: "GET",
+        credentials: "include",
+        headers: { Accept: "application/json" },
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json().catch(() => null);
+      const roles: string[] = data?.roles ?? [];
+      const admin = roles.includes("ROLE_ADMIN");
+
+      if (!cancelled) setIsAdmin(admin);
+    } catch {
+      // ignore
+    }
+  })();
+
+  return () => { cancelled = true; };
+}, []);
+
+
   const pozBoundary = useMemo(() => pickPoznanBoundary(poz as any), []);
 
   const navigate = useNavigate();
+
+  const onLogout = useCallback(async () => {
+  try {
+    const res = await fetch("http://localhost:8080/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      alert(`Logout failed: ${res.status} ${body}`);
+      return;
+    }
+
+    setSidebarVisible(false);
+    navigate("/login", { replace: true });
+  } catch (e) {
+    console.error(e);
+    alert("Logout error");
+  }
+}, [navigate]);
+
 
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [zoom, setZoom] = useState(3); // 1..5
@@ -141,14 +186,15 @@ export const AppView: React.FC = () => {
 
 const items = useMemo(
   () => [
-    { label: "Mój profil", icon: "pi pi-user", command: () => navigate("/profile") },
-    { label: "Moje dzieła", icon: "pi pi-images", command: () => navigate("/my-artpieces") },
-    { label: "Ustawienia", icon: "pi pi-cog", command: () => navigate("/settings") },
+    { label: "Mój profil", icon: "pi pi-user" },
+    { label: "Moje dzieła", icon: "pi pi-images" },
+    { label: "Ustawienia", icon: "pi pi-cog" },
     { separator: true },
-    { label: "Wyloguj", icon: "pi pi-sign-out", command: () => navigate("/logout") },
+    { label: "Wyloguj", icon: "pi pi-sign-out", command: onLogout },
   ],
-  [navigate]
+  [onLogout]
 );
+
 
   useEffect(() => {
     let cancelled = false;
@@ -312,7 +358,31 @@ data={pozBoundary as any}
             </div>
 
 
-            <div style={{ position: "absolute", right: 18, bottom: 18, zIndex: 9999, pointerEvents  : "auto" }}>
+            <div
+  style={{
+    position: "absolute",
+    right: 18,
+    bottom: 18,
+    zIndex: 9999,
+    pointerEvents: "auto",
+    display: "flex",
+    flexDirection: "column",
+    gap: 14, // <- zwiększ odstęp (np. 14 / 18 / 24)
+    alignItems: "flex-end",
+  }}
+>
+
+{isAdmin && (
+  <Button
+    label="Admin Page"
+    icon="pi pi-shield"
+    severity="warning"
+    onClick={() => navigate("/admin")}
+    style={{ borderRadius: 12, fontWeight: 700 }}
+  />
+)}
+
+
               <Button
   label="Add New"
   icon="pi pi-plus"
@@ -367,10 +437,7 @@ data={pozBoundary as any}
             <div>
               <b>Lat/Lng:</b> {selected.lat.toFixed(4)} / {selected.lng.toFixed(4)}
             </div>
-            <small style={{ opacity: 0.8 }}>
-              Dane markerów lecą z backendu (/map/artPieces). Jeśli widzisz 403, endpoint jest chroniony — dodaj permitAll
-              albo Authorization header w fetch().
-            </small>
+          
           </div>
         )}
       </Dialog>

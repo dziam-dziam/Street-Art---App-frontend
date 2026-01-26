@@ -31,7 +31,7 @@ export const AddArtPiecePage: React.FC = () => {
 
   const [addArtPieceForm, setForm] = useState<AddArtPieceDto>({
     artPieceAddress: "",
-    artPieceName: "",
+    artPieceName: "Anonymous",
     artPieceContainsText: false,
     artPiecePosition: "",
     artPieceUserDescription: "",
@@ -49,7 +49,7 @@ export const AddArtPiecePage: React.FC = () => {
       { label: "Stare Miasto", value: "Stare Miasto" },
       { label: "Grunwald", value: "Grunwald" },
       { label: "Wilda", value: "Wilda" },
-      { label: "Nowe Miasto", value: "Nowe Miasto" },
+      { label: "Łazarz", value: "Łazarz" },
     ],
     []
   );
@@ -240,7 +240,7 @@ const styleOptions = useMemo(
             <InputText
               value={addArtPieceForm.artPieceAddress}
               onChange={(e) => setForm((p) => ({ ...p, artPieceAddress: e.target.value }))}
-              placeholder="Address (for geocoding)"
+              placeholder="Address"
               style={{ width: "100%", borderRadius: 10 }}
             />
 
@@ -262,11 +262,12 @@ const styleOptions = useMemo(
                 style={{ width: "100%" }}
               />
               <InputText
-                value={addArtPieceForm.artPieceCity}
-                onChange={(e) => setForm((p) => ({ ...p, artPieceCity: e.target.value }))}
-                placeholder="City"
-                style={{ width: "100%", borderRadius: 10 }}
-              />
+  value={addArtPieceForm.artPieceCity}
+  disabled
+  placeholder="City"
+  style={{ width: "100%", borderRadius: 10, opacity: 0.9 }}
+/>
+
             </div>
 
             {/* Types */}
