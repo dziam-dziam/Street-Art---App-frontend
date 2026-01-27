@@ -1,4 +1,6 @@
-import React, { useMemo, useState, useEffect, useCallback, useRef  } from "react";
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import styles from "../../styles/pages.module.css";
+
 import { Sidebar } from "primereact/sidebar";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
@@ -13,13 +15,7 @@ import { GeoJSON, useMap } from "react-leaflet";
 import poz from "../assets/poznan.json";
 import { Toast } from "primereact/toast";
 
-
-type DistrictName =
-  | "Jeżyce"
-  | "Stare Miasto"
-  | "Grunwald"
-  | "Wilda"
-  | "Łazarz";
+type DistrictName = "Jeżyce" | "Stare Miasto" | "Grunwald" | "Wilda" | "Łazarz";
 
 type ArtPoint = {
   id: string;
@@ -28,15 +24,6 @@ type ArtPoint = {
   district: DistrictName;
   lat: number;
   lng: number;
-};
-
-type Cluster = {
-  id: string;
-  count: number;
-  lat: number;
-  lng: number;
-  district?: DistrictName;
-  points?: ArtPoint[];
 };
 
 type ArtPieceMapPointDto = {
@@ -49,17 +36,6 @@ type ArtPieceMapPointDto = {
 };
 
 const BASE_URL = "http://localhost:8080";
-
-function projectToCanvas(lat: number, lng: number, width: number, height: number) {
-  const latMin = 52.385,
-    latMax = 52.425;
-  const lngMin = 16.885,
-    lngMax = 16.975;
-
-  const x = ((lng - lngMin) / (lngMax - lngMin)) * width;
-  const y = (1 - (lat - latMin) / (latMax - latMin)) * height;
-  return { x, y };
-}
 
 function normalizeDistrict(d: string): DistrictName {
   const x = (d ?? "").trim().toLowerCase();
@@ -81,7 +57,6 @@ function FitAndLockToGeoJson({ data }: { data: any }) {
     try {
       const layer = L.geoJSON(data);
       const bounds = layer.getBounds();
-
       if (!bounds.isValid()) return;
 
       map.fitBounds(bounds, { padding: [20, 20] });
@@ -119,59 +94,38 @@ function pickPoznanBoundary(fc: any) {
 export const AppView: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
 
-useEffect(() => {
-  let cancelled = false;
+  useEffect(() => {
+    let cancelled = false;
 
-  (async () => {
-    try {
-      const res = await fetch("http://localhost:8080/auth/me", {
-        method: "GET",
-        credentials: "include",
-        headers: { Accept: "application/json" },
-      });
+    (async () => {
+      try {
+        const res = await fetch("http://localhost:8080/auth/me", {
+          method: "GET",
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        });
 
-      if (!res.ok) return;
+        if (!res.ok) return;
 
-      const data = await res.json().catch(() => null);
-      const roles: string[] = data?.roles ?? [];
-      const admin = roles.includes("ROLE_ADMIN");
+        const data = await res.json().catch(() => null);
+        const roles: string[] = data?.roles ?? [];
+        const admin = roles.includes("ROLE_ADMIN");
 
-      if (!cancelled) setIsAdmin(admin);
-    } catch {
-      // ignore
-    }
-  })();
+        if (!cancelled) setIsAdmin(admin);
+      } catch {
+        // ignore
+      }
+    })();
 
-  return () => { cancelled = true; };
-}, []);
-
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const pozBoundary = useMemo(() => pickPoznanBoundary(poz as any), []);
 
   const navigate = useNavigate();
   const toast = useRef<Toast>(null);
-
-  const onLogout = useCallback(async () => {
-  try {
-    const res = await fetch("http://localhost:8080/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    });
-
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      alert(`Logout failed: ${res.status} ${body}`);
-      return;
-    }
-
-    setSidebarVisible(false);
-    navigate("/login", { replace: true });
-  } catch (e) {
-    console.error(e);
-    alert("Logout error");
-  }
-}, [navigate]);
-
 
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [selected, setSelected] = useState<ArtPoint | null>(null);
@@ -180,17 +134,37 @@ useEffect(() => {
   const [loadingPoints, setLoadingPoints] = useState(false);
   const [pointsError, setPointsError] = useState<string | null>(null);
 
-const items = useMemo(
-  () => [
-    { label: "Mój profil", icon: "pi pi-user" },
-    { label: "Moje dzieła", icon: "pi pi-images" },
-    { label: "Ustawienia", icon: "pi pi-cog" },
-    { separator: true },
-    { label: "Wyloguj", icon: "pi pi-sign-out", command: onLogout },
-  ],
-  [onLogout]
-);
+  const onLogout = useCallback(async () => {
+    try {
+      const res = await fetch("http://localhost:8080/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
 
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        alert(`Logout failed: ${res.status} ${body}`);
+        return;
+      }
+
+      setSidebarVisible(false);
+      navigate("/login", { replace: true });
+    } catch (e) {
+      console.error(e);
+      alert("Logout error");
+    }
+  }, [navigate]);
+
+  const items = useMemo(
+    () => [
+      { label: "Mój profil", icon: "pi pi-user" },
+      { label: "Moje dzieła", icon: "pi pi-images" },
+      { label: "Ustawienia", icon: "pi pi-cog" },
+      { separator: true },
+      { label: "Wyloguj", icon: "pi pi-sign-out", command: onLogout },
+    ],
+    [onLogout]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -202,12 +176,8 @@ const items = useMemo(
       try {
         const res = await fetch(`${BASE_URL}/map/artPieces`, {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            // Jeśli masz JWT:
-            // "Authorization": `Bearer ${localStorage.getItem("token") ?? ""}`,
-          },
-          credentials: "include", // jeśli cookies/session; nie szkodzi też przy permitAll
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
         });
 
         if (!res.ok) {
@@ -242,77 +212,25 @@ const items = useMemo(
     };
   }, []);
 
-
   return (
-    
-    <div
-    
-      style={{
-        minHeight: "100vh",
-        background: "#7b83cf",
-        padding: 24,
-        display: "grid",
-        placeItems: "center",
-      }
-    } 
->
-  <Toast ref={toast} position="center" />
-      <Card
-        title="App View"
-        style={{
-          width: "min(1100px, 96vw)",
-          background: "#4b55a3",
-          color: "white",
-          borderRadius: 16,
-        }}
-      >
-        <div style={{ display: "grid", gridTemplateColumns: "72px 1fr", gap: 14 }}>
-          <div
-  style={{
-    background: "rgba(255,255,255,0.12)",
-    borderRadius: 14,
-    padding: 10,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "flex-start",
-  }}
->
-  <Button
-    icon="pi pi-bars"
-    rounded
-    text
-    aria-label="menu"
-    onClick={() => setSidebarVisible(true)}
-    style={{ color: "white" }}
-  />
-</div>
-          <div
-            style={{
-              position: "relative",
-              background: "rgba(0,0,0,0.18)",
-              borderRadius: 14,
-              border: "1px solid rgba(255,255,255,0.22)",
-              padding: 14,
-              minHeight: 520,
-              overflow: "hidden",
-            }}
-          >
+    <div className={styles.pageCenter}>
+      <Toast ref={toast} position="center" />
 
-            <div style={{ position: "relative", height: 480, borderRadius: 12, overflow: "hidden", zIndex: 1 }}>
-              <MapContainer
-  center={[52.4064, 16.9252] as [number, number]}
-  zoom={12}
-  style={{ height: "100%", width: "100%", borderRadius: 12 }}
-  worldCopyJump={false}
->
+      <Card title="App View" className={styles.appCardWide}>
+        {pointsError ? <div style={{ marginBottom: 10, color: "#ffd1d1", fontWeight: 700 }}>Error: {pointsError}</div> : null}
 
-                <TileLayer
-                  attribution='&copy; OpenStreetMap contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                                <GeoJSON
-data={pozBoundary as any}
+        <div className={styles.appLayout}>
+          <div className={styles.iconRail}>
+            <Button icon="pi pi-bars" rounded text aria-label="menu" onClick={() => setSidebarVisible(true)} style={{ color: "white" }} />
+          </div>
+
+          <div className={styles.mapShell}>
+            <div className={styles.mapViewport}>
+              <MapContainer center={[52.4064, 16.9252] as [number, number]} zoom={12} worldCopyJump={false}>
+                <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+                <GeoJSON
+                  data={pozBoundary as any}
                   style={() => ({
                     color: "#ffffff",
                     weight: 3,
@@ -322,100 +240,68 @@ data={pozBoundary as any}
 
                 <FitAndLockToGeoJson data={pozBoundary} />
 
-
-
-                {points.map((p) => (
-                  <CircleMarker
-                    key={p.id}
-                    center={[p.lat, p.lng]}
-                    radius={7}
-                    eventHandlers={{
-                      click: () => setSelected(p),
-                    }}
-                  >
-                    <Popup>
-                      <b>{p.title}</b>
-                      <br />
-                      {p.address}
-                      <br />
-                      {p.district}
-                    </Popup>
-                  </CircleMarker>
-                ))}
+                {!loadingPoints &&
+                  points.map((p) => (
+                    <CircleMarker
+                      key={p.id}
+                      center={[p.lat, p.lng]}
+                      radius={7}
+                      eventHandlers={{
+                        click: () => setSelected(p),
+                      }}
+                    >
+                      <Popup>
+                        <b>{p.title}</b>
+                        <br />
+                        {p.address}
+                        <br />
+                        {p.district}
+                      </Popup>
+                    </CircleMarker>
+                  ))}
               </MapContainer>
             </div>
 
-
-            <div
-  style={{
-    position: "absolute",
-    right: 18,
-    bottom: 18,
-    zIndex: 9999,
-    pointerEvents: "auto",
-    display: "flex",
-    flexDirection: "column",
-    gap: 14,
-    alignItems: "flex-end",
-  }}
->
-
-{isAdmin && (
-  <Button
-    label="Admin Page"
-    icon="pi pi-shield"
-    severity="warning"
-    onClick={() => navigate("/admin")}
-    style={{ borderRadius: 12, fontWeight: 700 }}
-  />
-)}
-
+            <div className={styles.floatingActions}>
+              {isAdmin && (
+                <Button
+                  label="Admin Page"
+                  icon="pi pi-shield"
+                  severity="warning"
+                  onClick={() => navigate("/admin")}
+                  className={styles.btnRounded12Bold}
+                />
+              )}
 
               <Button
-  label="Add New"
-  icon="pi pi-plus"
-  iconPos="right"
-  onClick={() => navigate("/artpieces/add")}
-  style={{
-    borderRadius: 12,
-    fontWeight: 700,
-    boxShadow: "0 10px 24px rgba(0,0,0,0.25)",
-  }}
-/>
-
+                label="Add New"
+                icon="pi pi-plus"
+                iconPos="right"
+                onClick={() => navigate("/artpieces/add")}
+                className={`${styles.btnRounded12Bold} ${styles.btnShadow}`}
+              />
             </div>
           </div>
         </div>
       </Card>
 
-      <Sidebar
-  visible={sidebarVisible}
-  onHide={() => setSidebarVisible(false)}
-  position="left"
-  style={{ width: 320 }}
->
-  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-    <Avatar icon="pi pi-user" size="large" shape="circle" />
-    <div>
-      <div style={{ fontWeight: 800 }}>Użytkownik</div>
-      <small style={{ opacity: 0.75 }}>user@email.com</small>
-    </div>
-  </div>
+      <Sidebar visible={sidebarVisible} onHide={() => setSidebarVisible(false)} position="left" className={styles.sidebar}>
+        <div className={styles.sidebarHeader}>
+          <Avatar icon="pi pi-user" size="large" shape="circle" />
+          <div>
+            <div className={styles.sidebarUserTitle}>Użytkownik</div>
+            <small className={styles.sidebarUserSubtitle}>user@email.com</small>
+          </div>
+        </div>
 
-  <Divider />
+        <Divider />
 
-  <Menu model={items} style={{ width: "100%" }} />
-</Sidebar>
+        <Menu model={items} className={styles.fullWidth} />
+      </Sidebar>
 
-
-      <Dialog
-        header={selected ? selected.title : "Details"}
-        visible={!!selected}
-        style={{ width: "min(520px, 92vw)" }}
-        onHide={() => setSelected(null)}
-      >
+      <Dialog header={selected ? selected.title : "Details"} visible={!!selected} style={{ width: "min(520px, 92vw)" }} onHide={() => setSelected(null)}>
         {selected && (
-          <div style={{ display: "grid", gap: 10 }}>
+          <div className={styles.detailsGrid}>
             <div>
               <b>District:</b> {selected.district}
             </div>
@@ -425,7 +311,6 @@ data={pozBoundary as any}
             <div>
               <b>Lat/Lng:</b> {selected.lat.toFixed(4)} / {selected.lng.toFixed(4)}
             </div>
-          
           </div>
         )}
       </Dialog>

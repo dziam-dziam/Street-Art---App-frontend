@@ -7,7 +7,7 @@ import { Button } from "primereact/button";
 import { useNavigate } from "react-router-dom";
 import streetArtBlue from "../images/streetArtBlue.jpeg";
 import { Dropdown } from "primereact/dropdown";
-import { RegisterPageTwo } from "./RegisterPageTwo";
+import styles from "../../styles/pages.module.css";
 
 export type RegisterDto = {
   appUserName: string;
@@ -97,151 +97,91 @@ const nationalityOptions = useMemo(
       });
   };
 
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "grid",
-        placeItems: "center",
-        padding: 24,
-        background: "#7d98cd",
-      }}
-    >
-      <Card
-        title="Register Page - 1"
-        style={{
-          width: "min(980px, 96vw)",
-          background: "#4b55a3",
-          color: "white",
-          borderRadius: 14,
-        }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.05fr 1fr",
-            gap: 18,
-            alignItems: "start",
-          }}
-        >
-          {/* LEFT: image */}
-          <div
-            style={{
-              background: "rgba(255,255,255,0.12)",
-              borderRadius: 12,
-              padding: 12,
-              minHeight: 460,
-            }}
-          >
-            <img
-              src={streetArtBlue}
-              alt="street art"
-              style={{
-                width: "100%",
-                height: 460,
-                objectFit: "cover",
-                borderRadius: 10,
-                display: "block",
-              }}
-            />
-          </div>
+ return (
+  <div className={styles.authBg}>
+    <Card title="Register Page - 1" className={styles.authCardRegister}>
+      <div className={styles.registerGrid}>
+        <div className={styles.imagePanel} style={{ minHeight: 460 }}>
+          <img src={streetArtBlue} alt="street art" className={styles.imageFill460} />
+        </div>
 
-          <form
-            onSubmit={onNext}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 12,
-              paddingRight: 6,
-            }}
-          >
+        <form onSubmit={onNext} className={styles.formRegister}>
+          <InputText
+            value={form.appUserName}
+            onChange={(e) => setForm((p) => ({ ...p, appUserName: e.target.value }))}
+            placeholder="Name"
+            className={`${styles.fullWidth} ${styles.radius10}`}
+          />
+
+          <InputText
+            value={form.appUserEmail}
+            onChange={(e) => setForm((p) => ({ ...p, appUserEmail: e.target.value }))}
+            placeholder="Email"
+            className={`${styles.fullWidth} ${styles.radius10}`}
+          />
+
+          <Password
+            value={form.appUserPassword}
+            onChange={(e) => setForm((p) => ({ ...p, appUserPassword: e.target.value }))}
+            placeholder="Password"
+            toggleMask
+            feedback={false}
+            inputStyle={{ width: "100%" }}
+            className={styles.fullWidth}
+          />
+
+          <div className={styles.grid2}>
             <InputText
-              value={form.appUserName}
-              onChange={(e) => setForm((p) => ({ ...p, appUserName: e.target.value }))}
-              placeholder="Name"
-              style={{ width: "100%", borderRadius: 10 }}
+              value={form.appUserCity}
+              disabled
+              placeholder="City"
+              className={`${styles.fullWidth} ${styles.radius10}`}
+              style={{ opacity: 0.9 }}
             />
 
-            <InputText
-              value={form.appUserEmail}
-              onChange={(e) => setForm((p) => ({ ...p, appUserEmail: e.target.value }))}
-              placeholder="Email"
-              style={{ width: "100%", borderRadius: 10 }}
-            />
-
-            <Password
-              value={form.appUserPassword}
-              onChange={(e) => setForm((p) => ({ ...p, appUserPassword: e.target.value }))}
-              placeholder="Password"
-              toggleMask
-              feedback={false}
-              inputStyle={{ width: "100%" }}
-              style={{ width: "100%" }}
-            />
-
-            {/* 2 small fields like in mock */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <InputText
-                  value={form.appUserCity}
-                  disabled
-                  placeholder="City"
-                  style={{ width: "100%", borderRadius: 10, opacity: 0.9 }}
-                />
-
-              <Dropdown
-  value={form.appUserNationality}
-  options={nationalityOptions}
-  onChange={(e) =>
-    setForm((p) => ({ ...p, appUserNationality: e.value ?? "" }))
-  }
-  placeholder="Nationality"
-  style={{ width: "100%" }}
-  filter
-  showClear
-/>
-
-            </div>
-
-                        <Dropdown
-              value={form.appUserLiveInDistrict}
-              options={districtOptions}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, appUserLiveInDistrict: e.value ?? "" }))
-              }
-              placeholder="Live in district"
-              style={{ width: "100%" }}
+            <Dropdown
+              value={form.appUserNationality}
+              options={nationalityOptions}
+              onChange={(e) => setForm((p) => ({ ...p, appUserNationality: e.value ?? "" }))}
+              placeholder="Nationality"
+              className={styles.fullWidth}
               filter
               showClear
             />
+          </div>
 
+          <Dropdown
+            value={form.appUserLiveInDistrict}
+            options={districtOptions}
+            onChange={(e) => setForm((p) => ({ ...p, appUserLiveInDistrict: e.value ?? "" }))}
+            placeholder="Live in district"
+            className={styles.fullWidth}
+            filter
+            showClear
+          />
 
-            <MultiSelect
-              value={form.appUserLanguagesSpoken}
-              options={languageOptions}
-              onChange={(e) => setForm((p) => ({ ...p, appUserLanguagesSpoken: e.value }))}
-              display="chip"
-              placeholder="Languages spoken (dropdown)"
-              style={{ width: "100%" }}
+          <MultiSelect
+            value={form.appUserLanguagesSpoken}
+            options={languageOptions}
+            onChange={(e) => setForm((p) => ({ ...p, appUserLanguagesSpoken: e.value }))}
+            display="chip"
+            placeholder="Languages spoken (dropdown)"
+            className={styles.fullWidth}
+          />
+
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6 }}>
+            <Button
+              type="submit"
+              label="Next"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              disabled={!canGoNext}
+              className={styles.btnRounded12Bold}
             />
-
-            {/* Next button bottom-right */}
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6 }}>
-              <Button
-                type="submit"
-                label="Next"
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                disabled={!canGoNext}
-                style={{
-                  borderRadius: 10,
-                  fontWeight: 700,
-                  paddingInline: 18,
-                }}
-              />
-            </div>
-          </form>
-        </div>
-      </Card>
-    </div>
-  );
+          </div>
+        </form>
+      </div>
+    </Card>
+  </div>
+);
 };

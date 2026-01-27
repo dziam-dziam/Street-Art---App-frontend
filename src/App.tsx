@@ -16,6 +16,7 @@ function App() {
       <Route path="/app" element={<AppView />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/artpieces/add" element={<AddArtPiecePage />} />
+
       <Route
         path="/register/2"
         element={

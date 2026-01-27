@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 import { Card } from "primereact/card";
-import { InputText } from "primereact/inputtext";
 import { InputNumber } from "primereact/inputnumber";
 import { MultiSelect } from "primereact/multiselect";
 import { Button } from "primereact/button";
@@ -10,7 +9,7 @@ import { Divider } from "primereact/divider";
 import streetArtBrown from "../images/streetArtBrown.jpeg";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Dropdown } from "primereact/dropdown";
-
+import styles from "../../styles/pages.module.css";
 
 export type RegisterDto = {
   appUserName: string;
@@ -57,7 +56,6 @@ export const RegisterPageTwo: React.FC = () => {
 
     const registerData = location.state as RegisterDto | undefined;
 
-
   const [commuteForm, setCommuteForm] = useState<AddCommuteDto>({
     commuteThroughDistrictName: "",
     commuteTripsPerWeek: 1,
@@ -76,7 +74,6 @@ const hourOptions = useMemo(
     })),
   []
 );
-
 
   const transportOptions = useMemo(
     () => [
@@ -182,308 +179,165 @@ const hourOptions = useMemo(
     !commuteForm.commuteThroughDistrictName.trim() ||
     (commuteForm.commuteStopHour ?? 0) < (commuteForm.commuteStartHour ?? 0);
 
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "grid",
-        placeItems: "center",
-        padding: 24,
-        background: "#7d98cd",
-      }}
-    >
-      <Card
-        title="Register Page - 2"
-        style={{
-          width: "min(980px, 96vw)",
-          background: "#4b55a3", // niebiesko-fiolet jak na szkicu
-          color: "white",
-        }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.05fr 1fr",
-            gap: 18,
-            alignItems: "start",
-          }}
-        >
-          {/* LEFT: obrazek */}
-          <div
-            style={{
-              background: "rgba(255,255,255,0.12)",
-              borderRadius: 12,
-              padding: 12,
-              minHeight: 420,
-            }}
-          >
-            <img
-              src={streetArtBrown}
-              alt="art"
-              style={{
-                width: "100%",
-                height: 420,
-                objectFit: "cover",
-                borderRadius: 10,
-                display: "block",
-              }}
-            />
+return (
+  <div className={styles.authBg}>
+    <Card title="Register Page - 2" className={styles.authCardRegister}>
+      <div className={styles.registerGrid}>
+        <div className={styles.imagePanel} style={{ minHeight: 420 }}>
+          <img src={streetArtBrown} alt="art" className={styles.imageFill420} />
+        </div>
+
+        <div className={styles.stackCol}>
+          <div className={styles.previewPanel}>
+            <div className={styles.sectionTitle}>Podgląd danych (Page 1)</div>
+
+            <div className={styles.previewRows}>
+              {previewRows.map((r) => (
+                <div key={r.label} className={styles.previewRow}>
+                  <span className={styles.previewLabel}>{r.label}</span>
+                  <span className={styles.previewValue} title={String(r.value ?? "")}>
+                    {r.value || "—"}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* RIGHT: preview + commute form */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {/* przyciemnione okno / preview */}
-            <div
-              style={{
-                background: "rgba(0,0,0,0.25)",
-                border: "1px solid rgba(255,255,255,0.25)",
-                borderRadius: 12,
-                padding: 14,
-              }}
-            >
-              <div style={{ fontWeight: 700, marginBottom: 10 }}>
-                Podgląd danych (Page 1)
+          <div className={styles.commutePanel}>
+            <div className={styles.sectionTitle}>Dodaj przejazd (Commute)</div>
+
+            <div style={{ display: "grid", gap: 12 }}>
+              <div className={styles.fieldStack}>
+                <label className={styles.fieldLabel}>Commute through district</label>
+                <Dropdown
+                  value={commuteForm.commuteThroughDistrictName}
+                  options={districtOptions}
+                  onChange={(e) =>
+                    setCommuteForm((p) => ({ ...p, commuteThroughDistrictName: e.value ?? "" }))
+                  }
+                  placeholder="Select district"
+                  className={styles.fullWidth}
+                  filter
+                  showClear
+                />
               </div>
 
-              <div style={{ display: "grid", gap: 8 }}>
-                {previewRows.map((r) => (
-                  <div
-                    key={r.label}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "140px 1fr",
-                      gap: 10,
-                      alignItems: "center",
-                      fontSize: 14,
-                    }}
-                  >
-                    <span style={{ opacity: 0.9 }}>{r.label}</span>
-                    <span
-                      style={{
-                        background: "rgba(255,255,255,0.10)",
-                        borderRadius: 8,
-                        padding: "6px 10px",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                      title={String(r.value ?? "")}
-                    >
-                      {r.value || "—"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-                       {/* commute form */}
-            <div
-              style={{
-                background: "rgba(255,255,255,0.10)",
-                border: "1px solid rgba(255,255,255,0.25)",
-                borderRadius: 12,
-                padding: 14,
-              }}
-            >
-              <div style={{ fontWeight: 700, marginBottom: 10 }}>
-                Dodaj przejazd (Commute)
-              </div>
-
-              {/* FIELDS */}
-              <div style={{ display: "grid", gap: 12 }}>
-                {/* District */}
-                <div style={{ display: "grid", gap: 6 }}>
-                  <label style={{ fontSize: 12, opacity: 0.9 }}>
-                    Commute through district
-                  </label>
-                  <Dropdown
-                    value={commuteForm.commuteThroughDistrictName}
-                    options={districtOptions}
-                    onChange={(e) =>
-                      setCommuteForm((p) => ({
-                        ...p,
-                        commuteThroughDistrictName: e.value ?? "",
-                      }))
+              <div className={styles.grid2}>
+                <div className={styles.fieldStack}>
+                  <label className={styles.fieldLabel}>Trips per week</label>
+                  <InputNumber
+                    value={commuteForm.commuteTripsPerWeek}
+                    onValueChange={(e) =>
+                      setCommuteForm((p) => ({ ...p, commuteTripsPerWeek: Number(e.value ?? 0) }))
                     }
-                    placeholder="Select district"
-                    style={{ width: "100%" }}
-                    filter
-                    showClear
+                    min={0}
+                    max={50}
+                    className={styles.fullWidth}
+                    inputStyle={{ width: "100%" }}
                   />
                 </div>
 
-                {/* Trips + Transport */}
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 12,
-                  }}
-                >
-                  <div style={{ display: "grid", gap: 6 }}>
-                    <label style={{ fontSize: 12, opacity: 0.9 }}>
-                      Trips per week
-                    </label>
-                    <InputNumber
-                      value={commuteForm.commuteTripsPerWeek}
-                      onValueChange={(e) =>
-                        setCommuteForm((p) => ({
-                          ...p,
-                          commuteTripsPerWeek: Number(e.value ?? 0),
-                        }))
-                      }
-                      min={0}
-                      max={50}
-                      style={{ width: "100%" }}
-                      inputStyle={{ width: "100%" }}
-                    />
-                  </div>
-
-                  <div style={{ display: "grid", gap: 6 }}>
-                    <label style={{ fontSize: 12, opacity: 0.9 }}>
-                      Means of transport
-                    </label>
-                    <MultiSelect
-                      value={commuteForm.commuteMeansOfTransport}
-                      options={transportOptions}
-                      onChange={(e) =>
-                        setCommuteForm((p) => ({
-                          ...p,
-                          commuteMeansOfTransport: e.value,
-                        }))
-                      }
-                      display="chip"
-                      placeholder="Select transport"
-                      style={{ width: "100%" }}
-                    />
-                  </div>
-                </div>
-
-                {/* Start + Stop time as dropdowns */}
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 12,
-                  }}
-                >
-                  <div style={{ display: "grid", gap: 6 }}>
-                    <label style={{ fontSize: 12, opacity: 0.9 }}>
-                      Start time
-                    </label>
-                    <Dropdown
-                      value={commuteForm.commuteStartHour}
-                      options={hourOptions}
-                      onChange={(e) =>
-                        setCommuteForm((p) => ({
-                          ...p,
-                          commuteStartHour: Number(e.value ?? 0),
-                        }))
-                      }
-                      placeholder="00:00"
-                      style={{ width: "100%" }}
-                    />
-                  </div>
-
-                  <div style={{ display: "grid", gap: 6 }}>
-                    <label style={{ fontSize: 12, opacity: 0.9 }}>
-                      Stop time
-                    </label>
-                    <Dropdown
-                      value={commuteForm.commuteStopHour}
-                      options={hourOptions}
-                      onChange={(e) =>
-                        setCommuteForm((p) => ({
-                          ...p,
-                          commuteStopHour: Number(e.value ?? 0),
-                        }))
-                      }
-                      placeholder="00:00"
-                      style={{ width: "100%" }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                  <Button
-                    type="button"
-                    label="Add commute"
-                    icon="pi pi-plus"
-                    onClick={addCommute}
-                    disabled={isAddDisabled}
+                <div className={styles.fieldStack}>
+                  <label className={styles.fieldLabel}>Means of transport</label>
+                  <MultiSelect
+                    value={commuteForm.commuteMeansOfTransport}
+                    options={transportOptions}
+                    onChange={(e) =>
+                      setCommuteForm((p) => ({ ...p, commuteMeansOfTransport: e.value }))
+                    }
+                    display="chip"
+                    placeholder="Select transport"
+                    className={styles.fullWidth}
                   />
                 </div>
-
-                {(commuteForm.commuteStopHour ?? 0) <
-                  (commuteForm.commuteStartHour ?? 0) && (
-                  <small style={{ color: "#ffd6d6" }}>
-                    Stop time nie może być wcześniejszy niż Start time.
-                  </small>
-                )}
               </div>
 
-              <Divider style={{ margin: "16px 0", opacity: 0.4 }} />
+              <div className={styles.grid2}>
+                <div className={styles.fieldStack}>
+                  <label className={styles.fieldLabel}>Start time</label>
+                  <Dropdown
+                    value={commuteForm.commuteStartHour}
+                    options={hourOptions}
+                    onChange={(e) =>
+                      setCommuteForm((p) => ({ ...p, commuteStartHour: Number(e.value ?? 0) }))
+                    }
+                    placeholder="00:00"
+                    className={styles.fullWidth}
+                  />
+                </div>
 
-              <div style={{ fontWeight: 700, marginBottom: 10 }}>Twoje commutes</div>
+                <div className={styles.fieldStack}>
+                  <label className={styles.fieldLabel}>Stop time</label>
+                  <Dropdown
+                    value={commuteForm.commuteStopHour}
+                    options={hourOptions}
+                    onChange={(e) =>
+                      setCommuteForm((p) => ({ ...p, commuteStopHour: Number(e.value ?? 0) }))
+                    }
+                    placeholder="00:00"
+                    className={styles.fullWidth}
+                  />
+                </div>
+              </div>
 
-              <div
-                style={{
-                  background: "rgba(0,0,0,0.18)",
-                  borderRadius: 12,
-                  padding: 10,
-                  border: "1px solid rgba(255,255,255,0.18)",
-                }}
+              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                <Button
+                  type="button"
+                  label="Add commute"
+                  icon="pi pi-plus"
+                  onClick={addCommute}
+                  disabled={isAddDisabled}
+                />
+              </div>
+
+              {(commuteForm.commuteStopHour ?? 0) < (commuteForm.commuteStartHour ?? 0) && (
+                <small style={{ color: "#ffd6d6" }}>
+                  Stop time nie może być wcześniejszy niż Start time.
+                </small>
+              )}
+            </div>
+
+            <Divider style={{ margin: "16px 0", opacity: 0.4 }} />
+
+            <div className={styles.sectionTitle}>Twoje commutes</div>
+
+            <div className={styles.tableShell}>
+              <DataTable
+                value={commutes.map((c, idx) => ({ ...c, _idx: idx }))}
+                emptyMessage="No commutes added yet."
+                size="small"
+                style={{ background: "transparent" }}
               >
-                <DataTable
-                  value={commutes.map((c, idx) => ({ ...c, _idx: idx }))}
-                  emptyMessage="No commutes added yet."
-                  size="small"
-                  style={{ background: "transparent" }}
-                >
-                  <Column field="commuteThroughDistrictName" header="District" />
-                  <Column field="commuteTripsPerWeek" header="Trips/week" />
-                  <Column field="commuteStartHour" header="Start" />
-                  <Column field="commuteStopHour" header="Stop" />
-                  <Column
-                    header="Transport"
-                    body={(row) => (row.commuteMeansOfTransport ?? []).join(", ")}
-                  />
-                  <Column
-                    header=""
-                    body={(row) => (
-                      <Button
-                        type="button"
-                        icon="pi pi-trash"
-                        severity="danger"
-                        text
-                        onClick={() => removeCommute(row._idx)}
-                      />
-                    )}
-                    style={{ width: 60 }}
-                  />
-                </DataTable>
-              </div>
+                <Column field="commuteThroughDistrictName" header="District" />
+                <Column field="commuteTripsPerWeek" header="Trips/week" />
+                <Column field="commuteStartHour" header="Start" />
+                <Column field="commuteStopHour" header="Stop" />
+                <Column header="Transport" body={(row) => (row.commuteMeansOfTransport ?? []).join(", ")} />
+                <Column
+                  header=""
+                  body={(row) => (
+                    <Button
+                      type="button"
+                      icon="pi pi-trash"
+                      severity="danger"
+                      text
+                      onClick={() => removeCommute(row._idx)}
+                    />
+                  )}
+                  style={{ width: 60 }}
+                />
+              </DataTable>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* FINAL REGISTER BUTTON */}
-        <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
-          <Button
-            label="Register"
-            icon="pi pi-check"
-            onClick={finalSubmit}
-            style={{
-              background: "#7ee081",
-              borderColor: "#7ee081",
-              color: "#1b1b1b",
-              fontWeight: 700,
-              paddingInline: 26,
-            }}
-          />
-        </div>
-      </Card>
-    </div>
-  );
+      <div className={styles.centerRow}>
+        <Button label="Register" icon="pi pi-check" onClick={finalSubmit} className={styles.registerBtnGreen} />
+      </div>
+    </Card>
+  </div>
+);
+
 };
 

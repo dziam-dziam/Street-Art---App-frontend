@@ -1,4 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect, useCallback } from "react";
+import styles from "../../styles/pages.module.css";
+
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { DataTable } from "primereact/datatable";
@@ -23,7 +25,12 @@ type RowItem = {
 
 type UserEntity = { id: number; appUserName: string; appUserEmail: string };
 
-type ArtPieceEntity = { id: number; artPieceAddress: string; artPieceName: string; artPieceUserDescription: string };
+type ArtPieceEntity = {
+  id: number;
+  artPieceAddress: string;
+  artPieceName: string;
+  artPieceUserDescription: string;
+};
 
 const BASE = "http://localhost:8080";
 
@@ -33,47 +40,48 @@ const EMPTY: Record<AdminEntityType, RowItem[]> = {
 };
 
 export const AdminPage: React.FC = () => {
-  const typeOptions = useMemo(
-  () => [
-    { label: "Graffiti tag", value: "GRAFFITI_TAG" },
-    { label: "Graffiti piece", value: "GRAFFITI_PIECE" },
-    { label: "Stencil", value: "STENCIL" },
-    { label: "Wheat paste poster", value: "WHEAT_PASTE_POSTER" },
-    { label: "Sticker", value: "STICKER" },
-    { label: "Mural", value: "MURAL" },
-    { label: "3D installation", value: "INSTALLATION_3D" },
-  ],
-  []
-);
-
-const styleOptions = useMemo(
-  () => [
-    { label: "Political", value: "POLITICAL" },
-    { label: "Religious", value: "RELIGIOUS" },
-    { label: "Social commentary", value: "SOCIAL_COMMENTARY" },
-    { label: "Humor", value: "HUMOR" },
-    { label: "Love / romance", value: "LOVE_ROMANCE" },
-    { label: "Homesickness", value: "HOMESICKNESS" },
-    { label: "Philosophical", value: "PHILOSOPHICAL" },
-    { label: "Activism", value: "ACTIVISM" },
-    { label: "Anti-consumerism", value: "ANTI_CONSUMERISM" },
-    { label: "Commercial", value: "COMMERCIAL" },
-  ],
-  []
-);
-
-const languageOptions = useMemo(
-  () => [
-    { label: "Polish", value: "Polish" },
-    { label: "English", value: "English" },
-    { label: "German", value: "German" },
-    { label: "Spanish", value: "Spanish" },
-    { label: "French", value: "French" },
-  ],
-  []
-);
   const navigate = useNavigate();
   const toast = useRef<Toast>(null);
+
+  const typeOptions = useMemo(
+    () => [
+      { label: "Graffiti tag", value: "GRAFFITI_TAG" },
+      { label: "Graffiti piece", value: "GRAFFITI_PIECE" },
+      { label: "Stencil", value: "STENCIL" },
+      { label: "Wheat paste poster", value: "WHEAT_PASTE_POSTER" },
+      { label: "Sticker", value: "STICKER" },
+      { label: "Mural", value: "MURAL" },
+      { label: "3D installation", value: "INSTALLATION_3D" },
+    ],
+    []
+  );
+
+  const styleOptions = useMemo(
+    () => [
+      { label: "Political", value: "POLITICAL" },
+      { label: "Religious", value: "RELIGIOUS" },
+      { label: "Social commentary", value: "SOCIAL_COMMENTARY" },
+      { label: "Humor", value: "HUMOR" },
+      { label: "Love / romance", value: "LOVE_ROMANCE" },
+      { label: "Homesickness", value: "HOMESICKNESS" },
+      { label: "Philosophical", value: "PHILOSOPHICAL" },
+      { label: "Activism", value: "ACTIVISM" },
+      { label: "Anti-consumerism", value: "ANTI_CONSUMERISM" },
+      { label: "Commercial", value: "COMMERCIAL" },
+    ],
+    []
+  );
+
+  const languageOptions = useMemo(
+    () => [
+      { label: "Polish", value: "Polish" },
+      { label: "English", value: "English" },
+      { label: "German", value: "German" },
+      { label: "Spanish", value: "Spanish" },
+      { label: "French", value: "French" },
+    ],
+    []
+  );
 
   const [activeType, setActiveType] = useState<AdminEntityType>("Users");
   const [data, setData] = useState<Record<AdminEntityType, RowItem[]>>(EMPTY);
@@ -98,15 +106,13 @@ const languageOptions = useMemo(
   const [artPieceAddress, setApAddress] = useState("");
   const [artPieceUserDescription, setApUserDescription] = useState("");
 
-
   const [artPiecePosition, setApPosition] = useState("");
   const [artPieceContainsText, setApContainsText] = useState(false);
-const [artPieceTypes, setApTypes] = useState<string[]>([]);
-const [artPieceStyles, setApStyles] = useState<string[]>([]);
-const [artPieceTextLanguages, setApLangs] = useState<string[]>([]);
+  const [artPieceTypes, setApTypes] = useState<string[]>([]);
+  const [artPieceStyles, setApStyles] = useState<string[]>([]);
+  const [artPieceTextLanguages, setApLangs] = useState<string[]>([]);
 
-const [containsTextTouched, setContainsTextTouched] = useState(false);
-
+  const [containsTextTouched, setContainsTextTouched] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -162,6 +168,11 @@ const [containsTextTouched, setContainsTextTouched] = useState(false);
     [data]
   );
 
+  const tileClass = (isActive: boolean) =>
+    [styles.tile, isActive ? styles.tileActive : styles.tileInactive, loading ? styles.tileLoading : ""]
+      .filter(Boolean)
+      .join(" ");
+
   const deleteEndpointFor = (type: AdminEntityType, id: string) => {
     switch (type) {
       case "Users":
@@ -204,6 +215,7 @@ const [containsTextTouched, setContainsTextTouched] = useState(false);
         detail: `${selectedType === "Users" ? "User" : "ArtPiece"} został usunięty`,
         life: 2000,
       });
+
       setData((prev) => ({
         ...prev,
         [selectedType]: prev[selectedType].filter((x) => x.id !== selectedItem.id),
@@ -216,7 +228,7 @@ const [containsTextTouched, setContainsTextTouched] = useState(false);
       console.error(e);
       alert(e.message ?? "Delete error");
     }
-  }, [deleteItem, selectedItem, selectedType]);
+  }, [selectedItem, selectedType]);
 
   const putEndpointFor = useCallback((type: AdminEntityType, id: string) => {
     switch (type) {
@@ -253,27 +265,26 @@ const [containsTextTouched, setContainsTextTouched] = useState(false);
     if (!selectedItem) return;
 
     if (activeType === "Users") {
-      setTargetAppUserEmail(selectedItem.name ?? ""); // identyfikacja po STARYM emailu
+      setTargetAppUserEmail(selectedItem.name ?? "");
       setUserEmail(selectedItem.name ?? "");
       setUserName(selectedItem.subtitle ?? "");
       setUserPassword("");
       setAppUserLanguagesSpoken([]);
     }
 
-if (activeType === "ArtPieces") {
-  setApName(selectedItem.name ?? "");
-  setApAddress(selectedItem.subtitle ?? "");
-  setApUserDescription("");
-  setApPosition("");
+    if (activeType === "ArtPieces") {
+      setApName(selectedItem.name ?? "");
+      setApAddress(selectedItem.subtitle ?? "");
+      setApUserDescription("");
+      setApPosition("");
 
-  setApContainsText(false);
-  setContainsTextTouched(false);
+      setApContainsText(false);
+      setContainsTextTouched(false);
 
-  setApTypes([]);
-  setApStyles([]);
-  setApLangs([]);
-}
-
+      setApTypes([]);
+      setApStyles([]);
+      setApLangs([]);
+    }
 
     setEditOpen(true);
     opRef.current?.hide();
@@ -309,12 +320,11 @@ if (activeType === "ArtPieces") {
         }
 
         const body: any = {
-  ...(appUserName.trim() ? { appUserName: appUserName.trim() } : {}),
-  ...(appUserEmail.trim() ? { appUserEmail: appUserEmail.trim() } : {}),
-  ...(appUserLanguagesSpoken.length ? { appUserLanguagesSpoken } : {}),
-  ...(appUserPassword.trim() ? { appUserPassword: appUserPassword } : {}),
-};
-
+          ...(appUserName.trim() ? { appUserName: appUserName.trim() } : {}),
+          ...(appUserEmail.trim() ? { appUserEmail: appUserEmail.trim() } : {}),
+          ...(appUserLanguagesSpoken.length ? { appUserLanguagesSpoken } : {}),
+          ...(appUserPassword.trim() ? { appUserPassword: appUserPassword } : {}),
+        };
 
         const url = new URL(`${BASE}/updateAppUser/user`);
         url.searchParams.set("appUserEmail", targetAppUserEmail.trim());
@@ -337,30 +347,31 @@ if (activeType === "ArtPieces") {
         }));
 
         setSelectedItem((p) => (p ? { ...p, name: appUserEmail || p.name, subtitle: appUserName || p.subtitle } : p));
+
         toast.current?.show({
           severity: "success",
           summary: "Zapisano ✅",
           detail: "Zaktualizowano użytkownika",
           life: 2000,
         });
+
         setEditOpen(false);
         return;
       }
 
       if (activeType === "ArtPieces") {
         const body: any = {
-  ...(artPieceAddress.trim() ? { artPieceAddress: artPieceAddress.trim() } : {}),
-  ...(artPieceName.trim() ? { artPieceName: artPieceName.trim() } : {}),
-  ...(artPieceUserDescription.trim() ? { artPieceUserDescription: artPieceUserDescription.trim() } : {}),
-  ...(artPiecePosition.trim() ? { artPiecePosition: artPiecePosition.trim() } : {}),
+          ...(artPieceAddress.trim() ? { artPieceAddress: artPieceAddress.trim() } : {}),
+          ...(artPieceName.trim() ? { artPieceName: artPieceName.trim() } : {}),
+          ...(artPieceUserDescription.trim() ? { artPieceUserDescription: artPieceUserDescription.trim() } : {}),
+          ...(artPiecePosition.trim() ? { artPiecePosition: artPiecePosition.trim() } : {}),
 
-  ...(artPieceTypes.length ? { artPieceTypes } : {}),
-  ...(artPieceStyles.length ? { artPieceStyles } : {}),
-  ...(artPieceTextLanguages.length ? { artPieceTextLanguages } : {}),
+          ...(artPieceTypes.length ? { artPieceTypes } : {}),
+          ...(artPieceStyles.length ? { artPieceStyles } : {}),
+          ...(artPieceTextLanguages.length ? { artPieceTextLanguages } : {}),
 
-  ...(containsTextTouched ? { artPieceContainsText } : {}),
-};
-
+          ...(containsTextTouched ? { artPieceContainsText } : {}),
+        };
 
         await putItem("ArtPieces", selectedItem.id, body);
 
@@ -372,12 +383,14 @@ if (activeType === "ArtPieces") {
         }));
 
         setSelectedItem((p) => (p ? { ...p, name: artPieceName || p.name, subtitle: artPieceAddress || p.subtitle } : p));
+
         toast.current?.show({
           severity: "success",
           summary: "Zapisano ✅",
           detail: "Zaktualizowano ArtPiece",
           life: 2000,
         });
+
         setEditOpen(false);
         return;
       }
@@ -393,43 +406,28 @@ if (activeType === "ArtPieces") {
     appUserEmail,
     appUserName,
     appUserPassword,
+    appUserLanguagesSpoken,
     artPieceName,
     artPieceAddress,
     artPieceUserDescription,
     artPiecePosition,
+    artPieceTypes,
+    artPieceStyles,
+    artPieceTextLanguages,
+    artPieceContainsText,
+    containsTextTouched,
   ]);
 
-  const tileStyle = (isActive: boolean): React.CSSProperties => ({
-    background: isActive ? "rgba(126,224,129,0.95)" : "rgba(255,255,255,0.18)",
-    color: isActive ? "#1b1b1b" : "white",
-    borderRadius: 12,
-    padding: "10px 12px",
-    cursor: "pointer",
-    border: "1px solid rgba(255,255,255,0.22)",
-    userSelect: "none",
-    textAlign: "center",
-    fontWeight: 800,
-    opacity: loading ? 0.85 : 1,
-  });
-
   return (
-    <div style={{ minHeight: "100vh", background: "#7b83cf", display: "grid", placeItems: "center", padding: 24 }}>
+    <div className={styles.pageCenter}>
       <Toast ref={toast} position="top-right" />
 
-      <Card
-        title="Admin Page"
-        style={{ width: "min(980px, 96vw)", background: "#4b55a3", color: "white", borderRadius: 16 }}
-      >
+      <Card title="Admin Page" className={styles.cardShell}>
         {error ? <div style={{ marginBottom: 10, color: "#ffd1d1", fontWeight: 700 }}>Error: {error}</div> : null}
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+        <div className={styles.tilesGrid2}>
           {topTiles.map((t) => (
-            <div
-              key={t.type}
-              style={tileStyle(activeType === t.type)}
-              onClick={() => setActiveType(t.type)}
-              role="button"
-            >
+            <div key={t.type} className={tileClass(activeType === t.type)} onClick={() => setActiveType(t.type)} role="button">
               <div style={{ fontSize: 14 }}>{t.type}</div>
               <div style={{ fontSize: 12, opacity: activeType === t.type ? 0.85 : 0.9 }}>
                 {t.count} items {loading ? "(loading...)" : ""}
@@ -440,21 +438,12 @@ if (activeType === "ArtPieces") {
 
         <Divider style={{ opacity: 0.35 }} />
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+        <div className={styles.tilesGrid2}>
           {(Object.keys(data) as AdminEntityType[]).map((t) => (
-            <div
-              key={t}
-              style={{
-                background: "rgba(0,0,0,0.14)",
-                border: "1px solid rgba(255,255,255,0.18)",
-                borderRadius: 14,
-                padding: 10,
-                minHeight: 320,
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div key={t} className={styles.listPanel}>
+              <div className={styles.listHeader}>
                 <div style={{ fontWeight: 800 }}>{t}</div>
-                <Button icon="pi pi-plus" rounded text style={{ color: "white" }} onClick={() => { }} tooltip="Dodaj (TODO)" disabled />
+                <Button icon="pi pi-plus" rounded text style={{ color: "white" }} onClick={() => {}} tooltip="Dodaj (TODO)" disabled />
               </div>
 
               <div style={{ marginTop: 8 }}>
@@ -475,9 +464,9 @@ if (activeType === "ArtPieces") {
                     field="name"
                     header=""
                     body={(row: RowItem) => (
-                      <div style={{ display: "grid", gap: 2 }}>
-                        <div style={{ fontWeight: 700, color: "white" }}>{row.name}</div>
-                        {row.subtitle ? <small style={{ opacity: 0.8 }}>{row.subtitle}</small> : null}
+                      <div className={styles.itemBody}>
+                        <div className={styles.itemTitle}>{row.name}</div>
+                        {row.subtitle ? <small className={styles.itemSubtitle}>{row.subtitle}</small> : null}
                       </div>
                     )}
                   />
@@ -491,165 +480,128 @@ if (activeType === "ArtPieces") {
           <Menu model={menuModel} />
         </OverlayPanel>
 
-        <Dialog
-          header={`Edytuj: ${activeType}`}
-          visible={editOpen}
-          style={{ width: "min(520px, 92vw)" }}
-          onHide={() => setEditOpen(false)}
-        >
-{activeType === "Users" && (
-  <div style={{ display: "grid", gap: 14 }}>
-    <div style={{ display: "grid", gap: 6 }}>
-      <small style={{ opacity: 0.85, fontWeight: 700 }}>Email</small>
-      <InputText
-        value={appUserEmail}
-        onChange={(e) => setUserEmail(e.target.value)}
-        style={{ width: "100%" }}
-      />
-    </div>
+        <Dialog header={`Edytuj: ${activeType}`} visible={editOpen} style={{ width: "min(520px, 92vw)" }} onHide={() => setEditOpen(false)}>
+          {activeType === "Users" && (
+            <div style={{ display: "grid", gap: 14 }}>
+              <div style={{ display: "grid", gap: 6 }}>
+                <small style={{ opacity: 0.85, fontWeight: 700 }}>Email</small>
+                <InputText value={appUserEmail} onChange={(e) => setUserEmail(e.target.value)} className={styles.fullWidth} />
+              </div>
 
-    <div style={{ display: "grid", gap: 6 }}>
-      <small style={{ opacity: 0.85, fontWeight: 700 }}>Name</small>
-      <InputText
-        value={appUserName}
-        onChange={(e) => setUserName(e.target.value)}
-        style={{ width: "100%" }}
-      />
-    </div>
+              <div style={{ display: "grid", gap: 6 }}>
+                <small style={{ opacity: 0.85, fontWeight: 700 }}>Name</small>
+                <InputText value={appUserName} onChange={(e) => setUserName(e.target.value)} className={styles.fullWidth} />
+              </div>
 
-    <div style={{ display: "grid", gap: 6 }}>
-      <small style={{ opacity: 0.85, fontWeight: 700 }}>Languages spoken</small>
-      <MultiSelect
-        value={appUserLanguagesSpoken}
-        onChange={(e) => setAppUserLanguagesSpoken(e.value)}
-        options={languageOptions}
-        placeholder="Select languages"
-        style={{ width: "100%" }}
-        display="chip"
-      />
-    </div>
+              <div style={{ display: "grid", gap: 6 }}>
+                <small style={{ opacity: 0.85, fontWeight: 700 }}>Languages spoken</small>
+                <MultiSelect
+                  value={appUserLanguagesSpoken}
+                  onChange={(e) => setAppUserLanguagesSpoken(e.value)}
+                  options={languageOptions}
+                  placeholder="Select languages"
+                  className={styles.fullWidth}
+                  display="chip"
+                />
+              </div>
 
-    <div style={{ display: "grid", gap: 6 }}>
-      <small style={{ opacity: 0.85, fontWeight: 700 }}>Password</small>
-      <InputText
-        type="password"
-        value={appUserPassword}
-        onChange={(e) => setUserPassword(e.target.value)}
-        style={{ width: "100%" }}
-      />
-    </div>
-  </div>
-)}
-
-
-
-{activeType === "ArtPieces" && (
-  <div style={{ display: "grid", gap: 14 }}>
-    <div style={{ display: "grid", gap: 6 }}>
-      <small style={{ opacity: 0.85, fontWeight: 700 }}>Name</small>
-      <InputText
-        value={artPieceName}
-        onChange={(e) => setApName(e.target.value)}
-        style={{ width: "100%" }}
-      />
-    </div>
-
-    <div style={{ display: "grid", gap: 6 }}>
-      <small style={{ opacity: 0.85, fontWeight: 700 }}>Address</small>
-      <InputText
-        value={artPieceAddress}
-        onChange={(e) => setApAddress(e.target.value)}
-        style={{ width: "100%" }}
-      />
-    </div>
-
-    <div style={{ display: "grid", gap: 6 }}>
-      <small style={{ opacity: 0.85, fontWeight: 700 }}>Description</small>
-      <InputText
-        value={artPieceUserDescription}
-        onChange={(e) => setApUserDescription(e.target.value)}
-        style={{ width: "100%" }}
-      />
-    </div>
-
-    <div style={{ display: "grid", gap: 6 }}>
-      <small style={{ opacity: 0.85, fontWeight: 700 }}>Position</small>
-      <InputText
-        value={artPiecePosition}
-        onChange={(e) => setApPosition(e.target.value)}
-        style={{ width: "100%" }}
-      />
-    </div>
-
-    <div style={{ display: "grid", gap: 8 }}>
-      <small style={{ opacity: 0.85, fontWeight: 700 }}>Contains text</small>
-      <ToggleButton
-        checked={artPieceContainsText}
-        onChange={(e) => {
-          setApContainsText(e.value);
-          setContainsTextTouched(true);
-          if (!e.value) setApLangs([]); // jak wyłączysz, czyścimy języki
-        }}
-        onLabel="Yes"
-        offLabel="No"
-        style={{ width: "100%" }}
-      />
-    </div>
-
-    {artPieceContainsText && (
-      <div style={{ display: "grid", gap: 6 }}>
-        <small style={{ opacity: 0.85, fontWeight: 700 }}>Text languages</small>
-        <MultiSelect
-          value={artPieceTextLanguages}
-          onChange={(e) => setApLangs(e.value)}
-          options={languageOptions}
-          placeholder="Select languages"
-          style={{ width: "100%" }}
-          display="chip"
-        />
-      </div>
-    )}
-
-    <div style={{ display: "grid", gap: 6 }}>
-      <small style={{ opacity: 0.85, fontWeight: 700 }}>Types</small>
-      <MultiSelect
-        value={artPieceTypes}
-        onChange={(e) => setApTypes(e.value)}
-        options={typeOptions}
-        placeholder="Select types"
-        style={{ width: "100%" }}
-        display="chip"
-      />
-    </div>
-
-    <div style={{ display: "grid", gap: 6 }}>
-      <small style={{ opacity: 0.85, fontWeight: 700 }}>Styles</small>
-      <MultiSelect
-        value={artPieceStyles}
-        onChange={(e) => setApStyles(e.value)}
-        options={styleOptions}
-        placeholder="Select styles"
-        style={{ width: "100%" }}
-        display="chip"
-      />
-    </div>
-  </div>
-)}
-
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
-              <Button label="Cancel" severity="secondary" onClick={() => setEditOpen(false)} />
-              <Button label="Save" icon="pi pi-check" onClick={saveEdit} />
+              <div style={{ display: "grid", gap: 6 }}>
+                <small style={{ opacity: 0.85, fontWeight: 700 }}>Password</small>
+                <InputText type="password" value={appUserPassword} onChange={(e) => setUserPassword(e.target.value)} className={styles.fullWidth} />
+              </div>
             </div>
+          )}
+
+          {activeType === "ArtPieces" && (
+            <div style={{ display: "grid", gap: 14 }}>
+              <div style={{ display: "grid", gap: 6 }}>
+                <small style={{ opacity: 0.85, fontWeight: 700 }}>Name</small>
+                <InputText value={artPieceName} onChange={(e) => setApName(e.target.value)} className={styles.fullWidth} />
+              </div>
+
+              <div style={{ display: "grid", gap: 6 }}>
+                <small style={{ opacity: 0.85, fontWeight: 700 }}>Address</small>
+                <InputText value={artPieceAddress} onChange={(e) => setApAddress(e.target.value)} className={styles.fullWidth} />
+              </div>
+
+              <div style={{ display: "grid", gap: 6 }}>
+                <small style={{ opacity: 0.85, fontWeight: 700 }}>Description</small>
+                <InputText value={artPieceUserDescription} onChange={(e) => setApUserDescription(e.target.value)} className={styles.fullWidth} />
+              </div>
+
+              <div style={{ display: "grid", gap: 6 }}>
+                <small style={{ opacity: 0.85, fontWeight: 700 }}>Position</small>
+                <InputText value={artPiecePosition} onChange={(e) => setApPosition(e.target.value)} className={styles.fullWidth} />
+              </div>
+
+              <div style={{ display: "grid", gap: 8 }}>
+                <small style={{ opacity: 0.85, fontWeight: 700 }}>Contains text</small>
+                <ToggleButton
+                  checked={artPieceContainsText}
+                  onChange={(e) => {
+                    setApContainsText(e.value);
+                    setContainsTextTouched(true);
+                    if (!e.value) setApLangs([]);
+                  }}
+                  onLabel="Yes"
+                  offLabel="No"
+                  className={styles.fullWidth}
+                />
+              </div>
+
+              {artPieceContainsText && (
+                <div style={{ display: "grid", gap: 6 }}>
+                  <small style={{ opacity: 0.85, fontWeight: 700 }}>Text languages</small>
+                  <MultiSelect
+                    value={artPieceTextLanguages}
+                    onChange={(e) => setApLangs(e.value)}
+                    options={languageOptions}
+                    placeholder="Select languages"
+                    className={styles.fullWidth}
+                    display="chip"
+                  />
+                </div>
+              )}
+
+              <div style={{ display: "grid", gap: 6 }}>
+                <small style={{ opacity: 0.85, fontWeight: 700 }}>Types</small>
+                <MultiSelect
+                  value={artPieceTypes}
+                  onChange={(e) => setApTypes(e.value)}
+                  options={typeOptions}
+                  placeholder="Select types"
+                  className={styles.fullWidth}
+                  display="chip"
+                />
+              </div>
+
+              <div style={{ display: "grid", gap: 6 }}>
+                <small style={{ opacity: 0.85, fontWeight: 700 }}>Styles</small>
+                <MultiSelect
+                  value={artPieceStyles}
+                  onChange={(e) => setApStyles(e.value)}
+                  options={styleOptions}
+                  placeholder="Select styles"
+                  className={styles.fullWidth}
+                  display="chip"
+                />
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
+            <Button label="Cancel" severity="secondary" onClick={() => setEditOpen(false)} />
+            <Button label="Save" icon="pi pi-check" onClick={saveEdit} />
+          </div>
         </Dialog>
 
-        <div style={{ display: "flex", justifyContent: "center", marginTop: 18 }}>
+        <div className={styles.actionsFooter}>
           <Button
             label="Leave Admin Page"
             icon="pi pi-arrow-left"
             severity="secondary"
             onClick={() => navigate("/app")}
-            style={{ borderRadius: 12, fontWeight: 800, paddingInline: 24 }}
+            className={styles.btnEmphasis}
           />
         </div>
       </Card>

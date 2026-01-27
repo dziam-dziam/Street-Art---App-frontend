@@ -5,6 +5,7 @@ import { Password } from "primereact/password";
 import { Button } from "primereact/button";
 import { useNavigate } from "react-router-dom";
 import streetArtGreen from "../images/streetArtGreen.jpeg"; 
+import styles from "../../styles/pages.module.css";
 
 
 export const LoginPage: React.FC = () => {
@@ -39,114 +40,56 @@ export const LoginPage: React.FC = () => {
   }
 
 
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "grid",
-        placeItems: "center",
-        padding: 24,
-        background: "#7d98cd",
-      }}
-    >
-      <Card
-        style={{
-          width: "min(920px, 96vw)",
-          background: "#4b55a3",
-          color: "white",
-          borderRadius: 14,
-        }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 18,
-            alignItems: "center",
-          }}
-        >
-          {/* LEFT: image */}
-          <div
-            style={{
-              background: "rgba(255,255,255,0.12)",
-              borderRadius: 12,
-              padding: 12,
-            }}
-          >
-            <img
-              src={streetArtGreen}
-              alt="street art"
-              style={{
-                width: "100%",
-                height: 420,
-                objectFit: "cover",
-                borderRadius: 10,
-                display: "block",
-              }}
-            />
-          </div>
-
-          {/* RIGHT: form */}
-          <div style={{ paddingRight: 8 }}>
-            <div style={{ fontWeight: 800, fontSize: 18, lineHeight: 1.2 }}>
-              Welcome to StreetApp!
-              <br />
-              Let us explore
-            </div>
-
-            <form
-              onSubmit={onLogin}
-              style={{ marginTop: 18, display: "flex", flexDirection: "column", gap: 12 }}
-            >
-              <InputText
-                value={appUserEmail}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-                style={{
-                  width: "100%",
-                  borderRadius: 8,
-                }}
-              />
-
-              <Password
-                value={appUserPassword}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-                toggleMask
-                feedback={false}
-                inputStyle={{ width: "100%" }}
-                style={{ width: "100%" }}
-              />
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 4 }}>
-                <Button
-                  type="submit"
-                  label="Login"
-                  style={{
-                    width: 140,
-                    borderRadius: 10,
-                    fontWeight: 700,
-                  }}
-                />
-
-                <Button
-                  type="button"
-                  label="Sign Up"
-                  outlined
-                  onClick={() => navigate("/register")}
-                  style={{
-                    width: 140,
-                    borderRadius: 10,
-                    fontWeight: 700,
-                    color: "white",
-                    borderColor: "rgba(255,255,255,0.75)",
-                  }}
-                />
-              </div>
-            </form>
-          </div>
+ return (
+  <div className={styles.authBg}>
+    <Card className={styles.authCardLogin}>
+      <div className={styles.authGrid2}>
+        <div className={styles.imagePanel}>
+          <img src={streetArtGreen} alt="street art" className={styles.imageFill420} />
         </div>
-      </Card>
-    </div>
-  );
+
+        <div className={styles.formRightPad}>
+          <div className={styles.headline}>
+            Welcome to StreetApp!
+            <br />
+            Let us explore
+          </div>
+
+          <form onSubmit={onLogin} className={styles.formCol}>
+            <InputText
+              value={appUserEmail}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              className={styles.fullWidth}
+              style={{ borderRadius: 8 }}
+            />
+
+            <Password
+              value={appUserPassword}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              toggleMask
+              feedback={false}
+              inputStyle={{ width: "100%" }}
+              className={styles.fullWidth}
+            />
+
+            <div className={styles.buttonsCol}>
+              <Button type="submit" label="Login" className={styles.btnW140} />
+
+              <Button
+                type="button"
+                label="Sign Up"
+                outlined
+                onClick={() => navigate("/register")}
+                className={`${styles.btnW140} ${styles.btnOutlinedWhite}`}
+              />
+            </div>
+          </form>
+        </div>
+      </div>
+    </Card>
+  </div>
+);
+
 };
