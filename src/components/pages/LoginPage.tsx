@@ -33,7 +33,6 @@ export const LoginPage: React.FC = () => {
         const data = await res.json().catch(() => null);
     console.log("Response from server:\n", data);
     navigate("/app", { replace: true });
-    alert("Login successful!");
     } catch (err) {
       console.error("Fetch error:", err);
     }

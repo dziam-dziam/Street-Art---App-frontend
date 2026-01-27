@@ -9,6 +9,9 @@ import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { Divider } from "primereact/divider";
 import { useNavigate } from "react-router-dom";
+import { Toast } from "primereact/toast";
+import { MultiSelect } from "primereact/multiselect";
+import { ToggleButton } from "primereact/togglebutton";
 
 type AdminEntityType = "Users" | "ArtPieces";
 
@@ -20,7 +23,6 @@ type RowItem = {
 
 type UserEntity = { id: number; appUserName: string; appUserEmail: string };
 
-// dopasowane do Twojego ArtPieceAdminDto
 type ArtPieceEntity = { id: number; artPieceAddress: string; artPieceName: string; artPieceUserDescription: string };
 
 const BASE = "http://localhost:8080";
@@ -31,7 +33,47 @@ const EMPTY: Record<AdminEntityType, RowItem[]> = {
 };
 
 export const AdminPage: React.FC = () => {
+  const typeOptions = useMemo(
+  () => [
+    { label: "Graffiti tag", value: "GRAFFITI_TAG" },
+    { label: "Graffiti piece", value: "GRAFFITI_PIECE" },
+    { label: "Stencil", value: "STENCIL" },
+    { label: "Wheat paste poster", value: "WHEAT_PASTE_POSTER" },
+    { label: "Sticker", value: "STICKER" },
+    { label: "Mural", value: "MURAL" },
+    { label: "3D installation", value: "INSTALLATION_3D" },
+  ],
+  []
+);
+
+const styleOptions = useMemo(
+  () => [
+    { label: "Political", value: "POLITICAL" },
+    { label: "Religious", value: "RELIGIOUS" },
+    { label: "Social commentary", value: "SOCIAL_COMMENTARY" },
+    { label: "Humor", value: "HUMOR" },
+    { label: "Love / romance", value: "LOVE_ROMANCE" },
+    { label: "Homesickness", value: "HOMESICKNESS" },
+    { label: "Philosophical", value: "PHILOSOPHICAL" },
+    { label: "Activism", value: "ACTIVISM" },
+    { label: "Anti-consumerism", value: "ANTI_CONSUMERISM" },
+    { label: "Commercial", value: "COMMERCIAL" },
+  ],
+  []
+);
+
+const languageOptions = useMemo(
+  () => [
+    { label: "Polish", value: "Polish" },
+    { label: "English", value: "English" },
+    { label: "German", value: "German" },
+    { label: "Spanish", value: "Spanish" },
+    { label: "French", value: "French" },
+  ],
+  []
+);
   const navigate = useNavigate();
+  const toast = useRef<Toast>(null);
 
   const [activeType, setActiveType] = useState<AdminEntityType>("Users");
   const [data, setData] = useState<Record<AdminEntityType, RowItem[]>>(EMPTY);
@@ -44,29 +86,28 @@ export const AdminPage: React.FC = () => {
 
   const opRef = useRef<OverlayPanel>(null);
 
-  // --- EDIT STATE ---
   const [editOpen, setEditOpen] = useState(false);
 
-  // ===== USERS (UpdateAppUserDto) =====
-  const [targetAppUserEmail, setTargetAppUserEmail] = useState(""); // email do identyfikacji (stary)
+  const [targetAppUserEmail, setTargetAppUserEmail] = useState("");
   const [appUserEmail, setUserEmail] = useState("");
   const [appUserName, setUserName] = useState("");
   const [appUserPassword, setUserPassword] = useState("");
-  const [appUserLanguages, setUserLanguages] = useState<string>(""); // csv
+  const [appUserLanguagesSpoken, setAppUserLanguagesSpoken] = useState<string[]>([]);
 
-  // ===== ARTPIECES (UpdateArtPieceDto) =====
   const [artPieceName, setApName] = useState("");
   const [artPieceAddress, setApAddress] = useState("");
   const [artPieceUserDescription, setApUserDescription] = useState("");
 
-  // opcjonalne pola (zostawiamy, ale NIE wysyłamy jeśli puste)
+
   const [artPiecePosition, setApPosition] = useState("");
   const [artPieceContainsText, setApContainsText] = useState(false);
-  const [artPieceTypesCsv, setApTypesCsv] = useState<string>("");
-  const [artPieceStylesCsv, setApStylesCsv] = useState<string>("");
-  const [artPieceTextLanguagesCsv, setApLangsCsv] = useState<string>("");
+const [artPieceTypes, setApTypes] = useState<string[]>([]);
+const [artPieceStyles, setApStyles] = useState<string[]>([]);
+const [artPieceTextLanguages, setApLangs] = useState<string[]>([]);
 
-  // ========== GET ==========
+const [containsTextTouched, setContainsTextTouched] = useState(false);
+
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -121,7 +162,6 @@ export const AdminPage: React.FC = () => {
     [data]
   );
 
-  // ========== DELETE ==========
   const deleteEndpointFor = (type: AdminEntityType, id: string) => {
     switch (type) {
       case "Users":
@@ -158,7 +198,12 @@ export const AdminPage: React.FC = () => {
 
     try {
       await deleteItem(selectedType, selectedItem.id);
-
+      toast.current?.show({
+        severity: "success",
+        summary: "Usunięto ✅",
+        detail: `${selectedType === "Users" ? "User" : "ArtPiece"} został usunięty`,
+        life: 2000,
+      });
       setData((prev) => ({
         ...prev,
         [selectedType]: prev[selectedType].filter((x) => x.id !== selectedItem.id),
@@ -173,7 +218,6 @@ export const AdminPage: React.FC = () => {
     }
   }, [deleteItem, selectedItem, selectedType]);
 
-  // ========== PUT (tylko ArtPieces - jak miałeś) ==========
   const putEndpointFor = useCallback((type: AdminEntityType, id: string) => {
     switch (type) {
       case "ArtPieces":
@@ -205,20 +249,6 @@ export const AdminPage: React.FC = () => {
     [putEndpointFor]
   );
 
-  // helpers
-  const csvToStringArray = (csv: string): string[] =>
-    csv
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-  const csvToEnumArray = (csv: string): string[] =>
-    csv
-      .split(",")
-      .map((s) => s.trim().toUpperCase())
-      .filter(Boolean);
-
-  // ========== MENU (Edytuj/Usuń) ==========
   const openEditDialog = useCallback(() => {
     if (!selectedItem) return;
 
@@ -227,19 +257,23 @@ export const AdminPage: React.FC = () => {
       setUserEmail(selectedItem.name ?? "");
       setUserName(selectedItem.subtitle ?? "");
       setUserPassword("");
-      setUserLanguages("");
+      setAppUserLanguagesSpoken([]);
     }
 
-    if (activeType === "ArtPieces") {
-      setApName(selectedItem.name ?? "");
-      setApAddress(selectedItem.subtitle ?? "");
-      setApUserDescription("");
-      setApPosition("");
-      setApContainsText(false);
-      setApTypesCsv("");
-      setApStylesCsv("");
-      setApLangsCsv("");
-    }
+if (activeType === "ArtPieces") {
+  setApName(selectedItem.name ?? "");
+  setApAddress(selectedItem.subtitle ?? "");
+  setApUserDescription("");
+  setApPosition("");
+
+  setApContainsText(false);
+  setContainsTextTouched(false);
+
+  setApTypes([]);
+  setApStyles([]);
+  setApLangs([]);
+}
+
 
     setEditOpen(true);
     opRef.current?.hide();
@@ -265,23 +299,22 @@ export const AdminPage: React.FC = () => {
     opRef.current?.toggle(e.originalEvent);
   };
 
-  // ========== SAVE EDIT ==========
   const saveEdit = useCallback(async () => {
     if (!selectedItem) return;
 
     try {
-      // ===== USERS: PUT /updateAppUser/user?appUserEmail=OLD_EMAIL =====
       if (activeType === "Users") {
         if (!targetAppUserEmail.trim()) {
           throw new Error("Brak targetAppUserEmail (email do identyfikacji).");
         }
 
         const body: any = {
-          ...(appUserName.trim() ? { appUserName: appUserName.trim() } : {}),
-          ...(appUserEmail.trim() ? { appUserEmail: appUserEmail.trim() } : {}),
-          ...(appUserLanguages.trim() ? { appUserLanguagesSpoken: csvToStringArray(appUserLanguages) } : {}),
-          ...(appUserPassword.trim() ? { appUserPassword: appUserPassword } : {}),
-        };
+  ...(appUserName.trim() ? { appUserName: appUserName.trim() } : {}),
+  ...(appUserEmail.trim() ? { appUserEmail: appUserEmail.trim() } : {}),
+  ...(appUserLanguagesSpoken.length ? { appUserLanguagesSpoken } : {}),
+  ...(appUserPassword.trim() ? { appUserPassword: appUserPassword } : {}),
+};
+
 
         const url = new URL(`${BASE}/updateAppUser/user`);
         url.searchParams.set("appUserEmail", targetAppUserEmail.trim());
@@ -296,7 +329,6 @@ export const AdminPage: React.FC = () => {
         const raw = await res.text().catch(() => "");
         if (!res.ok) throw new Error(`PUT Users failed: HTTP ${res.status}. Body: ${raw.slice(0, 200)}`);
 
-        // UI: name=email, subtitle=name
         setData((prev) => ({
           ...prev,
           Users: prev.Users.map((x) =>
@@ -305,27 +337,30 @@ export const AdminPage: React.FC = () => {
         }));
 
         setSelectedItem((p) => (p ? { ...p, name: appUserEmail || p.name, subtitle: appUserName || p.subtitle } : p));
-
+        toast.current?.show({
+          severity: "success",
+          summary: "Zapisano ✅",
+          detail: "Zaktualizowano użytkownika",
+          life: 2000,
+        });
         setEditOpen(false);
         return;
       }
 
-      // ===== ARTPIECES: PUT /updateArtPiece/artPiece/{id} =====
       if (activeType === "ArtPieces") {
         const body: any = {
-          ...(artPieceAddress.trim() ? { artPieceAddress: artPieceAddress.trim() } : {}),
-          ...(artPieceName.trim() ? { artPieceName: artPieceName.trim() } : {}),
-          ...(artPieceUserDescription.trim() ? { artPieceUserDescription: artPieceUserDescription.trim() } : {}),
-          ...(artPiecePosition.trim() ? { artPiecePosition: artPiecePosition.trim() } : {}),
-          // UWAGA: to jest ryzykowne bez prefill -> tylko jeśli użytkownik wpisze CSV:
-          ...(artPieceTypesCsv.trim() ? { artPieceTypes: csvToEnumArray(artPieceTypesCsv) } : {}),
-          ...(artPieceStylesCsv.trim() ? { artPieceStyles: csvToEnumArray(artPieceStylesCsv) } : {}),
-          ...(artPieceTextLanguagesCsv.trim()
-            ? { artPieceTextLanguages: csvToStringArray(artPieceTextLanguagesCsv) }
-            : {}),
-          // NIE wysyłam artPieceContainsText “zawsze”, bo nie masz wartości z GET i nadpiszesz DB
-          // jeśli chcesz, dodamy "touched" flagę i wtedy wyślemy.
-        };
+  ...(artPieceAddress.trim() ? { artPieceAddress: artPieceAddress.trim() } : {}),
+  ...(artPieceName.trim() ? { artPieceName: artPieceName.trim() } : {}),
+  ...(artPieceUserDescription.trim() ? { artPieceUserDescription: artPieceUserDescription.trim() } : {}),
+  ...(artPiecePosition.trim() ? { artPiecePosition: artPiecePosition.trim() } : {}),
+
+  ...(artPieceTypes.length ? { artPieceTypes } : {}),
+  ...(artPieceStyles.length ? { artPieceStyles } : {}),
+  ...(artPieceTextLanguages.length ? { artPieceTextLanguages } : {}),
+
+  ...(containsTextTouched ? { artPieceContainsText } : {}),
+};
+
 
         await putItem("ArtPieces", selectedItem.id, body);
 
@@ -337,7 +372,12 @@ export const AdminPage: React.FC = () => {
         }));
 
         setSelectedItem((p) => (p ? { ...p, name: artPieceName || p.name, subtitle: artPieceAddress || p.subtitle } : p));
-
+        toast.current?.show({
+          severity: "success",
+          summary: "Zapisano ✅",
+          detail: "Zaktualizowano ArtPiece",
+          life: 2000,
+        });
         setEditOpen(false);
         return;
       }
@@ -349,20 +389,14 @@ export const AdminPage: React.FC = () => {
     activeType,
     selectedItem,
     putItem,
-    // users
     targetAppUserEmail,
     appUserEmail,
     appUserName,
     appUserPassword,
-    appUserLanguages,
-    // artpieces
     artPieceName,
     artPieceAddress,
     artPieceUserDescription,
     artPiecePosition,
-    artPieceTypesCsv,
-    artPieceStylesCsv,
-    artPieceTextLanguagesCsv,
   ]);
 
   const tileStyle = (isActive: boolean): React.CSSProperties => ({
@@ -380,6 +414,8 @@ export const AdminPage: React.FC = () => {
 
   return (
     <div style={{ minHeight: "100vh", background: "#7b83cf", display: "grid", placeItems: "center", padding: 24 }}>
+      <Toast ref={toast} position="top-right" />
+
       <Card
         title="Admin Page"
         style={{ width: "min(980px, 96vw)", background: "#4b55a3", color: "white", borderRadius: 16 }}
@@ -418,7 +454,7 @@ export const AdminPage: React.FC = () => {
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div style={{ fontWeight: 800 }}>{t}</div>
-                <Button icon="pi pi-plus" rounded text style={{ color: "white" }} onClick={() => {}} tooltip="Dodaj (TODO)" disabled />
+                <Button icon="pi pi-plus" rounded text style={{ color: "white" }} onClick={() => { }} tooltip="Dodaj (TODO)" disabled />
               </div>
 
               <div style={{ marginTop: 8 }}>
@@ -461,108 +497,150 @@ export const AdminPage: React.FC = () => {
           style={{ width: "min(520px, 92vw)" }}
           onHide={() => setEditOpen(false)}
         >
-          <div style={{ display: "grid", gap: 12 }}>
-            {activeType === "Users" && (
-              <>
-                <span className="p-float-label">
-                  <InputText id="uEmail" value={appUserEmail} onChange={(e) => setUserEmail(e.target.value)} style={{ width: "100%" }} />
-                  <label htmlFor="uEmail">appUserEmail</label>
-                </span>
+{activeType === "Users" && (
+  <div style={{ display: "grid", gap: 14 }}>
+    <div style={{ display: "grid", gap: 6 }}>
+      <small style={{ opacity: 0.85, fontWeight: 700 }}>Email</small>
+      <InputText
+        value={appUserEmail}
+        onChange={(e) => setUserEmail(e.target.value)}
+        style={{ width: "100%" }}
+      />
+    </div>
 
-                <span className="p-float-label">
-                  <InputText id="uName" value={appUserName} onChange={(e) => setUserName(e.target.value)} style={{ width: "100%" }} />
-                  <label htmlFor="uName">appUserName</label>
-                </span>
+    <div style={{ display: "grid", gap: 6 }}>
+      <small style={{ opacity: 0.85, fontWeight: 700 }}>Name</small>
+      <InputText
+        value={appUserName}
+        onChange={(e) => setUserName(e.target.value)}
+        style={{ width: "100%" }}
+      />
+    </div>
 
-                <span className="p-float-label">
-                  <InputText
-                    id="uLangs"
-                    value={appUserLanguages}
-                    onChange={(e) => setUserLanguages(e.target.value)}
-                    style={{ width: "100%" }}
-                  />
-                  <label htmlFor="uLangs">appUserLanguagesSpoken (csv, np: en,pl,de)</label>
-                </span>
+    <div style={{ display: "grid", gap: 6 }}>
+      <small style={{ opacity: 0.85, fontWeight: 700 }}>Languages spoken</small>
+      <MultiSelect
+        value={appUserLanguagesSpoken}
+        onChange={(e) => setAppUserLanguagesSpoken(e.value)}
+        options={languageOptions}
+        placeholder="Select languages"
+        style={{ width: "100%" }}
+        display="chip"
+      />
+    </div>
 
-                <span className="p-float-label">
-                  <InputText
-                    id="uPass"
-                    value={appUserPassword}
-                    onChange={(e) => setUserPassword(e.target.value)}
-                    style={{ width: "100%" }}
-                  />
-                  <label htmlFor="uPass">appUserPassword (opcjonalnie)</label>
-                </span>
-              </>
-            )}
+    <div style={{ display: "grid", gap: 6 }}>
+      <small style={{ opacity: 0.85, fontWeight: 700 }}>Password</small>
+      <InputText
+        type="password"
+        value={appUserPassword}
+        onChange={(e) => setUserPassword(e.target.value)}
+        style={{ width: "100%" }}
+      />
+    </div>
+  </div>
+)}
 
-            {activeType === "ArtPieces" && (
-              <>
-                <span className="p-float-label">
-                  <InputText id="apName" value={artPieceName} onChange={(e) => setApName(e.target.value)} style={{ width: "100%" }} />
-                  <label htmlFor="apName">artPieceName</label>
-                </span>
 
-                <span className="p-float-label">
-                  <InputText
-                    id="apAddress"
-                    value={artPieceAddress}
-                    onChange={(e) => setApAddress(e.target.value)}
-                    style={{ width: "100%" }}
-                  />
-                  <label htmlFor="apAddress">artPieceAddress</label>
-                </span>
 
-                <span className="p-float-label">
-                  <InputText
-                    id="apDesc"
-                    value={artPieceUserDescription}
-                    onChange={(e) => setApUserDescription(e.target.value)}
-                    style={{ width: "100%" }}
-                  />
-                  <label htmlFor="apDesc">artPieceUserDescription</label>
-                </span>
+{activeType === "ArtPieces" && (
+  <div style={{ display: "grid", gap: 14 }}>
+    <div style={{ display: "grid", gap: 6 }}>
+      <small style={{ opacity: 0.85, fontWeight: 700 }}>Name</small>
+      <InputText
+        value={artPieceName}
+        onChange={(e) => setApName(e.target.value)}
+        style={{ width: "100%" }}
+      />
+    </div>
 
-                {/* opcjonalne pola */}
-                <span className="p-float-label">
-                  <InputText id="apPos" value={artPiecePosition} onChange={(e) => setApPosition(e.target.value)} style={{ width: "100%" }} />
-                  <label htmlFor="apPos">artPiecePosition (opcjonalnie)</label>
-                </span>
+    <div style={{ display: "grid", gap: 6 }}>
+      <small style={{ opacity: 0.85, fontWeight: 700 }}>Address</small>
+      <InputText
+        value={artPieceAddress}
+        onChange={(e) => setApAddress(e.target.value)}
+        style={{ width: "100%" }}
+      />
+    </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <input
-                    id="apContainsText"
-                    type="checkbox"
-                    checked={artPieceContainsText}
-                    onChange={(e) => setApContainsText(e.target.checked)}
-                  />
-                  <label htmlFor="apContainsText" style={{ cursor: "pointer" }}>
-                    artPieceContainsText (UWAGA: nie wysyłam tego w PUT w tej wersji)
-                  </label>
-                </div>
+    <div style={{ display: "grid", gap: 6 }}>
+      <small style={{ opacity: 0.85, fontWeight: 700 }}>Description</small>
+      <InputText
+        value={artPieceUserDescription}
+        onChange={(e) => setApUserDescription(e.target.value)}
+        style={{ width: "100%" }}
+      />
+    </div>
 
-                <span className="p-float-label">
-                  <InputText id="apTypes" value={artPieceTypesCsv} onChange={(e) => setApTypesCsv(e.target.value)} style={{ width: "100%" }} />
-                  <label htmlFor="apTypes">artPieceTypes (csv enum, np: MURAL,STICKER)</label>
-                </span>
+    <div style={{ display: "grid", gap: 6 }}>
+      <small style={{ opacity: 0.85, fontWeight: 700 }}>Position</small>
+      <InputText
+        value={artPiecePosition}
+        onChange={(e) => setApPosition(e.target.value)}
+        style={{ width: "100%" }}
+      />
+    </div>
 
-                <span className="p-float-label">
-                  <InputText id="apStyles" value={artPieceStylesCsv} onChange={(e) => setApStylesCsv(e.target.value)} style={{ width: "100%" }} />
-                  <label htmlFor="apStyles">artPieceStyles (csv enum, np: REALISM,ABSTRACT)</label>
-                </span>
+    <div style={{ display: "grid", gap: 8 }}>
+      <small style={{ opacity: 0.85, fontWeight: 700 }}>Contains text</small>
+      <ToggleButton
+        checked={artPieceContainsText}
+        onChange={(e) => {
+          setApContainsText(e.value);
+          setContainsTextTouched(true);
+          if (!e.value) setApLangs([]); // jak wyłączysz, czyścimy języki
+        }}
+        onLabel="Yes"
+        offLabel="No"
+        style={{ width: "100%" }}
+      />
+    </div>
 
-                <span className="p-float-label">
-                  <InputText id="apLangs" value={artPieceTextLanguagesCsv} onChange={(e) => setApLangsCsv(e.target.value)} style={{ width: "100%" }} />
-                  <label htmlFor="apLangs">artPieceTextLanguages (csv, np: en,pl)</label>
-                </span>
-              </>
-            )}
+    {artPieceContainsText && (
+      <div style={{ display: "grid", gap: 6 }}>
+        <small style={{ opacity: 0.85, fontWeight: 700 }}>Text languages</small>
+        <MultiSelect
+          value={artPieceTextLanguages}
+          onChange={(e) => setApLangs(e.value)}
+          options={languageOptions}
+          placeholder="Select languages"
+          style={{ width: "100%" }}
+          display="chip"
+        />
+      </div>
+    )}
+
+    <div style={{ display: "grid", gap: 6 }}>
+      <small style={{ opacity: 0.85, fontWeight: 700 }}>Types</small>
+      <MultiSelect
+        value={artPieceTypes}
+        onChange={(e) => setApTypes(e.value)}
+        options={typeOptions}
+        placeholder="Select types"
+        style={{ width: "100%" }}
+        display="chip"
+      />
+    </div>
+
+    <div style={{ display: "grid", gap: 6 }}>
+      <small style={{ opacity: 0.85, fontWeight: 700 }}>Styles</small>
+      <MultiSelect
+        value={artPieceStyles}
+        onChange={(e) => setApStyles(e.value)}
+        options={styleOptions}
+        placeholder="Select styles"
+        style={{ width: "100%" }}
+        display="chip"
+      />
+    </div>
+  </div>
+)}
+
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
               <Button label="Cancel" severity="secondary" onClick={() => setEditOpen(false)} />
               <Button label="Save" icon="pi pi-check" onClick={saveEdit} />
             </div>
-          </div>
         </Dialog>
 
         <div style={{ display: "flex", justifyContent: "center", marginTop: 18 }}>

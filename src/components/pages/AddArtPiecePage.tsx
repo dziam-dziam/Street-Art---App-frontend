@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
@@ -9,6 +9,7 @@ import { ToggleButton } from "primereact/togglebutton";
 import { FileUpload } from "primereact/fileupload";
 import { Divider } from "primereact/divider";
 import { useNavigate } from "react-router-dom";
+import { Toast } from "primereact/toast";
 
 type ArtPieceTypes = "MURAL" | "GRAFFITI" | "STICKER" | "PASTE_UP" | "TAG";
 type ArtPieceStyles = "REALISM" | "ABSTRACT" | "TYPOGRAPHY" | "CHARACTER" | "OTHER";
@@ -28,6 +29,8 @@ type AddArtPieceDto = {
 
 export const AddArtPiecePage: React.FC = () => {
   const navigate = useNavigate();
+  const toast = useRef<Toast>(null);
+
 
   const [addArtPieceForm, setForm] = useState<AddArtPieceDto>({
     artPieceAddress: "",
@@ -42,7 +45,6 @@ export const AddArtPiecePage: React.FC = () => {
     artPieceTextLanguages: [],
   });
 
-  // Opcje (placeholdery — dopasujesz do enumów z backendu)
   const districtOptions = useMemo(
     () => [
       { label: "Jeżyce", value: "Jeżyce" },
@@ -67,7 +69,6 @@ const typeOptions = useMemo(
   []
 );
 
-
 const styleOptions = useMemo(
   () => [
     { label: "Political", value: "POLITICAL" },
@@ -83,7 +84,6 @@ const styleOptions = useMemo(
   ],
   []
 );
-
 
   const languageOptions = useMemo(
     () => [
@@ -114,13 +114,19 @@ const styleOptions = useMemo(
         credentials: "include",
       });
       if (!res.ok){
-        alert ("Failed to add art piece");
         throw new Error ("Failed to add art piece");
       }
     const data = await res.json().catch(() => null);
     console.log("Response from server:\n", data); 
-      navigate("/app", { replace: true });
-    alert("Art piece added successfully!");
+        toast.current?.show({
+          severity: "success",
+          summary: "Sukces ✅",
+          detail: "ArtPiece has been added",
+          life: 2000,
+        });
+        setTimeout(() => {
+          navigate("/app", { replace: true });
+        }, 990);
    }
     catch (error) {
     console.error("Error during adding art piece:", error);
@@ -137,6 +143,7 @@ const styleOptions = useMemo(
         background: "#7b83cf",
       }}
     >
+      <Toast ref={toast} position="center" />
       <Card
         title="Add Art Piece"
         style={{

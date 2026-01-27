@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback  } from "react";
+import React, { useMemo, useState, useEffect, useCallback, useRef  } from "react";
 import { Sidebar } from "primereact/sidebar";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
@@ -6,12 +6,12 @@ import { Avatar } from "primereact/avatar";
 import { Divider } from "primereact/divider";
 import { Menu } from "primereact/menu";
 import { Dialog } from "primereact/dialog";
-import { Tag } from "primereact/tag";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { GeoJSON, useMap } from "react-leaflet";
 import poz from "../assets/poznan.json";
+import { Toast } from "primereact/toast";
 
 
 type DistrictName =
@@ -60,9 +60,6 @@ function projectToCanvas(lat: number, lng: number, width: number, height: number
   const y = (1 - (lat - latMin) / (latMax - latMin)) * height;
   return { x, y };
 }
-
-
-
 
 function normalizeDistrict(d: string): DistrictName {
   const x = (d ?? "").trim().toLowerCase();
@@ -120,7 +117,6 @@ function pickPoznanBoundary(fc: any) {
 }
 
 export const AppView: React.FC = () => {
-
   const [isAdmin, setIsAdmin] = useState(false);
 
 useEffect(() => {
@@ -153,6 +149,7 @@ useEffect(() => {
   const pozBoundary = useMemo(() => pickPoznanBoundary(poz as any), []);
 
   const navigate = useNavigate();
+  const toast = useRef<Toast>(null);
 
   const onLogout = useCallback(async () => {
   try {
@@ -177,7 +174,6 @@ useEffect(() => {
 
 
   const [sidebarVisible, setSidebarVisible] = useState(true);
-  const [zoom, setZoom] = useState(3); // 1..5
   const [selected, setSelected] = useState<ArtPoint | null>(null);
 
   const [points, setPoints] = useState<ArtPoint[]>([]);
@@ -246,19 +242,21 @@ const items = useMemo(
     };
   }, []);
 
-  const onZoomIn = () => setZoom((z) => Math.min(5, z + 1));
-  const onZoomOut = () => setZoom((z) => Math.max(1, z - 1));
 
   return (
+    
     <div
+    
       style={{
         minHeight: "100vh",
         background: "#7b83cf",
         padding: 24,
         display: "grid",
         placeItems: "center",
-      }}
-    >
+      }
+    } 
+>
+  <Toast ref={toast} position="center" />
       <Card
         title="App View"
         style={{
@@ -289,8 +287,6 @@ const items = useMemo(
     style={{ color: "white" }}
   />
 </div>
-
-
           <div
             style={{
               position: "relative",
@@ -302,14 +298,6 @@ const items = useMemo(
               overflow: "hidden",
             }}
           >
-            <div style={{ position: "absolute", top: 14, right: 14, display: "flex", gap: 8, zIndex: 5 }}>
-              <Button icon="pi pi-minus" onClick={onZoomOut} rounded />
-              <Button icon="pi pi-plus" onClick={onZoomIn} rounded />
-              <Tag value={`Zoom: ${zoom}`} severity="info" />
-              {loadingPoints && <Tag value="Loading points..." severity="warning" />}
-              {pointsError && <Tag value={`Error: ${pointsError}`} severity="danger" />}
-              {!loadingPoints && !pointsError && <Tag value={`${points.length} pts`} severity="success" />}
-            </div>
 
             <div style={{ position: "relative", height: 480, borderRadius: 12, overflow: "hidden", zIndex: 1 }}>
               <MapContainer
@@ -367,7 +355,7 @@ data={pozBoundary as any}
     pointerEvents: "auto",
     display: "flex",
     flexDirection: "column",
-    gap: 14, // <- zwiększ odstęp (np. 14 / 18 / 24)
+    gap: 14,
     alignItems: "flex-end",
   }}
 >
@@ -444,83 +432,3 @@ data={pozBoundary as any}
     </div>
   );
 };
-
-function MarkerLayer(props: {
-  zoom: number;
-  items: (Cluster | ArtPoint)[];
-  onClusterClick: () => void;
-  onPointClick: (p: ArtPoint) => void;
-}) {
-  const { zoom, items, onClusterClick, onPointClick } = props;
-
-  const W = 800;
-  const H = 480;
-
-  return (
-    <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-      {items.map((item) => {
-        const isCluster = (item as any).count !== undefined;
-        const lat = (item as any).lat as number;
-        const lng = (item as any).lng as number;
-        const { x, y } = projectToCanvas(lat, lng, W, H);
-
-        if (isCluster) {
-          const c = item as Cluster;
-          const size = Math.min(54, 26 + c.count * 3);
-
-          return (
-            <button
-              key={c.id}
-              onClick={onClusterClick}
-              style={{
-                pointerEvents: "auto",
-                position: "absolute",
-                left: `${(x / W) * 100}%`,
-                top: `${(y / H) * 100}%`,
-                transform: "translate(-50%, -50%)",
-                width: size,
-                height: size,
-                borderRadius: 999,
-                border: "2px solid rgba(255,255,255,0.7)",
-                background: "rgba(30, 144, 255, 0.85)",
-                color: "white",
-                fontWeight: 800,
-                cursor: "pointer",
-                boxShadow: "0 10px 24px rgba(0,0,0,0.25)",
-              }}
-              title="Kliknij aby przybliżyć"
-            >
-              {c.count}
-            </button>
-          );
-        }
-
-        const p = item as ArtPoint;
-        const dotSize = zoom >= 5 ? 14 : 12;
-
-        return (
-          <button
-            key={p.id}
-            onClick={() => onPointClick(p)}
-            style={{
-              pointerEvents: "auto",
-              position: "absolute",
-              left: `${(x / W) * 100}%`,
-              top: `${(y / H) * 100}%`,
-              transform: "translate(-50%, -50%)",
-              width: dotSize,
-              height: dotSize,
-              borderRadius: 999,
-              border: "2px solid rgba(255,255,255,0.9)",
-              background: "rgba(126, 224, 129, 0.95)",
-              cursor: "pointer",
-              boxShadow: "0 10px 24px rgba(0,0,0,0.22)",
-            }}
-            title={p.title}
-          />
-        );
-      })}
-    </div>
-      );
-
-}
