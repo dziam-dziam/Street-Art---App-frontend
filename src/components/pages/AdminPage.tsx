@@ -15,21 +15,24 @@ import { Toast } from "primereact/toast";
 import { MultiSelect } from "primereact/multiselect";
 import { ToggleButton } from "primereact/togglebutton";
 
+import { ART_TYPE_OPTIONS, ART_STYLE_OPTIONS, LANGUAGE_OPTIONS } from "../constants/options";
+import type { UserEntity, ArtPieceEntity } from "../dto/admin/AdminDtos";
+
+type LanguageOption = (typeof LANGUAGE_OPTIONS)[number]["value"];
+const languageOptions: LanguageOption[] = LANGUAGE_OPTIONS.map((opt) => opt.value);
+
+type ArtTypeOption = (typeof ART_TYPE_OPTIONS)[number]["value"];
+const typeOptions: ArtTypeOption[] = ART_TYPE_OPTIONS.map((opt) => opt.value);
+
+type ArtStyleOption = (typeof ART_STYLE_OPTIONS)[number]["value"];
+const styleOptions: ArtStyleOption[] = ART_STYLE_OPTIONS.map((opt) => opt.value);
+
 type AdminEntityType = "Users" | "ArtPieces";
 
 type RowItem = {
   id: string;
   name: string;
   subtitle?: string;
-};
-
-type UserEntity = { id: number; appUserName: string; appUserEmail: string };
-
-type ArtPieceEntity = {
-  id: number;
-  artPieceAddress: string;
-  artPieceName: string;
-  artPieceUserDescription: string;
 };
 
 const BASE = "http://localhost:8080";
@@ -43,46 +46,6 @@ export const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const toast = useRef<Toast>(null);
 
-  const typeOptions = useMemo(
-    () => [
-      { label: "Graffiti tag", value: "GRAFFITI_TAG" },
-      { label: "Graffiti piece", value: "GRAFFITI_PIECE" },
-      { label: "Stencil", value: "STENCIL" },
-      { label: "Wheat paste poster", value: "WHEAT_PASTE_POSTER" },
-      { label: "Sticker", value: "STICKER" },
-      { label: "Mural", value: "MURAL" },
-      { label: "3D installation", value: "INSTALLATION_3D" },
-    ],
-    []
-  );
-
-  const styleOptions = useMemo(
-    () => [
-      { label: "Political", value: "POLITICAL" },
-      { label: "Religious", value: "RELIGIOUS" },
-      { label: "Social commentary", value: "SOCIAL_COMMENTARY" },
-      { label: "Humor", value: "HUMOR" },
-      { label: "Love / romance", value: "LOVE_ROMANCE" },
-      { label: "Homesickness", value: "HOMESICKNESS" },
-      { label: "Philosophical", value: "PHILOSOPHICAL" },
-      { label: "Activism", value: "ACTIVISM" },
-      { label: "Anti-consumerism", value: "ANTI_CONSUMERISM" },
-      { label: "Commercial", value: "COMMERCIAL" },
-    ],
-    []
-  );
-
-  const languageOptions = useMemo(
-    () => [
-      { label: "Polish", value: "Polish" },
-      { label: "English", value: "English" },
-      { label: "German", value: "German" },
-      { label: "Spanish", value: "Spanish" },
-      { label: "French", value: "French" },
-    ],
-    []
-  );
-
   const [activeType, setActiveType] = useState<AdminEntityType>("Users");
   const [data, setData] = useState<Record<AdminEntityType, RowItem[]>>(EMPTY);
 
@@ -93,7 +56,6 @@ export const AdminPage: React.FC = () => {
   const [selectedType, setSelectedType] = useState<AdminEntityType | null>(null);
 
   const opRef = useRef<OverlayPanel>(null);
-
   const [editOpen, setEditOpen] = useState(false);
 
   const [targetAppUserEmail, setTargetAppUserEmail] = useState("");
@@ -111,7 +73,6 @@ export const AdminPage: React.FC = () => {
   const [artPieceTypes, setApTypes] = useState<string[]>([]);
   const [artPieceStyles, setApStyles] = useState<string[]>([]);
   const [artPieceTextLanguages, setApLangs] = useState<string[]>([]);
-
   const [containsTextTouched, setContainsTextTouched] = useState(false);
 
   useEffect(() => {
@@ -172,6 +133,9 @@ export const AdminPage: React.FC = () => {
     [styles.tile, isActive ? styles.tileActive : styles.tileInactive, loading ? styles.tileLoading : ""]
       .filter(Boolean)
       .join(" ");
+
+  const tileCountClass = (isActive: boolean) =>
+    [styles.tileCount, isActive ? styles.tileCountActive : styles.tileCountInactive].join(" ");
 
   const deleteEndpointFor = (type: AdminEntityType, id: string) => {
     switch (type) {
@@ -423,30 +387,34 @@ export const AdminPage: React.FC = () => {
       <Toast ref={toast} position="top-right" />
 
       <Card title="Admin Page" className={styles.cardShell}>
-        {error ? <div style={{ marginBottom: 10, color: "#ffd1d1", fontWeight: 700 }}>Error: {error}</div> : null}
+        {error ? <div className={styles.adminError}>Error: {error}</div> : null}
 
         <div className={styles.tilesGrid2}>
           {topTiles.map((t) => (
-            <div key={t.type} className={tileClass(activeType === t.type)} onClick={() => setActiveType(t.type)} role="button">
-              <div style={{ fontSize: 14 }}>{t.type}</div>
-              <div style={{ fontSize: 12, opacity: activeType === t.type ? 0.85 : 0.9 }}>
+            <div
+              key={t.type}
+              className={tileClass(activeType === t.type)}
+              onClick={() => setActiveType(t.type)}
+              role="button"
+            >
+              <div className={styles.tileTitle}>{t.type}</div>
+              <div className={tileCountClass(activeType === t.type)}>
                 {t.count} items {loading ? "(loading...)" : ""}
               </div>
             </div>
           ))}
         </div>
 
-        <Divider style={{ opacity: 0.35 }} />
+        <Divider className={styles.dividerSoft} />
 
         <div className={styles.tilesGrid2}>
           {(Object.keys(data) as AdminEntityType[]).map((t) => (
             <div key={t} className={styles.listPanel}>
               <div className={styles.listHeader}>
-                <div style={{ fontWeight: 800 }}>{t}</div>
-                <Button icon="pi pi-plus" rounded text style={{ color: "white" }} onClick={() => {}} tooltip="Dodaj (TODO)" disabled />
+                <div className={styles.adminListTitle}>{t}</div>
               </div>
 
-              <div style={{ marginTop: 8 }}>
+              <div className={styles.mt8}>
                 <DataTable
                   value={data[t]}
                   size="small"
@@ -457,6 +425,7 @@ export const AdminPage: React.FC = () => {
                     setActiveType(t);
                     onRowClick(t, e);
                   }}
+                  className={styles.adminTable} 
                   style={{ background: "transparent" }}
                   emptyMessage={loading ? "Loading..." : "Brak danych"}
                 >
@@ -480,21 +449,26 @@ export const AdminPage: React.FC = () => {
           <Menu model={menuModel} />
         </OverlayPanel>
 
-        <Dialog header={`Edytuj: ${activeType}`} visible={editOpen} style={{ width: "min(520px, 92vw)" }} onHide={() => setEditOpen(false)}>
+        <Dialog
+          header={`Edytuj: ${activeType}`}
+          visible={editOpen}
+          className={styles.dialogNarrow}
+          onHide={() => setEditOpen(false)}
+        >
           {activeType === "Users" && (
-            <div style={{ display: "grid", gap: 14 }}>
-              <div style={{ display: "grid", gap: 6 }}>
-                <small style={{ opacity: 0.85, fontWeight: 700 }}>Email</small>
+            <div className={styles.dialogGrid14}>
+              <div className={styles.fieldBlock}>
+                <small className={styles.fieldLabelSmall}>Email</small>
                 <InputText value={appUserEmail} onChange={(e) => setUserEmail(e.target.value)} className={styles.fullWidth} />
               </div>
 
-              <div style={{ display: "grid", gap: 6 }}>
-                <small style={{ opacity: 0.85, fontWeight: 700 }}>Name</small>
+              <div className={styles.fieldBlock}>
+                <small className={styles.fieldLabelSmall}>Name</small>
                 <InputText value={appUserName} onChange={(e) => setUserName(e.target.value)} className={styles.fullWidth} />
               </div>
 
-              <div style={{ display: "grid", gap: 6 }}>
-                <small style={{ opacity: 0.85, fontWeight: 700 }}>Languages spoken</small>
+              <div className={styles.fieldBlock}>
+                <small className={styles.fieldLabelSmall}>Languages spoken</small>
                 <MultiSelect
                   value={appUserLanguagesSpoken}
                   onChange={(e) => setAppUserLanguagesSpoken(e.value)}
@@ -505,37 +479,37 @@ export const AdminPage: React.FC = () => {
                 />
               </div>
 
-              <div style={{ display: "grid", gap: 6 }}>
-                <small style={{ opacity: 0.85, fontWeight: 700 }}>Password</small>
+              <div className={styles.fieldBlock}>
+                <small className={styles.fieldLabelSmall}>Password</small>
                 <InputText type="password" value={appUserPassword} onChange={(e) => setUserPassword(e.target.value)} className={styles.fullWidth} />
               </div>
             </div>
           )}
 
           {activeType === "ArtPieces" && (
-            <div style={{ display: "grid", gap: 14 }}>
-              <div style={{ display: "grid", gap: 6 }}>
-                <small style={{ opacity: 0.85, fontWeight: 700 }}>Name</small>
+            <div className={styles.dialogGrid14}>
+              <div className={styles.fieldBlock}>
+                <small className={styles.fieldLabelSmall}>Name</small>
                 <InputText value={artPieceName} onChange={(e) => setApName(e.target.value)} className={styles.fullWidth} />
               </div>
 
-              <div style={{ display: "grid", gap: 6 }}>
-                <small style={{ opacity: 0.85, fontWeight: 700 }}>Address</small>
+              <div className={styles.fieldBlock}>
+                <small className={styles.fieldLabelSmall}>Address</small>
                 <InputText value={artPieceAddress} onChange={(e) => setApAddress(e.target.value)} className={styles.fullWidth} />
               </div>
 
-              <div style={{ display: "grid", gap: 6 }}>
-                <small style={{ opacity: 0.85, fontWeight: 700 }}>Description</small>
+              <div className={styles.fieldBlock}>
+                <small className={styles.fieldLabelSmall}>Description</small>
                 <InputText value={artPieceUserDescription} onChange={(e) => setApUserDescription(e.target.value)} className={styles.fullWidth} />
               </div>
 
-              <div style={{ display: "grid", gap: 6 }}>
-                <small style={{ opacity: 0.85, fontWeight: 700 }}>Position</small>
+              <div className={styles.fieldBlock}>
+                <small className={styles.fieldLabelSmall}>Position</small>
                 <InputText value={artPiecePosition} onChange={(e) => setApPosition(e.target.value)} className={styles.fullWidth} />
               </div>
 
-              <div style={{ display: "grid", gap: 8 }}>
-                <small style={{ opacity: 0.85, fontWeight: 700 }}>Contains text</small>
+              <div className={styles.fieldToggleStack}>
+                <small className={styles.fieldLabelSmall}>Contains text</small>
                 <ToggleButton
                   checked={artPieceContainsText}
                   onChange={(e) => {
@@ -550,8 +524,8 @@ export const AdminPage: React.FC = () => {
               </div>
 
               {artPieceContainsText && (
-                <div style={{ display: "grid", gap: 6 }}>
-                  <small style={{ opacity: 0.85, fontWeight: 700 }}>Text languages</small>
+                <div className={styles.fieldBlock}>
+                  <small className={styles.fieldLabelSmall}>Text languages</small>
                   <MultiSelect
                     value={artPieceTextLanguages}
                     onChange={(e) => setApLangs(e.value)}
@@ -563,8 +537,8 @@ export const AdminPage: React.FC = () => {
                 </div>
               )}
 
-              <div style={{ display: "grid", gap: 6 }}>
-                <small style={{ opacity: 0.85, fontWeight: 700 }}>Types</small>
+              <div className={styles.fieldBlock}>
+                <small className={styles.fieldLabelSmall}>Types</small>
                 <MultiSelect
                   value={artPieceTypes}
                   onChange={(e) => setApTypes(e.value)}
@@ -575,8 +549,8 @@ export const AdminPage: React.FC = () => {
                 />
               </div>
 
-              <div style={{ display: "grid", gap: 6 }}>
-                <small style={{ opacity: 0.85, fontWeight: 700 }}>Styles</small>
+              <div className={styles.fieldBlock}>
+                <small className={styles.fieldLabelSmall}>Styles</small>
                 <MultiSelect
                   value={artPieceStyles}
                   onChange={(e) => setApStyles(e.value)}
@@ -589,7 +563,7 @@ export const AdminPage: React.FC = () => {
             </div>
           )}
 
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
+          <div className={styles.dialogActions}>
             <Button label="Cancel" severity="secondary" onClick={() => setEditOpen(false)} />
             <Button label="Save" icon="pi pi-check" onClick={saveEdit} />
           </div>

@@ -35,6 +35,7 @@ export const DISTRICT_OPTIONS = [
   { label: "Stare Miasto", value: "Stare Miasto" },
   { label: "Nowe Miasto", value: "Nowe Miasto" },
   { label: "Wilda", value: "Wilda" },
+  { label: "Łazarz", value: "Łazarz" },
 ] as const;
 
 export const NATIONALITY_OPTIONS = [

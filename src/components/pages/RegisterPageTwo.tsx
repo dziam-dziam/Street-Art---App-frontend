@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from "react";
-import { Card } from "primereact/card";
 import { InputNumber } from "primereact/inputnumber";
 import { MultiSelect } from "primereact/multiselect";
 import { Button } from "primereact/button";
@@ -8,6 +7,8 @@ import { Column } from "primereact/column";
 import { Divider } from "primereact/divider";
 import { Dropdown } from "primereact/dropdown";
 import { useNavigate, useLocation } from "react-router-dom";
+import type { RegisterDto } from "../dto/auth/RegisterDto";
+import type { AddCommuteDto } from "../dto/commute/AddCommuteDto";
 
 import streetArtBrown from "../images/streetArtBrown.jpeg";
 import styles from "../../styles/pages.module.css";
@@ -16,26 +17,6 @@ import { AuthShell } from "../../widgets/auth/AutoShell";
 import { AuthImagePanel } from "../../widgets/auth/ImagePanel";
 
 import { DISTRICT_OPTIONS, HOUR_OPTIONS, TRANSPORT_OPTIONS } from "../constants/options";
-
-type MeansOfTransport = (typeof TRANSPORT_OPTIONS)[number]["value"];
-
-export type RegisterDto = {
-  appUserName: string;
-  appUserEmail: string;
-  appUserPassword: string;
-  appUserNationality: string;
-  appUserLanguagesSpoken: string[];
-  appUserCity: string;
-  appUserLiveInDistrict: string;
-};
-
-export type AddCommuteDto = {
-  commuteThroughDistrictName: string;
-  commuteTripsPerWeek: number;
-  commuteStartHour: number;
-  commuteStopHour: number;
-  commuteMeansOfTransport: MeansOfTransport[];
-};
 
 export const RegisterPageTwo: React.FC = () => {
   const navigate = useNavigate();

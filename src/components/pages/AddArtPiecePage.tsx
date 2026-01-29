@@ -13,40 +13,7 @@ import styles from "../../styles/pages.module.css";
 
 import { AddArtPiecePhotoPanel } from "../../widgets/artpiece/AddArtPieceWidgets";
 import { DISTRICT_OPTIONS, ART_TYPE_OPTIONS, ART_STYLE_OPTIONS, LANGUAGE_OPTIONS } from "../constants/options";
-
-type ArtPieceTypes =
-  | "GRAFFITI_TAG"
-  | "GRAFFITI_PIECE"
-  | "STENCIL"
-  | "WHEAT_PASTE_POSTER"
-  | "STICKER"
-  | "MURAL"
-  | "INSTALLATION_3D";
-
-type ArtPieceStyles =
-  | "POLITICAL"
-  | "RELIGIOUS"
-  | "SOCIAL_COMMENTARY"
-  | "HUMOR"
-  | "LOVE_ROMANCE"
-  | "HOMESICKNESS"
-  | "PHILOSOPHICAL"
-  | "ACTIVISM"
-  | "ANTI_CONSUMERISM"
-  | "COMMERCIAL";
-
-type AddArtPieceDto = {
-  artPieceAddress: string;
-  artPieceName: string;
-  artPieceContainsText: boolean;
-  artPiecePosition: string;
-  artPieceUserDescription: string;
-  artPieceDistrict: string;
-  artPieceCity: string;
-  artPieceTypes: ArtPieceTypes[];
-  artPieceStyles: ArtPieceStyles[];
-  artPieceTextLanguages: string[];
-};
+import type { AddArtPieceDto } from "../dto/artpiece/AddArtPieceDto";
 
 export const AddArtPiecePage: React.FC = () => {
   const navigate = useNavigate();

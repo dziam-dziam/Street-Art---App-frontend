@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { Card } from "primereact/card";
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
 import { MultiSelect } from "primereact/multiselect";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 import { useNavigate } from "react-router-dom";
+import type { RegisterDto } from "../dto/auth/RegisterDto";
+
 
 import streetArtBlue from "../images/streetArtBlue.jpeg";
 import styles from "../../styles/pages.module.css";
@@ -14,16 +15,6 @@ import { AuthShell } from "../../widgets/auth/AutoShell";
 import { AuthImagePanel } from "../../widgets/auth/ImagePanel";
 
 import { LANGUAGE_OPTIONS, DISTRICT_OPTIONS, NATIONALITY_OPTIONS } from "../constants/options";
-
-export type RegisterDto = {
-  appUserName: string;
-  appUserEmail: string;
-  appUserPassword: string;
-  appUserNationality: string;
-  appUserLanguagesSpoken: string[];
-  appUserCity: string;
-  appUserLiveInDistrict: string;
-};
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();

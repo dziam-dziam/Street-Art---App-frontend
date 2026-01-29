@@ -1,4 +1,3 @@
-/* Layouty / tła */
 .pageCenter {
   min-height: 100vh;
   display: grid;
@@ -14,7 +13,6 @@
   border-radius: 16px;
 }
 
-/* Siatki */
 .twoColGrid {
   display: grid;
   grid-template-columns: 0.95fr 1.05fr;
@@ -39,7 +37,6 @@
   min-height: 520px;
 }
 
-/* Sekcje i elementy UI */
 .panelTitle {
   font-weight: 800;
   margin-bottom: 10px;
@@ -448,4 +445,96 @@
   color: #1b1b1b;
   font-weight: 700;
   padding-inline: 26px;
+}
+/* ===== AdminPage extras ===== */
+
+.adminError {
+  margin-bottom: 10px;
+  color: #ffd1d1;
+  font-weight: 700;
+}
+
+.dividerSoft {
+  opacity: 0.35;
+}
+
+.tileTitle {
+  font-size: 14px;
+}
+
+.tileCount {
+  font-size: 12px;
+}
+
+.tileCountActive {
+  opacity: 0.85;
+}
+
+.tileCountInactive {
+  opacity: 0.9;
+}
+
+.adminListTitle {
+  font-weight: 800;
+}
+
+.iconWhite {
+  color: white;
+}
+
+.mt8 {
+  margin-top: 8px;
+}
+
+.dialogNarrow {
+  width: min(520px, 92vw);
+}
+
+.dialogGrid14 {
+  display: grid;
+  gap: 14px;
+}
+
+.fieldBlock {
+  display: grid;
+  gap: 6px;
+}
+
+.fieldLabelSmall {
+  opacity: 0.85;
+  font-weight: 700;
+}
+
+.fieldToggleStack {
+  display: grid;
+  gap: 8px;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* AdminPage: usuń biały pasek nagłówka DataTable (thead) */
+.adminTable :global(.p-datatable-thead) {
+  display: none;
+}
+
+/* PrimeReact czasem zostawia "scrollable header" jako biały pasek */
+.adminTable :global(.p-datatable-scrollable-header),
+.adminTable :global(.p-datatable-scrollable-header-box) {
+  display: none;
+}
+
+/* Upewnij się, że wrapper nie dodaje białego tła */
+.adminTable :global(.p-datatable-wrapper) {
+  background: transparent;
+}
+
+/* Opcjonalnie: tło komórek i border żeby pasowały do Twojego UI */
+.adminTable :global(.p-datatable-tbody > tr > td) {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.12);
 }

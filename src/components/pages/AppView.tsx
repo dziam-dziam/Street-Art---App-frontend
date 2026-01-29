@@ -14,23 +14,15 @@ import L from "leaflet";
 import { GeoJSON, useMap } from "react-leaflet";
 import poz from "../assets/poznan.json";
 import { Toast } from "primereact/toast";
-
-type DistrictName = "Jeżyce" | "Stare Miasto" | "Grunwald" | "Wilda" | "Łazarz";
+import type { ArtPieceMapPointDto } from "../dto/artpiece/ArtPieceMapPointDto";
+import { DISTRICT_OPTIONS} from "../constants/options";
+type DistrictName = (typeof DISTRICT_OPTIONS)[number]["value"];
 
 type ArtPoint = {
   id: string;
   title: string;
   address: string;
   district: DistrictName;
-  lat: number;
-  lng: number;
-};
-
-type ArtPieceMapPointDto = {
-  id: number;
-  title: string;
-  address: string;
-  district: string;
   lat: number;
   lng: number;
 };
