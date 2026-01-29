@@ -1,12 +1,14 @@
 import React, { useState } from "react";
-import { Card } from "primereact/card";
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
 import { Button } from "primereact/button";
 import { useNavigate } from "react-router-dom";
-import streetArtGreen from "../images/streetArtGreen.jpeg"; 
+
+import streetArtGreen from "../images/streetArtGreen.jpeg";
 import styles from "../../styles/pages.module.css";
 
+import { AuthShell } from "../../widgets/auth/AutoShell";
+import { AuthImagePanel } from "../../widgets/auth/ImagePanel";
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -17,36 +19,35 @@ export const LoginPage: React.FC = () => {
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const body = { appUserEmail: appUserEmail, appUserPassword: appUserPassword };
+    const body = { appUserEmail, appUserPassword };
     console.log("LOGIN BODY:\n", JSON.stringify(body, null, 2));
+
     const url = new URL("http://localhost:8080/auth/login");
-    try{
+    try {
       const res = await fetch(url.toString(), {
         method: "POST",
-        headers: { "Content-Type": "application/json; charset=UTF-8"},
+        headers: { "Content-Type": "application/json; charset=UTF-8" },
         body: JSON.stringify(body),
         credentials: "include",
       });
+
       if (!res.ok) {
         alert("Login failed. Please check your credentials and try again.");
         throw new Error(`HTTP error by login! status: ${res.status}`);
       }
-        const data = await res.json().catch(() => null);
-    console.log("Response from server:\n", data);
-    navigate("/app", { replace: true });
+
+      const data = await res.json().catch(() => null);
+      console.log("Response from server:\n", data);
+      navigate("/app", { replace: true });
     } catch (err) {
       console.error("Fetch error:", err);
     }
-  }
+  };
 
-
- return (
-  <div className={styles.authBg}>
-    <Card className={styles.authCardLogin}>
+  return (
+    <AuthShell cardClassName={styles.authCardLogin}>
       <div className={styles.authGrid2}>
-        <div className={styles.imagePanel}>
-          <img src={streetArtGreen} alt="street art" className={styles.imageFill420} />
-        </div>
+        <AuthImagePanel src={streetArtGreen} alt="street art" imgClassName={styles.imageFill420} />
 
         <div className={styles.formRightPad}>
           <div className={styles.headline}>
@@ -60,8 +61,7 @@ export const LoginPage: React.FC = () => {
               value={appUserEmail}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
-              className={styles.fullWidth}
-              style={{ borderRadius: 8 }}
+              className={`${styles.fullWidth} ${styles.radius10}`}
             />
 
             <Password
@@ -88,8 +88,6 @@ export const LoginPage: React.FC = () => {
           </form>
         </div>
       </div>
-    </Card>
-  </div>
-);
-
+    </AuthShell>
+  );
 };

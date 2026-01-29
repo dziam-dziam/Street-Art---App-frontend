@@ -6,10 +6,18 @@ import { Button } from "primereact/button";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Divider } from "primereact/divider";
-import streetArtBrown from "../images/streetArtBrown.jpeg";
-import { useNavigate, useLocation } from "react-router-dom";
 import { Dropdown } from "primereact/dropdown";
+import { useNavigate, useLocation } from "react-router-dom";
+
+import streetArtBrown from "../images/streetArtBrown.jpeg";
 import styles from "../../styles/pages.module.css";
+
+import { AuthShell } from "../../widgets/auth/AutoShell";
+import { AuthImagePanel } from "../../widgets/auth/ImagePanel";
+
+import { DISTRICT_OPTIONS, HOUR_OPTIONS, TRANSPORT_OPTIONS } from "../constants/options";
+
+type MeansOfTransport = (typeof TRANSPORT_OPTIONS)[number]["value"];
 
 export type RegisterDto = {
   appUserName: string;
@@ -21,15 +29,6 @@ export type RegisterDto = {
   appUserLiveInDistrict: string;
 };
 
-export type MeansOfTransport =
-  | "WALK"
-  | "BIKE"
-  | "CAR"
-  | "TRAM"
-  | "BUS"
-  | "TRAIN"
-  | "METRO";
-
 export type AddCommuteDto = {
   commuteThroughDistrictName: string;
   commuteTripsPerWeek: number;
@@ -38,23 +37,11 @@ export type AddCommuteDto = {
   commuteMeansOfTransport: MeansOfTransport[];
 };
 
-export const RegisterPageTwo: React.FC = () => { 
-
-  const districtOptions = useMemo(
-  () => [
-    { label: "Jeżyce", value: "Jeżyce" },
-    { label: "Grunwald", value: "Grunwald" },
-    { label: "Stare Miasto", value: "Stare Miasto" },
-    { label: "Nowe Miasto", value: "Nowe Miasto" },
-    { label: "Wilda", value: "Wilda" },
-  ],
-  []
-);
-  
+export const RegisterPageTwo: React.FC = () => {
   const navigate = useNavigate();
-    const location = useLocation();
+  const location = useLocation();
 
-    const registerData = location.state as RegisterDto | undefined;
+  const registerData = location.state as RegisterDto | undefined;
 
   const [commuteForm, setCommuteForm] = useState<AddCommuteDto>({
     commuteThroughDistrictName: "",
@@ -66,28 +53,6 @@ export const RegisterPageTwo: React.FC = () => {
 
   const [commutes, setCommutes] = useState<AddCommuteDto[]>([]);
 
-const hourOptions = useMemo(
-  () =>
-    Array.from({ length: 24 }, (_, h) => ({
-      label: `${String(h).padStart(2, "0")}:00`,
-      value: h,
-    })),
-  []
-);
-
-  const transportOptions = useMemo(
-    () => [
-      { label: "Walk", value: "WALK" },
-      { label: "Bike", value: "BIKE" },
-      { label: "Car", value: "CAR" },
-      { label: "Tram", value: "TRAM" },
-      { label: "Bus", value: "BUS" },
-      { label: "Train", value: "TRAIN" },
-      { label: "Metro", value: "METRO" },
-    ],
-    []
-  );
-
   const previewRows = useMemo(() => {
     const maskedPassword = registerData?.appUserPassword ? "••••••••" : "";
     return [
@@ -97,10 +62,7 @@ const hourOptions = useMemo(
       { label: "Nationality", value: registerData?.appUserNationality },
       { label: "City", value: registerData?.appUserCity },
       { label: "Live in district", value: registerData?.appUserLiveInDistrict },
-      {
-        label: "Languages",
-        value: (registerData?.appUserLanguagesSpoken ?? []).join(", "),
-      },
+      { label: "Languages", value: (registerData?.appUserLanguagesSpoken ?? []).join(", ") },
     ];
   }, [registerData]);
 
@@ -124,14 +86,13 @@ const hourOptions = useMemo(
 
     setCommutes((prev) => [...prev, cleaned]);
 
-    setCommuteForm((p) => ({
-      ...p,
+    setCommuteForm({
       commuteThroughDistrictName: "",
       commuteTripsPerWeek: 1,
       commuteStartHour: 8,
       commuteStopHour: 17,
       commuteMeansOfTransport: [],
-    }));
+    });
   };
 
   const removeCommute = (index: number) => {
@@ -140,52 +101,51 @@ const hourOptions = useMemo(
 
   const finalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!registerData?.appUserEmail) {
       alert("Brak appUserEmail (nie przeszedł ze strony 1).");
       return;
     }
 
     if (commutes.length === 0) {
-    alert("Dodaj przynajmniej jeden commute (kliknij Add commute).");
-    return;
-  }
-
-  const lastCommute = commutes[commutes.length - 1];
-    
-    const url = new URL("http://localhost:8080/auth/addCommute");
-    url.searchParams.set("appUserEmail", registerData.appUserEmail);
-    try {
-    const res = await fetch(url.toString(), {
-      method: "POST",
-      headers: { "Content-Type": "application/json; charset=UTF-8" },
-      body: JSON.stringify(lastCommute),
-    });
-
-    if (!res.ok) {
-      alert(`Błąd ${res.status}: ${res.statusText}`);
-      throw new Error(`HTTP error! status: ${res.status}`);
+      alert("Dodaj przynajmniej jeden commute (kliknij Add commute).");
+      return;
     }
 
-    const data = await res.json().catch(() => null);
-    console.log("Response from server:\n", data);
+    const lastCommute = commutes[commutes.length - 1];
 
-    navigate("/login", { replace: true });
-  } catch (err) {
-    console.error("Fetch error:", err);
-  }
-}
+    const url = new URL("http://localhost:8080/auth/addCommute");
+    url.searchParams.set("appUserEmail", registerData.appUserEmail);
+
+    try {
+      const res = await fetch(url.toString(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=UTF-8" },
+        body: JSON.stringify(lastCommute),
+      });
+
+      if (!res.ok) {
+        alert(`Błąd ${res.status}: ${res.statusText}`);
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json().catch(() => null);
+      console.log("Response from server:\n", data);
+
+      navigate("/login", { replace: true });
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
+  };
 
   const isAddDisabled =
     !commuteForm.commuteThroughDistrictName.trim() ||
     (commuteForm.commuteStopHour ?? 0) < (commuteForm.commuteStartHour ?? 0);
 
-return (
-  <div className={styles.authBg}>
-    <Card title="Register Page - 2" className={styles.authCardRegister}>
+  return (
+    <AuthShell title="Sign Up - Add Commutes" cardClassName={styles.authCardRegister}>
       <div className={styles.registerGrid}>
-        <div className={styles.imagePanel} style={{ minHeight: 420 }}>
-          <img src={streetArtBrown} alt="art" className={styles.imageFill420} />
-        </div>
+        <AuthImagePanel src={streetArtBrown} alt="art" imgClassName={styles.imageFill420} />
 
         <div className={styles.stackCol}>
           <div className={styles.previewPanel}>
@@ -211,10 +171,8 @@ return (
                 <label className={styles.fieldLabel}>Commute through district</label>
                 <Dropdown
                   value={commuteForm.commuteThroughDistrictName}
-                  options={districtOptions}
-                  onChange={(e) =>
-                    setCommuteForm((p) => ({ ...p, commuteThroughDistrictName: e.value ?? "" }))
-                  }
+                  options={DISTRICT_OPTIONS as any}
+                  onChange={(e) => setCommuteForm((p) => ({ ...p, commuteThroughDistrictName: e.value ?? "" }))}
                   placeholder="Select district"
                   className={styles.fullWidth}
                   filter
@@ -227,9 +185,7 @@ return (
                   <label className={styles.fieldLabel}>Trips per week</label>
                   <InputNumber
                     value={commuteForm.commuteTripsPerWeek}
-                    onValueChange={(e) =>
-                      setCommuteForm((p) => ({ ...p, commuteTripsPerWeek: Number(e.value ?? 0) }))
-                    }
+                    onValueChange={(e) => setCommuteForm((p) => ({ ...p, commuteTripsPerWeek: Number(e.value ?? 0) }))}
                     min={0}
                     max={50}
                     className={styles.fullWidth}
@@ -241,10 +197,8 @@ return (
                   <label className={styles.fieldLabel}>Means of transport</label>
                   <MultiSelect
                     value={commuteForm.commuteMeansOfTransport}
-                    options={transportOptions}
-                    onChange={(e) =>
-                      setCommuteForm((p) => ({ ...p, commuteMeansOfTransport: e.value }))
-                    }
+                    options={TRANSPORT_OPTIONS as any}
+                    onChange={(e) => setCommuteForm((p) => ({ ...p, commuteMeansOfTransport: e.value }))}
                     display="chip"
                     placeholder="Select transport"
                     className={styles.fullWidth}
@@ -257,10 +211,8 @@ return (
                   <label className={styles.fieldLabel}>Start time</label>
                   <Dropdown
                     value={commuteForm.commuteStartHour}
-                    options={hourOptions}
-                    onChange={(e) =>
-                      setCommuteForm((p) => ({ ...p, commuteStartHour: Number(e.value ?? 0) }))
-                    }
+                    options={HOUR_OPTIONS as any}
+                    onChange={(e) => setCommuteForm((p) => ({ ...p, commuteStartHour: Number(e.value ?? 0) }))}
                     placeholder="00:00"
                     className={styles.fullWidth}
                   />
@@ -270,10 +222,8 @@ return (
                   <label className={styles.fieldLabel}>Stop time</label>
                   <Dropdown
                     value={commuteForm.commuteStopHour}
-                    options={hourOptions}
-                    onChange={(e) =>
-                      setCommuteForm((p) => ({ ...p, commuteStopHour: Number(e.value ?? 0) }))
-                    }
+                    options={HOUR_OPTIONS as any}
+                    onChange={(e) => setCommuteForm((p) => ({ ...p, commuteStopHour: Number(e.value ?? 0) }))}
                     placeholder="00:00"
                     className={styles.fullWidth}
                   />
@@ -281,63 +231,46 @@ return (
               </div>
 
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                <Button
-                  type="button"
-                  label="Add commute"
-                  icon="pi pi-plus"
-                  onClick={addCommute}
-                  disabled={isAddDisabled}
-                />
+                <Button type="button" label="Add commute" icon="pi pi-plus" onClick={addCommute} disabled={isAddDisabled} />
               </div>
 
               {(commuteForm.commuteStopHour ?? 0) < (commuteForm.commuteStartHour ?? 0) && (
-                <small style={{ color: "#ffd6d6" }}>
-                  Stop time nie może być wcześniejszy niż Start time.
-                </small>
+                <small style={{ color: "#ffd6d6" }}>Stop time nie może być wcześniejszy niż Start time.</small>
               )}
+
+              <Divider style={{ margin: "16px 0", opacity: 0.4 }} />
+
+              <div style={{ fontWeight: 700, marginBottom: 10 }}>Twoje commutes</div>
+
+              <div className={styles.tableShell}>
+                <DataTable
+                  value={commutes.map((c, idx) => ({ ...c, _idx: idx }))}
+                  emptyMessage="No commutes added yet."
+                  size="small"
+                  style={{ background: "transparent" }}
+                >
+                  <Column field="commuteThroughDistrictName" header="District" />
+                  <Column field="commuteTripsPerWeek" header="Trips/week" />
+                  <Column field="commuteStartHour" header="Start" />
+                  <Column field="commuteStopHour" header="Stop" />
+                  <Column header="Transport" body={(row) => (row.commuteMeansOfTransport ?? []).join(", ")} />
+                  <Column
+                    header=""
+                    body={(row) => (
+                      <Button type="button" icon="pi pi-trash" severity="danger" text onClick={() => removeCommute(row._idx)} />
+                    )}
+                    style={{ width: 60 }}
+                  />
+                </DataTable>
+              </div>
             </div>
+          </div>
 
-            <Divider style={{ margin: "16px 0", opacity: 0.4 }} />
-
-            <div className={styles.sectionTitle}>Twoje commutes</div>
-
-            <div className={styles.tableShell}>
-              <DataTable
-                value={commutes.map((c, idx) => ({ ...c, _idx: idx }))}
-                emptyMessage="No commutes added yet."
-                size="small"
-                style={{ background: "transparent" }}
-              >
-                <Column field="commuteThroughDistrictName" header="District" />
-                <Column field="commuteTripsPerWeek" header="Trips/week" />
-                <Column field="commuteStartHour" header="Start" />
-                <Column field="commuteStopHour" header="Stop" />
-                <Column header="Transport" body={(row) => (row.commuteMeansOfTransport ?? []).join(", ")} />
-                <Column
-                  header=""
-                  body={(row) => (
-                    <Button
-                      type="button"
-                      icon="pi pi-trash"
-                      severity="danger"
-                      text
-                      onClick={() => removeCommute(row._idx)}
-                    />
-                  )}
-                  style={{ width: 60 }}
-                />
-              </DataTable>
-            </div>
+          <div className={styles.centerRow}>
+            <Button label="Register" icon="pi pi-check" onClick={finalSubmit} className={styles.registerBtnGreen} />
           </div>
         </div>
       </div>
-
-      <div className={styles.centerRow}>
-        <Button label="Register" icon="pi pi-check" onClick={finalSubmit} className={styles.registerBtnGreen} />
-      </div>
-    </Card>
-  </div>
-);
-
+    </AuthShell>
+  );
 };
-

@@ -1,13 +1,19 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { Card } from "primereact/card";
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
 import { MultiSelect } from "primereact/multiselect";
 import { Button } from "primereact/button";
-import { useNavigate } from "react-router-dom";
-import streetArtBlue from "../images/streetArtBlue.jpeg";
 import { Dropdown } from "primereact/dropdown";
+import { useNavigate } from "react-router-dom";
+
+import streetArtBlue from "../images/streetArtBlue.jpeg";
 import styles from "../../styles/pages.module.css";
+
+import { AuthShell } from "../../widgets/auth/AutoShell";
+import { AuthImagePanel } from "../../widgets/auth/ImagePanel";
+
+import { LANGUAGE_OPTIONS, DISTRICT_OPTIONS, NATIONALITY_OPTIONS } from "../constants/options";
 
 export type RegisterDto = {
   appUserName: string;
@@ -22,32 +28,6 @@ export type RegisterDto = {
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const districtOptions = useMemo(
-  () => [
-    { label: "Jeżyce", value: "Jeżyce" },
-    { label: "Grunwald", value: "Grunwald" },
-    { label: "Stare Miasto", value: "Stare Miasto" },
-    { label: "Nowe Miasto", value: "Nowe Miasto" },
-    { label: "Wilda", value: "Wilda" },
-  ],
-  []
-);
-
-const nationalityOptions = useMemo(
-  () => [
-    { label: "Polish", value: "Polish" },
-    { label: "German", value: "German" },
-    { label: "Spanish", value: "Spanish" },
-    { label: "French", value: "French" },
-    { label: "English", value: "English" },
-    { label: "Ukrainian", value: "Ukrainian" },
-    { label: "Other", value: "Other" },
-  ],
-  []
-);
-
-
-
   const [form, setForm] = useState<RegisterDto>({
     appUserName: "",
     appUserEmail: "",
@@ -58,37 +38,24 @@ const nationalityOptions = useMemo(
     appUserLiveInDistrict: "",
   });
 
-  const languageOptions = useMemo(
-    () => [
-      { label: "English", value: "English" },
-      { label: "Polish", value: "Polish" },
-      { label: "Spanish", value: "Spanish" },
-      { label: "German", value: "German" },
-      { label: "French", value: "French" },
-    ],
-    []
-  );
-
-  const canGoNext =
-    form.appUserName.trim() &&
-    form.appUserEmail.trim() &&
-    form.appUserPassword.trim();
+  const canGoNext = form.appUserName.trim() && form.appUserEmail.trim() && form.appUserPassword.trim();
 
   const onNext = (e: React.FormEvent) => {
     e.preventDefault();
-      fetch("http://localhost:8080/auth/register", {
-        method: "POST",
-        body: JSON.stringify(form, null, 2),
-        headers: {
-          "Content-type": "application/json; charset=UTF-8",
-        },
-      }).then(response => {
-          if (!response.ok) {
-            alert(`Błąd ${response.status}: ${response.statusText}`);
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
+
+    fetch("http://localhost:8080/auth/register", {
+      method: "POST",
+      body: JSON.stringify(form, null, 2),
+      headers: { "Content-type": "application/json; charset=UTF-8" },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          alert(`Błąd ${response.status}: ${response.statusText}`);
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json().catch(() => null);
       })
-      .then(data => {
+      .then((data) => {
         console.log("Response from server:\n", data);
         navigate("/register/2", { state: form });
       })
@@ -97,13 +64,10 @@ const nationalityOptions = useMemo(
       });
   };
 
- return (
-  <div className={styles.authBg}>
-    <Card title="Register Page - 1" className={styles.authCardRegister}>
+  return (
+    <AuthShell title="Sign Up" cardClassName={styles.authCardRegister}>
       <div className={styles.registerGrid}>
-        <div className={styles.imagePanel} style={{ minHeight: 460 }}>
-          <img src={streetArtBlue} alt="street art" className={styles.imageFill460} />
-        </div>
+        <AuthImagePanel src={streetArtBlue} alt="street art" imgClassName={styles.imageFill460} />
 
         <form onSubmit={onNext} className={styles.formRegister}>
           <InputText
@@ -131,17 +95,11 @@ const nationalityOptions = useMemo(
           />
 
           <div className={styles.grid2}>
-            <InputText
-              value={form.appUserCity}
-              disabled
-              placeholder="City"
-              className={`${styles.fullWidth} ${styles.radius10}`}
-              style={{ opacity: 0.9 }}
-            />
+            <InputText value={form.appUserCity} disabled placeholder="City" className={`${styles.fullWidth} ${styles.radius10}`} />
 
             <Dropdown
               value={form.appUserNationality}
-              options={nationalityOptions}
+              options={NATIONALITY_OPTIONS as any}
               onChange={(e) => setForm((p) => ({ ...p, appUserNationality: e.value ?? "" }))}
               placeholder="Nationality"
               className={styles.fullWidth}
@@ -152,7 +110,7 @@ const nationalityOptions = useMemo(
 
           <Dropdown
             value={form.appUserLiveInDistrict}
-            options={districtOptions}
+            options={DISTRICT_OPTIONS as any}
             onChange={(e) => setForm((p) => ({ ...p, appUserLiveInDistrict: e.value ?? "" }))}
             placeholder="Live in district"
             className={styles.fullWidth}
@@ -162,10 +120,10 @@ const nationalityOptions = useMemo(
 
           <MultiSelect
             value={form.appUserLanguagesSpoken}
-            options={languageOptions}
+            options={LANGUAGE_OPTIONS as any}
             onChange={(e) => setForm((p) => ({ ...p, appUserLanguagesSpoken: e.value }))}
             display="chip"
-            placeholder="Languages spoken (dropdown)"
+            placeholder="Languages spoken"
             className={styles.fullWidth}
           />
 
@@ -176,12 +134,12 @@ const nationalityOptions = useMemo(
               icon="pi pi-arrow-right"
               iconPos="right"
               disabled={!canGoNext}
-              className={styles.btnRounded12Bold}
+              className={`${styles.radius10}`}
+              style={{ fontWeight: 700, paddingInline: 18 }}
             />
           </div>
         </form>
       </div>
-    </Card>
-  </div>
-);
+    </AuthShell>
+  );
 };
