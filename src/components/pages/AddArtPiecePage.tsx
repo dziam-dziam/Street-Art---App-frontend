@@ -21,6 +21,12 @@ const MAX_NAME = 50;
 const MAX_POS = 50;
 const MAX_DESC = 200;
 
+function extraCount(arr: any[] | undefined, maxShown: number) {
+  const n = Array.isArray(arr) ? arr.length : 0;
+  return Math.max(0, n - maxShown);
+}
+
+
 export const AddArtPiecePage: React.FC = () => {
   const navigate = useNavigate();
   const toast = useRef<Toast>(null);
@@ -42,15 +48,12 @@ export const AddArtPiecePage: React.FC = () => {
   const markTouched = (k: keyof AddArtPieceDto) => setTouched((p) => ({ ...p, [k]: true }));
   const showErr = (k: keyof AddArtPieceDto, errors: Errors) => Boolean(touched[k] && errors[k]);
 
-  // Address check
   const [addressStatus, setAddressStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle");
   const [addressHint, setAddressHint] = useState("");
 
-  // Photos (multi)
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviewUrls, setPhotoPreviewUrls] = useState<string[]>([]);
 
-  // cleanup object URLs on unmount / change
   useEffect(() => {
     return () => {
       photoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
@@ -377,33 +380,35 @@ const onSubmit = async (e: React.FormEvent) => {
               <InputText value={addArtPieceForm.artPieceCity} disabled placeholder="City" className={`${styles.fullWidth} ${styles.radius10}`} />
             </div>
 
-            {/* Types */}
-            <div className={styles.fieldStack}>
-              <MultiSelect
-                value={addArtPieceForm.artPieceTypes}
-                options={ART_TYPE_OPTIONS as any}
-                onChange={(e) => setForm((p) => ({ ...p, artPieceTypes: e.value }))}
-                onBlur={() => markTouched("artPieceTypes")}
-                placeholder="Art piece types"
-                display="chip"
-                className={`${styles.fullWidth} ${showErr("artPieceTypes", errors) ? "p-invalid" : ""}`}
-              />
-              {showErr("artPieceTypes", errors) ? <small className="p-error">{errors.artPieceTypes}</small> : null}
-            </div>
+{/* Types */}
+<div className={styles.fieldStack}>
+  <MultiSelect
+    value={addArtPieceForm.artPieceTypes}
+    options={ART_TYPE_OPTIONS as any}
+    onChange={(e) => setForm((p) => ({ ...p, artPieceTypes: e.value }))}
+    onBlur={() => markTouched("artPieceTypes")}
+    placeholder="Art piece types"
+    display="chip"
+    className={`${styles.fullWidth} ${showErr("artPieceTypes", errors) ? "p-invalid" : ""}`}
+  />
+  {showErr("artPieceTypes", errors) ? <small className="p-error">{errors.artPieceTypes}</small> : null}
+</div>
 
-            {/* Styles */}
-            <div className={styles.fieldStack}>
-              <MultiSelect
-                value={addArtPieceForm.artPieceStyles}
-                options={ART_STYLE_OPTIONS as any}
-                onChange={(e) => setForm((p) => ({ ...p, artPieceStyles: e.value }))}
-                onBlur={() => markTouched("artPieceStyles")}
-                placeholder="Art piece styles"
-                display="chip"
-                className={`${styles.fullWidth} ${showErr("artPieceStyles", errors) ? "p-invalid" : ""}`}
-              />
-              {showErr("artPieceStyles", errors) ? <small className="p-error">{errors.artPieceStyles}</small> : null}
-            </div>
+{/* Styles */}
+<div className={styles.fieldStack}>
+  <MultiSelect
+    value={addArtPieceForm.artPieceStyles}
+    options={ART_STYLE_OPTIONS as any}
+    onChange={(e) => setForm((p) => ({ ...p, artPieceStyles: e.value }))}
+    onBlur={() => markTouched("artPieceStyles")}
+    placeholder="Art piece styles"
+    display="chip"
+    className={`${styles.fullWidth} ${showErr("artPieceStyles", errors) ? "p-invalid" : ""}`}
+  />
+  {showErr("artPieceStyles", errors) ? <small className="p-error">{errors.artPieceStyles}</small> : null}
+</div>
+
+
 
             {/* ✅ MOVED: Contains text? is now right above languages */}
             <div className={styles.fieldStack}>

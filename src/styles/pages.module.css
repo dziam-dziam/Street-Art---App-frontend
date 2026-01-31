@@ -538,3 +538,73 @@
   background: transparent;
   border-color: rgba(255, 255, 255, 0.12);
 }
+
+/* ===== PrimeReact inputs inside our dark cards ===== */
+.cardShell :global(.p-inputtext),
+.cardShell :global(.p-inputtextarea),
+.cardShell :global(.p-dropdown),
+.cardShell :global(.p-multiselect) {
+  background: rgba(255, 255, 255, 0.95);
+  color: #1b1b1b;
+}
+
+/* label (to co widać w środku MultiSelect/Dropdown) */
+.cardShell :global(.p-multiselect-label),
+.cardShell :global(.p-dropdown-label) {
+  color: #1b1b1b;
+}
+
+/* placeholder ma być trochę jaśniejszy */
+.cardShell :global(.p-multiselect-label.p-placeholder),
+.cardShell :global(.p-dropdown-label.p-placeholder) {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+/* żeby tekst się nie rozpychał w nieskończoność */
+.cardShell :global(.p-multiselect-label) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* ===== MultiSelect chips: wrap + hide Prime overflow "+n" ===== */
+
+/* chipy mają się zawijać */
+.cardShell :global(.p-multiselect-label-container) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  overflow: visible;
+}
+
+/* nie ucinać labela (bo masz globalne ellipsis) */
+.cardShell :global(.p-multiselect-label) {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* popraw wygląd chipów */
+.cardShell :global(.p-multiselect-token) {
+  margin: 0;
+  border-radius: 999px;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+/* Najczęściej działa to: */
+.cardShell :global(.p-multiselect-items-label) {
+  display: none !important;
+}
+
+/* Czasem Prime używa innego elementu na "+n": */
+.cardShell :global(.p-multiselect-token.p-multiselect-token-more),
+.cardShell :global(.p-multiselect-token-more) {
+  display: none !important;
+}
+
+
+
+
+
+

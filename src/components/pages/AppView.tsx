@@ -373,26 +373,47 @@ export const AppView: React.FC = () => {
   {details && (
     <div style={{ display: "grid", gap: 14 }}>
       {/* Photos carousel */}
-      {details.photos?.length ? (
-        <Carousel
-          value={details.photos}
-          numVisible={1}
-          numScroll={1}
-          circular
-          itemTemplate={(p) => {
-            const src = p.downloadUrl?.startsWith("http") ? p.downloadUrl : `${BASE_URL}${p.downloadUrl ?? ""}`;
-            return (
-              <img
-                src={src}
-                alt={p.fileName ?? "photo"}
-                style={{ width: "100%", maxHeight: 380, objectFit: "cover", borderRadius: 12 }}
-              />
-            );
+{details.photos?.length ? (
+  <Carousel
+    value={details.photos}
+    numVisible={1}
+    numScroll={1}
+    circular
+    showIndicators={details.photos.length > 1}
+    showNavigators={details.photos.length > 1}
+    itemTemplate={(p) => {
+      const src = p.downloadUrl?.startsWith("http") ? p.downloadUrl : `${BASE_URL}${p.downloadUrl ?? ""}`;
+
+      return (
+        <div
+          style={{
+            width: "100%",
+            height: 360,            // ✅ stała wysokość okna
+            borderRadius: 12,
+            overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(255,255,255,0.04)", // delikatne tło, możesz usunąć
           }}
-        />
-      ) : (
-        <div style={{ opacity: 0.85 }}>(no photos)</div>
-      )}
+        >
+          <img
+            src={src}
+            alt={p.fileName ?? "photo"}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",  // ✅ dopasuj bez rozciągania
+              display: "block",
+            }}
+          />
+        </div>
+      );
+    }}
+  />
+) : (
+  <div style={{ opacity: 0.85 }}>(no photos)</div>
+)}
 
       {/* Main info */}
       <div className={styles.detailsGrid}>
