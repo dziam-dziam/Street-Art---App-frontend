@@ -15,7 +15,7 @@ import { Toast } from "primereact/toast";
 import { MultiSelect } from "primereact/multiselect";
 import { ToggleButton } from "primereact/togglebutton";
 
-import { ART_TYPE_OPTIONS, ART_STYLE_OPTIONS, LANGUAGE_OPTIONS } from "../constants/options";
+import { ART_TYPE_OPTIONS, ART_STYLE_OPTIONS, LANGUAGE_OPTIONS } from "../constants/Options";
 import type { UserEntity, ArtPieceEntity } from "../dto/admin/AdminDtos";
 
 type LanguageOption = (typeof LANGUAGE_OPTIONS)[number]["value"];

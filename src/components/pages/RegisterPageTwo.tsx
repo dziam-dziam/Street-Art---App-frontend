@@ -16,7 +16,9 @@ import styles from "../../styles/pages.module.css";
 import { AuthShell } from "../../widgets/auth/AutoShell";
 import { AuthImagePanel } from "../../widgets/auth/ImagePanel";
 
-import { DISTRICT_OPTIONS, HOUR_OPTIONS, TRANSPORT_OPTIONS } from "../constants/options";
+import { DISTRICT_OPTIONS, HOUR_OPTIONS, TRANSPORT_OPTIONS } from "../constants/Options";
+
+type CommuteErrors = Partial<Record<keyof AddCommuteDto, string>>;
 
 export const RegisterPageTwo: React.FC = () => {
   const navigate = useNavigate();
@@ -33,6 +35,7 @@ export const RegisterPageTwo: React.FC = () => {
   });
 
   const [commutes, setCommutes] = useState<AddCommuteDto[]>([]);
+  const [touchedAdd, setTouchedAdd] = useState(false);
 
   const previewRows = useMemo(() => {
     const maskedPassword = registerData?.appUserPassword ? "••••••••" : "";
@@ -47,15 +50,41 @@ export const RegisterPageTwo: React.FC = () => {
     ];
   }, [registerData]);
 
+  const validateCommute = (c: AddCommuteDto): CommuteErrors => {
+    const e: CommuteErrors = {};
+
+    const district = c.commuteThroughDistrictName?.trim() ?? "";
+    if (!district) e.commuteThroughDistrictName = "Select district.";
+
+    const trips = Number(c.commuteTripsPerWeek ?? 0);
+    if (!(trips > 0 && trips < 100)) e.commuteTripsPerWeek = "Trips per week must be > 0 and < 100.";
+
+    const start = Number(c.commuteStartHour ?? 0);
+    const stop = Number(c.commuteStopHour ?? 0);
+    if (start < 0 || start > 23) e.commuteStartHour = "Start time must be between 0 and 23.";
+    if (stop < 0 || stop > 23) e.commuteStopHour = "Stop time must be between 0 and 23.";
+
+    const transport = c.commuteMeansOfTransport ?? [];
+    if (!transport.length) e.commuteMeansOfTransport = "Select at least one means of transport.";
+
+    return e;
+  };
+
+  const commuteErrors = useMemo(() => validateCommute(commuteForm), [commuteForm]);
+
+  const isNextDay =
+    Number(commuteForm.commuteStartHour ?? 0) >= Number(commuteForm.commuteStopHour ?? 0);
+
+  const isAddDisabled = Object.keys(commuteErrors).length > 0;
+
   const addCommute = () => {
+    setTouchedAdd(true);
+    if (Object.keys(commuteErrors).length > 0) return;
+
     const d = commuteForm.commuteThroughDistrictName.trim();
-    if (!d) return;
-
-    const start = Math.max(0, Math.min(23, commuteForm.commuteStartHour ?? 0));
-    const stop = Math.max(0, Math.min(23, commuteForm.commuteStopHour ?? 0));
-    const trips = Math.max(0, Math.min(50, commuteForm.commuteTripsPerWeek ?? 0));
-
-    if (stop < start) return;
+    const start = Math.max(0, Math.min(23, Number(commuteForm.commuteStartHour ?? 0)));
+    const stop = Math.max(0, Math.min(23, Number(commuteForm.commuteStopHour ?? 0)));
+    const trips = Math.max(1, Math.min(99, Number(commuteForm.commuteTripsPerWeek ?? 1)));
 
     const cleaned: AddCommuteDto = {
       commuteThroughDistrictName: d,
@@ -74,6 +103,7 @@ export const RegisterPageTwo: React.FC = () => {
       commuteStopHour: 17,
       commuteMeansOfTransport: [],
     });
+    setTouchedAdd(false);
   };
 
   const removeCommute = (index: number) => {
@@ -103,10 +133,12 @@ export const RegisterPageTwo: React.FC = () => {
         method: "POST",
         headers: { "Content-Type": "application/json; charset=UTF-8" },
         body: JSON.stringify(lastCommute),
+        credentials: "include",
       });
 
       if (!res.ok) {
-        alert(`Błąd ${res.status}: ${res.statusText}`);
+        const raw = await res.text().catch(() => "");
+        alert(`Błąd ${res.status}: ${raw || res.statusText}`);
         throw new Error(`HTTP error! status: ${res.status}`);
       }
 
@@ -119,9 +151,7 @@ export const RegisterPageTwo: React.FC = () => {
     }
   };
 
-  const isAddDisabled =
-    !commuteForm.commuteThroughDistrictName.trim() ||
-    (commuteForm.commuteStopHour ?? 0) < (commuteForm.commuteStartHour ?? 0);
+  const showError = (key: keyof AddCommuteDto) => touchedAdd && Boolean(commuteErrors[key]);
 
   return (
     <AuthShell title="Sign Up - Add Commutes" cardClassName={styles.authCardRegister}>
@@ -153,12 +183,17 @@ export const RegisterPageTwo: React.FC = () => {
                 <Dropdown
                   value={commuteForm.commuteThroughDistrictName}
                   options={DISTRICT_OPTIONS as any}
-                  onChange={(e) => setCommuteForm((p) => ({ ...p, commuteThroughDistrictName: e.value ?? "" }))}
+                  onChange={(e) =>
+                    setCommuteForm((p) => ({ ...p, commuteThroughDistrictName: e.value ?? "" }))
+                  }
                   placeholder="Select district"
-                  className={styles.fullWidth}
+                  className={`${styles.fullWidth} ${showError("commuteThroughDistrictName") ? "p-invalid" : ""}`}
                   filter
                   showClear
                 />
+                {showError("commuteThroughDistrictName") ? (
+                  <small className="p-error">{commuteErrors.commuteThroughDistrictName}</small>
+                ) : null}
               </div>
 
               <div className={styles.grid2}>
@@ -166,12 +201,18 @@ export const RegisterPageTwo: React.FC = () => {
                   <label className={styles.fieldLabel}>Trips per week</label>
                   <InputNumber
                     value={commuteForm.commuteTripsPerWeek}
-                    onValueChange={(e) => setCommuteForm((p) => ({ ...p, commuteTripsPerWeek: Number(e.value ?? 0) }))}
-                    min={0}
-                    max={50}
-                    className={styles.fullWidth}
+                    onValueChange={(e) =>
+                      setCommuteForm((p) => ({ ...p, commuteTripsPerWeek: Number(e.value ?? 0) }))
+                    }
+                    min={1}
+                    max={99}
+                    className={`${styles.fullWidth} ${showError("commuteTripsPerWeek") ? "p-invalid" : ""}`}
                     inputStyle={{ width: "100%" }}
+                    useGrouping={false}
                   />
+                  {showError("commuteTripsPerWeek") ? (
+                    <small className="p-error">{commuteErrors.commuteTripsPerWeek}</small>
+                  ) : null}
                 </div>
 
                 <div className={styles.fieldStack}>
@@ -179,11 +220,16 @@ export const RegisterPageTwo: React.FC = () => {
                   <MultiSelect
                     value={commuteForm.commuteMeansOfTransport}
                     options={TRANSPORT_OPTIONS as any}
-                    onChange={(e) => setCommuteForm((p) => ({ ...p, commuteMeansOfTransport: e.value }))}
+                    onChange={(e) =>
+                      setCommuteForm((p) => ({ ...p, commuteMeansOfTransport: e.value }))
+                    }
                     display="chip"
                     placeholder="Select transport"
-                    className={styles.fullWidth}
+                    className={`${styles.fullWidth} ${showError("commuteMeansOfTransport") ? "p-invalid" : ""}`}
                   />
+                  {showError("commuteMeansOfTransport") ? (
+                    <small className="p-error">{commuteErrors.commuteMeansOfTransport}</small>
+                  ) : null}
                 </div>
               </div>
 
@@ -193,31 +239,45 @@ export const RegisterPageTwo: React.FC = () => {
                   <Dropdown
                     value={commuteForm.commuteStartHour}
                     options={HOUR_OPTIONS as any}
-                    onChange={(e) => setCommuteForm((p) => ({ ...p, commuteStartHour: Number(e.value ?? 0) }))}
+                    onChange={(e) =>
+                      setCommuteForm((p) => ({ ...p, commuteStartHour: Number(e.value ?? 0) }))
+                    }
                     placeholder="00:00"
-                    className={styles.fullWidth}
+                    className={`${styles.fullWidth} ${showError("commuteStartHour") ? "p-invalid" : ""}`}
                   />
+                  {showError("commuteStartHour") ? (
+                    <small className="p-error">{commuteErrors.commuteStartHour}</small>
+                  ) : null}
                 </div>
 
                 <div className={styles.fieldStack}>
-                  <label className={styles.fieldLabel}>Stop time</label>
+                  <label className={styles.fieldLabel}>
+                    {isNextDay ? "Stop Time, Next Day" : "Stop time"}
+                  </label>
                   <Dropdown
                     value={commuteForm.commuteStopHour}
                     options={HOUR_OPTIONS as any}
-                    onChange={(e) => setCommuteForm((p) => ({ ...p, commuteStopHour: Number(e.value ?? 0) }))}
+                    onChange={(e) =>
+                      setCommuteForm((p) => ({ ...p, commuteStopHour: Number(e.value ?? 0) }))
+                    }
                     placeholder="00:00"
-                    className={styles.fullWidth}
+                    className={`${styles.fullWidth} ${showError("commuteStopHour") ? "p-invalid" : ""}`}
                   />
+                  {showError("commuteStopHour") ? (
+                    <small className="p-error">{commuteErrors.commuteStopHour}</small>
+                  ) : null}
                 </div>
               </div>
 
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                <Button type="button" label="Add commute" icon="pi pi-plus" onClick={addCommute} disabled={isAddDisabled} />
+                <Button
+                  type="button"
+                  label="Add commute"
+                  icon="pi pi-plus"
+                  onClick={addCommute}
+                  disabled={isAddDisabled}
+                />
               </div>
-
-              {(commuteForm.commuteStopHour ?? 0) < (commuteForm.commuteStartHour ?? 0) && (
-                <small style={{ color: "#ffd6d6" }}>Stop time nie może być wcześniejszy niż Start time.</small>
-              )}
 
               <Divider style={{ margin: "16px 0", opacity: 0.4 }} />
 
@@ -238,7 +298,13 @@ export const RegisterPageTwo: React.FC = () => {
                   <Column
                     header=""
                     body={(row) => (
-                      <Button type="button" icon="pi pi-trash" severity="danger" text onClick={() => removeCommute(row._idx)} />
+                      <Button
+                        type="button"
+                        icon="pi pi-trash"
+                        severity="danger"
+                        text
+                        onClick={() => removeCommute(row._idx)}
+                      />
                     )}
                     style={{ width: 60 }}
                   />

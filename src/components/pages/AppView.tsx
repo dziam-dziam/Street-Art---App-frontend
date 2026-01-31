@@ -1,6 +1,8 @@
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import styles from "../../styles/pages.module.css";
 
+import { Carousel } from "primereact/carousel";
+import { Chip } from "primereact/chip";
 import { Sidebar } from "primereact/sidebar";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
@@ -15,8 +17,9 @@ import { GeoJSON, useMap } from "react-leaflet";
 import poz from "../assets/poznan.json";
 import { Toast } from "primereact/toast";
 import type { ArtPieceMapPointDto } from "../dto/artpiece/ArtPieceMapPointDto";
-import { DISTRICT_OPTIONS} from "../constants/options";
+import { DISTRICT_OPTIONS} from "../constants/Options";
 type DistrictName = (typeof DISTRICT_OPTIONS)[number]["value"];
+
 
 type ArtPoint = {
   id: string;
@@ -26,6 +29,34 @@ type ArtPoint = {
   lat: number;
   lng: number;
 };
+
+type PhotoResponseDto = {
+  id?: number;
+  fileName?: string;
+  contentType?: string;
+  sizeBytes?: number;
+  downloadUrl?: string;
+};
+
+type ArtPieceDetailsDto = {
+  id: number;
+
+  artPieceAddress: string;
+  artPieceName: string;
+  artPieceContainsText: boolean;
+  artPiecePosition: string;
+  artPieceUserDescription: string;
+
+  districtName?: string;
+  cityName?: string;
+
+  artPieceTextLanguages: string[];
+  artPieceTypes: string[];
+  artPieceStyles: string[];
+
+  photos: PhotoResponseDto[];
+};
+
 
 const BASE_URL = "http://localhost:8080";
 
@@ -85,6 +116,38 @@ function pickPoznanBoundary(fc: any) {
 
 export const AppView: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const [details, setDetails] = useState<ArtPieceDetailsDto | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [detailsError, setDetailsError] = useState<string | null>(null);
+
+  const loadDetails = useCallback(async (id: string) => {
+  setLoadingDetails(true);
+  setDetailsError(null);
+  setDetails(null);
+
+  try {
+    const res = await fetch(`${BASE_URL}/map/artPieces/${id}`, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      credentials: "include", // może być, nie przeszkadza
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`GET /map/artPieces/${id} failed: ${res.status}. ${body}`);
+    }
+
+    const dto = (await res.json()) as ArtPieceDetailsDto;
+    setDetails(dto);
+  } catch (e: any) {
+    setDetailsError(e?.message ?? "Unknown error");
+  } finally {
+    setLoadingDetails(false);
+  }
+}, []);
+
+
 
   useEffect(() => {
     let cancelled = false;
@@ -239,7 +302,10 @@ export const AppView: React.FC = () => {
                       center={[p.lat, p.lng]}
                       radius={7}
                       eventHandlers={{
-                        click: () => setSelected(p),
+                        click: () => {
+                          setSelected(p);
+                          void loadDetails(p.id);
+                        },
                       }}
                     >
                       <Popup>
@@ -291,21 +357,104 @@ export const AppView: React.FC = () => {
         <Menu model={items} className={styles.fullWidth} />
       </Sidebar>
 
-      <Dialog header={selected ? selected.title : "Details"} visible={!!selected} style={{ width: "min(520px, 92vw)" }} onHide={() => setSelected(null)}>
-        {selected && (
-          <div className={styles.detailsGrid}>
-            <div>
-              <b>District:</b> {selected.district}
-            </div>
-            <div>
-              <b>Address:</b> {selected.address}
-            </div>
-            <div>
-              <b>Lat/Lng:</b> {selected.lat.toFixed(4)} / {selected.lng.toFixed(4)}
-            </div>
-          </div>
+      <Dialog
+  header={details?.artPieceName ?? selected?.title ?? "Details"}
+  visible={!!selected}
+  style={{ width: "min(720px, 94vw)" }}
+  onHide={() => {
+    setSelected(null);
+    setDetails(null);
+    setDetailsError(null);
+  }}
+>
+  {loadingDetails ? <div>Loading...</div> : null}
+  {detailsError ? <div style={{ color: "#ffd1d1", fontWeight: 700 }}>Error: {detailsError}</div> : null}
+
+  {details && (
+    <div style={{ display: "grid", gap: 14 }}>
+      {/* Photos carousel */}
+      {details.photos?.length ? (
+        <Carousel
+          value={details.photos}
+          numVisible={1}
+          numScroll={1}
+          circular
+          itemTemplate={(p) => {
+            const src = p.downloadUrl?.startsWith("http") ? p.downloadUrl : `${BASE_URL}${p.downloadUrl ?? ""}`;
+            return (
+              <img
+                src={src}
+                alt={p.fileName ?? "photo"}
+                style={{ width: "100%", maxHeight: 380, objectFit: "cover", borderRadius: 12 }}
+              />
+            );
+          }}
+        />
+      ) : (
+        <div style={{ opacity: 0.85 }}>(no photos)</div>
+      )}
+
+      {/* Main info */}
+      <div className={styles.detailsGrid}>
+        <div><b>Name:</b> {details.artPieceName}</div>
+        <div><b>Address:</b> {details.artPieceAddress}</div>
+        <div><b>District:</b> {details.districtName ?? selected?.district}</div>
+        <div><b>City:</b> {details.cityName ?? "Poznań"}</div>
+        <div><b>Position:</b> {details.artPiecePosition || "-"}</div>
+        <div><b>Contains text:</b> {details.artPieceContainsText ? "Yes" : "No"}</div>
+      </div>
+
+      {/* Types */}
+      <div>
+        <b>Types:</b>{" "}
+        {details.artPieceTypes?.length ? (
+          <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
+            {details.artPieceTypes.map((t) => (
+              <Chip key={t} label={t} />
+            ))}
+          </span>
+        ) : (
+          <span> -</span>
         )}
-      </Dialog>
+      </div>
+
+      {/* Styles */}
+      <div>
+        <b>Styles:</b>{" "}
+        {details.artPieceStyles?.length ? (
+          <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
+            {details.artPieceStyles.map((s) => (
+              <Chip key={s} label={s} />
+            ))}
+          </span>
+        ) : (
+          <span> -</span>
+        )}
+      </div>
+
+      {/* Text languages */}
+      <div>
+        <b>Text languages:</b>{" "}
+        {details.artPieceContainsText && details.artPieceTextLanguages?.length ? (
+          <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
+            {details.artPieceTextLanguages.map((l) => (
+              <Chip key={l} label={l} />
+            ))}
+          </span>
+        ) : (
+          <span> -</span>
+        )}
+      </div>
+
+      {/* Description */}
+      <div>
+        <b>Description:</b>
+        <div style={{ marginTop: 6, opacity: 0.95 }}>{details.artPieceUserDescription || "-"}</div>
+      </div>
+    </div>
+  )}
+</Dialog>
+
     </div>
   );
 };

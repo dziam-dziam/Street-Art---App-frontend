@@ -4,7 +4,7 @@ import styles from "../../styles/pages.module.css";
 
 type Props = {
   title?: string;
-  cardClassName: string;   // np. styles.authCardLogin / styles.authCardRegister
+  cardClassName: string;  
   children: React.ReactNode;
 };
 

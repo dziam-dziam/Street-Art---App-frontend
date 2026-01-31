@@ -4,8 +4,8 @@ import styles from "../../styles/pages.module.css";
 type Props = {
   src: string;
   alt: string;
-  imgClassName: string; // styles.imageFill420 / styles.imageFill460
-  minHeight?: number;   // opcjonalnie, jak chcesz
+  imgClassName: string;
+  minHeight?: number;  
 };
 
 export const AuthImagePanel: React.FC<Props> = ({ src, alt, imgClassName }) => {

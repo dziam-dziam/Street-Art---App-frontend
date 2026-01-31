@@ -1,4 +1,4 @@
-import {TRANSPORT_OPTIONS } from "../../constants/options";
+import {TRANSPORT_OPTIONS } from "../../constants/Options";
 type MeansOfTransport = (typeof TRANSPORT_OPTIONS)[number]["value"];
 
 export type AddCommuteDto = {
