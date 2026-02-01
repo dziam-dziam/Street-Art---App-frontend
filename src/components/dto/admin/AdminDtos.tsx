@@ -1,3 +1,5 @@
+// src/app/dto/admin/AdminDtos.ts
+
 export type UserEntity = {
   id: number;
   appUserName: string;

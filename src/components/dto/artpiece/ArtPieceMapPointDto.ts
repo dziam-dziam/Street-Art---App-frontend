@@ -1,3 +1,4 @@
+// src/app/dto/artpiece/ArtPieceMapPointDto.ts
 export type ArtPieceMapPointDto = {
   id: number;
   title: string;

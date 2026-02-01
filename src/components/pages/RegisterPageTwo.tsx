@@ -72,8 +72,7 @@ export const RegisterPageTwo: React.FC = () => {
 
   const commuteErrors = useMemo(() => validateCommute(commuteForm), [commuteForm]);
 
-  const isNextDay =
-    Number(commuteForm.commuteStartHour ?? 0) >= Number(commuteForm.commuteStopHour ?? 0);
+  const isNextDay = Number(commuteForm.commuteStartHour ?? 0) >= Number(commuteForm.commuteStopHour ?? 0);
 
   const isAddDisabled = Object.keys(commuteErrors).length > 0;
 
@@ -183,17 +182,13 @@ export const RegisterPageTwo: React.FC = () => {
                 <Dropdown
                   value={commuteForm.commuteThroughDistrictName}
                   options={DISTRICT_OPTIONS as any}
-                  onChange={(e) =>
-                    setCommuteForm((p) => ({ ...p, commuteThroughDistrictName: e.value ?? "" }))
-                  }
+                  onChange={(e) => setCommuteForm((p) => ({ ...p, commuteThroughDistrictName: e.value ?? "" }))}
                   placeholder="Select district"
                   className={`${styles.fullWidth} ${showError("commuteThroughDistrictName") ? "p-invalid" : ""}`}
                   filter
                   showClear
                 />
-                {showError("commuteThroughDistrictName") ? (
-                  <small className="p-error">{commuteErrors.commuteThroughDistrictName}</small>
-                ) : null}
+                {showError("commuteThroughDistrictName") ? <small className="p-error">{commuteErrors.commuteThroughDistrictName}</small> : null}
               </div>
 
               <div className={styles.grid2}>
@@ -201,18 +196,14 @@ export const RegisterPageTwo: React.FC = () => {
                   <label className={styles.fieldLabel}>Trips per week</label>
                   <InputNumber
                     value={commuteForm.commuteTripsPerWeek}
-                    onValueChange={(e) =>
-                      setCommuteForm((p) => ({ ...p, commuteTripsPerWeek: Number(e.value ?? 0) }))
-                    }
+                    onValueChange={(e) => setCommuteForm((p) => ({ ...p, commuteTripsPerWeek: Number(e.value ?? 0) }))}
                     min={1}
                     max={99}
                     className={`${styles.fullWidth} ${showError("commuteTripsPerWeek") ? "p-invalid" : ""}`}
                     inputStyle={{ width: "100%" }}
                     useGrouping={false}
                   />
-                  {showError("commuteTripsPerWeek") ? (
-                    <small className="p-error">{commuteErrors.commuteTripsPerWeek}</small>
-                  ) : null}
+                  {showError("commuteTripsPerWeek") ? <small className="p-error">{commuteErrors.commuteTripsPerWeek}</small> : null}
                 </div>
 
                 <div className={styles.fieldStack}>
@@ -220,16 +211,12 @@ export const RegisterPageTwo: React.FC = () => {
                   <MultiSelect
                     value={commuteForm.commuteMeansOfTransport}
                     options={TRANSPORT_OPTIONS as any}
-                    onChange={(e) =>
-                      setCommuteForm((p) => ({ ...p, commuteMeansOfTransport: e.value }))
-                    }
+                    onChange={(e) => setCommuteForm((p) => ({ ...p, commuteMeansOfTransport: e.value }))}
                     display="chip"
                     placeholder="Select transport"
                     className={`${styles.fullWidth} ${showError("commuteMeansOfTransport") ? "p-invalid" : ""}`}
                   />
-                  {showError("commuteMeansOfTransport") ? (
-                    <small className="p-error">{commuteErrors.commuteMeansOfTransport}</small>
-                  ) : null}
+                  {showError("commuteMeansOfTransport") ? <small className="p-error">{commuteErrors.commuteMeansOfTransport}</small> : null}
                 </div>
               </div>
 
@@ -239,44 +226,28 @@ export const RegisterPageTwo: React.FC = () => {
                   <Dropdown
                     value={commuteForm.commuteStartHour}
                     options={HOUR_OPTIONS as any}
-                    onChange={(e) =>
-                      setCommuteForm((p) => ({ ...p, commuteStartHour: Number(e.value ?? 0) }))
-                    }
+                    onChange={(e) => setCommuteForm((p) => ({ ...p, commuteStartHour: Number(e.value ?? 0) }))}
                     placeholder="00:00"
                     className={`${styles.fullWidth} ${showError("commuteStartHour") ? "p-invalid" : ""}`}
                   />
-                  {showError("commuteStartHour") ? (
-                    <small className="p-error">{commuteErrors.commuteStartHour}</small>
-                  ) : null}
+                  {showError("commuteStartHour") ? <small className="p-error">{commuteErrors.commuteStartHour}</small> : null}
                 </div>
 
                 <div className={styles.fieldStack}>
-                  <label className={styles.fieldLabel}>
-                    {isNextDay ? "Stop Time, Next Day" : "Stop time"}
-                  </label>
+                  <label className={styles.fieldLabel}>{isNextDay ? "Stop Time, Next Day" : "Stop time"}</label>
                   <Dropdown
                     value={commuteForm.commuteStopHour}
                     options={HOUR_OPTIONS as any}
-                    onChange={(e) =>
-                      setCommuteForm((p) => ({ ...p, commuteStopHour: Number(e.value ?? 0) }))
-                    }
+                    onChange={(e) => setCommuteForm((p) => ({ ...p, commuteStopHour: Number(e.value ?? 0) }))}
                     placeholder="00:00"
                     className={`${styles.fullWidth} ${showError("commuteStopHour") ? "p-invalid" : ""}`}
                   />
-                  {showError("commuteStopHour") ? (
-                    <small className="p-error">{commuteErrors.commuteStopHour}</small>
-                  ) : null}
+                  {showError("commuteStopHour") ? <small className="p-error">{commuteErrors.commuteStopHour}</small> : null}
                 </div>
               </div>
 
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                <Button
-                  type="button"
-                  label="Add commute"
-                  icon="pi pi-plus"
-                  onClick={addCommute}
-                  disabled={isAddDisabled}
-                />
+                <Button type="button" label="Add commute" icon="pi pi-plus" onClick={addCommute} disabled={isAddDisabled} />
               </div>
 
               <Divider style={{ margin: "16px 0", opacity: 0.4 }} />
@@ -284,12 +255,7 @@ export const RegisterPageTwo: React.FC = () => {
               <div style={{ fontWeight: 700, marginBottom: 10 }}>Twoje commutes</div>
 
               <div className={styles.tableShell}>
-                <DataTable
-                  value={commutes.map((c, idx) => ({ ...c, _idx: idx }))}
-                  emptyMessage="No commutes added yet."
-                  size="small"
-                  style={{ background: "transparent" }}
-                >
+                <DataTable value={commutes.map((c, idx) => ({ ...c, _idx: idx }))} emptyMessage="No commutes added yet." size="small" style={{ background: "transparent" }}>
                   <Column field="commuteThroughDistrictName" header="District" />
                   <Column field="commuteTripsPerWeek" header="Trips/week" />
                   <Column field="commuteStartHour" header="Start" />
@@ -298,13 +264,7 @@ export const RegisterPageTwo: React.FC = () => {
                   <Column
                     header=""
                     body={(row) => (
-                      <Button
-                        type="button"
-                        icon="pi pi-trash"
-                        severity="danger"
-                        text
-                        onClick={() => removeCommute(row._idx)}
-                      />
+                      <Button type="button" icon="pi pi-trash" severity="danger" text onClick={() => removeCommute(row._idx)} />
                     )}
                     style={{ width: 60 }}
                   />

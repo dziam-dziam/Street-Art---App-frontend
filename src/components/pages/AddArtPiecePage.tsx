@@ -21,11 +21,7 @@ const MAX_NAME = 50;
 const MAX_POS = 50;
 const MAX_DESC = 200;
 
-function extraCount(arr: any[] | undefined, maxShown: number) {
-  const n = Array.isArray(arr) ? arr.length : 0;
-  return Math.max(0, n - maxShown);
-}
-
+type CreatedArtPieceDto = { id: number };
 
 export const AddArtPiecePage: React.FC = () => {
   const navigate = useNavigate();
@@ -62,13 +58,11 @@ export const AddArtPiecePage: React.FC = () => {
   }, []);
 
   const addPhotos = (files: File[]) => {
-    // możesz dać limit, np. 10
     const next = [...photoFiles, ...files];
 
-    // revoke old urls
     photoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
-
     const urls = next.map((f) => URL.createObjectURL(f));
+
     setPhotoFiles(next);
     setPhotoPreviewUrls(urls);
   };
@@ -121,13 +115,12 @@ export const AddArtPiecePage: React.FC = () => {
   const errors = useMemo(() => validate(addArtPieceForm), [addArtPieceForm]);
   const canSubmitBase = Object.keys(errors).length === 0;
 
-  // FIX: gdy pole puste -> nie pokazuj drugiego komunikatu z addressHint
+  // gdy pole puste -> nie pokazuj hintów z nominatim
   const shouldShowAddressHint = !errors.artPieceAddress && addArtPieceForm.artPieceAddress.trim().length > 0;
 
   const validateAddressWithNominatim = async () => {
     const addr = addArtPieceForm.artPieceAddress.trim();
 
-    // FIX: gdy puste -> nie ustawiaj addressHint "required" (to robi walidacja pól)
     if (!addr) {
       setAddressStatus("idle");
       setAddressHint("");
@@ -180,115 +173,107 @@ export const AddArtPiecePage: React.FC = () => {
 
   const canSubmit = canSubmitBase && addressStatus === "valid";
 
-type CreatedArtPieceDto = {
-  id: number;
-};
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-const onSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-
-  setTouched({
-    artPieceName: true,
-    artPieceAddress: true,
-    artPiecePosition: true,
-    artPieceDistrict: true,
-    artPieceTypes: true,
-    artPieceStyles: true,
-    artPieceUserDescription: true,
-    artPieceTextLanguages: true,
-  });
-
-  if (!canSubmitBase) {
-    toast.current?.show({
-      severity: "warn",
-      summary: "Fix errors",
-      detail: "Please correct the highlighted fields.",
-      life: 2200,
-    });
-    return;
-  }
-
-  const okAddress = await validateAddressWithNominatim();
-  if (!okAddress) {
-    toast.current?.show({
-      severity: "warn",
-      summary: "Invalid address",
-      detail: "Please provide a valid address in Poznań.",
-      life: 2500,
-    });
-    return;
-  }
-
-  console.log("ADD ART PIECE BODY (JSON):\n", JSON.stringify(addArtPieceForm, null, 2));
-  console.log("PHOTOS:", photoFiles);
-
-  const createUrl = "http://localhost:8080/addNew/addArtPiece";
-
-  try {
-    // 1) create art piece
-    const createRes = await fetch(createUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json; charset=UTF-8" },
-      body: JSON.stringify(addArtPieceForm),
-      credentials: "include",
+    setTouched({
+      artPieceName: true,
+      artPieceAddress: true,
+      artPiecePosition: true,
+      artPieceDistrict: true,
+      artPieceTypes: true,
+      artPieceStyles: true,
+      artPieceUserDescription: true,
+      artPieceTextLanguages: true,
     });
 
-    if (!createRes.ok) {
-      const body = await createRes.text().catch(() => "");
-      throw new Error(`Failed to add art piece: ${createRes.status} ${body}`);
+    if (!canSubmitBase) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Fix errors",
+        detail: "Please correct the highlighted fields.",
+        life: 2200,
+      });
+      return;
     }
 
-    const created = (await createRes.json().catch(() => null)) as CreatedArtPieceDto | null;
-    const artPieceId = created?.id;
-
-    if (!artPieceId) {
-      throw new Error("Backend did not return ArtPiece id (ArtPieceDto should include id).");
+    const okAddress = await validateAddressWithNominatim();
+    if (!okAddress) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Invalid address",
+        detail: "Please provide a valid address in Poznań.",
+        life: 2500,
+      });
+      return;
     }
 
-    // 2) upload photos (if any)
-    if (photoFiles.length > 0) {
-      await Promise.all(
-        photoFiles.map(async (file) => {
-          const fd = new FormData();
-          fd.append("image", file);
+    console.log("ADD ART PIECE BODY (JSON):\n", JSON.stringify(addArtPieceForm, null, 2));
+    console.log("PHOTOS:", photoFiles);
 
-          const upRes = await fetch(`http://localhost:8080/api/photos/upload/${artPieceId}/photos`, {
-            method: "POST",
-            body: fd,
-            credentials: "include",
-          });
+    const createUrl = "http://localhost:8080/addNew/addArtPiece";
 
-          if (!upRes.ok) {
-            const body = await upRes.text().catch(() => "");
-            throw new Error(`Photo upload failed: ${upRes.status} ${body}`);
-          }
+    try {
+      // 1) create art piece
+      const createRes = await fetch(createUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=UTF-8" },
+        body: JSON.stringify(addArtPieceForm),
+        credentials: "include",
+      });
 
-          // optional: PhotoResponseDto is returned (can be ignored)
-          // const uploaded = await upRes.json().catch(() => null);
-        })
-      );
+      if (!createRes.ok) {
+        const body = await createRes.text().catch(() => "");
+        throw new Error(`Failed to add art piece: ${createRes.status} ${body}`);
+      }
+
+      const created = (await createRes.json().catch(() => null)) as CreatedArtPieceDto | null;
+      const artPieceId = created?.id;
+
+      if (!artPieceId) {
+        throw new Error("Backend did not return ArtPiece id (ArtPieceDto should include id).");
+      }
+
+      // 2) upload photos (if any)
+      if (photoFiles.length > 0) {
+        await Promise.all(
+          photoFiles.map(async (file) => {
+            const fd = new FormData();
+            fd.append("image", file);
+
+            const upRes = await fetch(`http://localhost:8080/api/photos/upload/${artPieceId}/photos`, {
+              method: "POST",
+              body: fd,
+              credentials: "include",
+            });
+
+            if (!upRes.ok) {
+              const body = await upRes.text().catch(() => "");
+              throw new Error(`Photo upload failed: ${upRes.status} ${body}`);
+            }
+          })
+        );
+      }
+
+      toast.current?.show({
+        severity: "success",
+        summary: "Sukces ✅",
+        detail: photoFiles.length > 0 ? "ArtPiece + photos uploaded" : "ArtPiece has been added",
+        life: 2200,
+      });
+
+      setTimeout(() => navigate("/app", { replace: true }), 990);
+    } catch (error: any) {
+      console.error("Error during adding art piece:", error);
+
+      toast.current?.show({
+        severity: "error",
+        summary: "Błąd ❌",
+        detail: error?.message ?? "Nie udało się dodać ArtPiece",
+        life: 3200,
+      });
     }
-
-    toast.current?.show({
-      severity: "success",
-      summary: "Sukces ✅",
-      detail: photoFiles.length > 0 ? "ArtPiece + photos uploaded" : "ArtPiece has been added",
-      life: 2200,
-    });
-
-    setTimeout(() => navigate("/app", { replace: true }), 990);
-  } catch (error: any) {
-    console.error("Error during adding art piece:", error);
-
-    toast.current?.show({
-      severity: "error",
-      summary: "Błąd ❌",
-      detail: error?.message ?? "Nie udało się dodać ArtPiece",
-      life: 3200,
-    });
-  }
-};
-
+  };
 
   return (
     <div className={styles.pageCenter}>
@@ -380,70 +365,67 @@ const onSubmit = async (e: React.FormEvent) => {
               <InputText value={addArtPieceForm.artPieceCity} disabled placeholder="City" className={`${styles.fullWidth} ${styles.radius10}`} />
             </div>
 
-{/* Types */}
-<div className={styles.fieldStack}>
-  <MultiSelect
-    value={addArtPieceForm.artPieceTypes}
-    options={ART_TYPE_OPTIONS as any}
-    onChange={(e) => setForm((p) => ({ ...p, artPieceTypes: e.value }))}
-    onBlur={() => markTouched("artPieceTypes")}
-    placeholder="Art piece types"
-    display="chip"
-    className={`${styles.fullWidth} ${showErr("artPieceTypes", errors) ? "p-invalid" : ""}`}
-  />
-  {showErr("artPieceTypes", errors) ? <small className="p-error">{errors.artPieceTypes}</small> : null}
-</div>
+            {/* Types */}
+            <div className={styles.fieldStack}>
+              <MultiSelect
+                value={addArtPieceForm.artPieceTypes}
+                options={ART_TYPE_OPTIONS as any}
+                onChange={(e) => setForm((p) => ({ ...p, artPieceTypes: e.value }))}
+                onBlur={() => markTouched("artPieceTypes")}
+                placeholder="Art piece types"
+                display="chip"
+                className={`${styles.fullWidth} ${showErr("artPieceTypes", errors) ? "p-invalid" : ""}`}
+              />
+              {showErr("artPieceTypes", errors) ? <small className="p-error">{errors.artPieceTypes}</small> : null}
+            </div>
 
-{/* Styles */}
-<div className={styles.fieldStack}>
-  <MultiSelect
-    value={addArtPieceForm.artPieceStyles}
-    options={ART_STYLE_OPTIONS as any}
-    onChange={(e) => setForm((p) => ({ ...p, artPieceStyles: e.value }))}
-    onBlur={() => markTouched("artPieceStyles")}
-    placeholder="Art piece styles"
-    display="chip"
-    className={`${styles.fullWidth} ${showErr("artPieceStyles", errors) ? "p-invalid" : ""}`}
-  />
-  {showErr("artPieceStyles", errors) ? <small className="p-error">{errors.artPieceStyles}</small> : null}
-</div>
+            {/* Styles */}
+            <div className={styles.fieldStack}>
+              <MultiSelect
+                value={addArtPieceForm.artPieceStyles}
+                options={ART_STYLE_OPTIONS as any}
+                onChange={(e) => setForm((p) => ({ ...p, artPieceStyles: e.value }))}
+                onBlur={() => markTouched("artPieceStyles")}
+                placeholder="Art piece styles"
+                display="chip"
+                className={`${styles.fullWidth} ${showErr("artPieceStyles", errors) ? "p-invalid" : ""}`}
+              />
+              {showErr("artPieceStyles", errors) ? <small className="p-error">{errors.artPieceStyles}</small> : null}
+            </div>
 
-
-
-            {/* ✅ MOVED: Contains text? is now right above languages */}
+            {/* Contains text? */}
             <div className={styles.fieldStack}>
               <label className={styles.fieldLabel}>Contains text?</label>
 
               <div style={{ display: "inline-flex", alignSelf: "flex-start" }}>
                 <ToggleButton
-  checked={addArtPieceForm.artPieceContainsText}
-  onChange={(e) => {
-    const next = Boolean(e.value); // ✅ ToggleButton -> value
-    setForm((p) => ({
-      ...p,
-      artPieceContainsText: next,
-      artPieceTextLanguages: next ? p.artPieceTextLanguages : [],
-    }));
-    markTouched("artPieceTextLanguages");
-  }}
-  onLabel="Tak"
-  offLabel="Nie"
-  onIcon="pi pi-check"
-  offIcon="pi pi-times"
-  pt={{
-    root: {
-      style: {
-        padding: "6px 10px",
-        minWidth: "auto",
-      },
-    },
-  }}
-/>
-
+                  checked={addArtPieceForm.artPieceContainsText}
+                  onChange={(e) => {
+                    const next = Boolean(e.value);
+                    setForm((p) => ({
+                      ...p,
+                      artPieceContainsText: next,
+                      artPieceTextLanguages: next ? p.artPieceTextLanguages : [],
+                    }));
+                    markTouched("artPieceTextLanguages");
+                  }}
+                  onLabel="Tak"
+                  offLabel="Nie"
+                  onIcon="pi pi-check"
+                  offIcon="pi pi-times"
+                  pt={{
+                    root: {
+                      style: {
+                        padding: "6px 10px",
+                        minWidth: "auto",
+                      },
+                    },
+                  }}
+                />
               </div>
             </div>
 
-            {/* Languages (only if containsText) */}
+            {/* Languages */}
             {addArtPieceForm.artPieceContainsText && (
               <div className={styles.fieldStack}>
                 <MultiSelect

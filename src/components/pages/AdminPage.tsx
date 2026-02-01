@@ -1,10 +1,8 @@
-import React, { useMemo, useRef, useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "../../styles/pages.module.css";
 
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { Menu } from "primereact/menu";
 import { Dialog } from "primereact/dialog";
@@ -18,22 +16,9 @@ import { ToggleButton } from "primereact/togglebutton";
 import { ART_TYPE_OPTIONS, ART_STYLE_OPTIONS, LANGUAGE_OPTIONS } from "../constants/Options";
 import type { UserEntity, ArtPieceEntity } from "../dto/admin/AdminDtos";
 
-type LanguageOption = (typeof LANGUAGE_OPTIONS)[number]["value"];
-const languageOptions: LanguageOption[] = LANGUAGE_OPTIONS.map((opt) => opt.value);
-
-type ArtTypeOption = (typeof ART_TYPE_OPTIONS)[number]["value"];
-const typeOptions: ArtTypeOption[] = ART_TYPE_OPTIONS.map((opt) => opt.value);
-
-type ArtStyleOption = (typeof ART_STYLE_OPTIONS)[number]["value"];
-const styleOptions: ArtStyleOption[] = ART_STYLE_OPTIONS.map((opt) => opt.value);
-
-type AdminEntityType = "Users" | "ArtPieces";
-
-type RowItem = {
-  id: string;
-  name: string;
-  subtitle?: string;
-};
+// ✅ widgety admin
+import { AdminTiles, AdminEntityPanel } from "../../widgets/admin/AdminWidgets";
+import type { AdminEntityType, RowItem } from "../../widgets/admin/AdminWidgets";
 
 const BASE = "http://localhost:8080";
 
@@ -58,12 +43,14 @@ export const AdminPage: React.FC = () => {
   const opRef = useRef<OverlayPanel>(null);
   const [editOpen, setEditOpen] = useState(false);
 
+  // ---- Users form ----
   const [targetAppUserEmail, setTargetAppUserEmail] = useState("");
   const [appUserEmail, setUserEmail] = useState("");
   const [appUserName, setUserName] = useState("");
   const [appUserPassword, setUserPassword] = useState("");
   const [appUserLanguagesSpoken, setAppUserLanguagesSpoken] = useState<string[]>([]);
 
+  // ---- ArtPieces form ----
   const [artPieceName, setApName] = useState("");
   const [artPieceAddress, setApAddress] = useState("");
   const [artPieceUserDescription, setApUserDescription] = useState("");
@@ -128,14 +115,6 @@ export const AdminPage: React.FC = () => {
       })),
     [data]
   );
-
-  const tileClass = (isActive: boolean) =>
-    [styles.tile, isActive ? styles.tileActive : styles.tileInactive, loading ? styles.tileLoading : ""]
-      .filter(Boolean)
-      .join(" ");
-
-  const tileCountClass = (isActive: boolean) =>
-    [styles.tileCount, isActive ? styles.tileCountActive : styles.tileCountInactive].join(" ");
 
   const deleteEndpointFor = (type: AdminEntityType, id: string) => {
     switch (type) {
@@ -389,59 +368,22 @@ export const AdminPage: React.FC = () => {
       <Card title="Admin Page" className={styles.cardShell}>
         {error ? <div className={styles.adminError}>Error: {error}</div> : null}
 
-        <div className={styles.tilesGrid2}>
-          {topTiles.map((t) => (
-            <div
-              key={t.type}
-              className={tileClass(activeType === t.type)}
-              onClick={() => setActiveType(t.type)}
-              role="button"
-            >
-              <div className={styles.tileTitle}>{t.type}</div>
-              <div className={tileCountClass(activeType === t.type)}>
-                {t.count} items {loading ? "(loading...)" : ""}
-              </div>
-            </div>
-          ))}
-        </div>
+        <AdminTiles tiles={topTiles} activeType={activeType} loading={loading} onPick={setActiveType} />
 
         <Divider className={styles.dividerSoft} />
 
         <div className={styles.tilesGrid2}>
           {(Object.keys(data) as AdminEntityType[]).map((t) => (
-            <div key={t} className={styles.listPanel}>
-              <div className={styles.listHeader}>
-                <div className={styles.adminListTitle}>{t}</div>
-              </div>
-
-              <div className={styles.mt8}>
-                <DataTable
-                  value={data[t]}
-                  size="small"
-                  scrollable
-                  scrollHeight="260px"
-                  selectionMode="single"
-                  onRowClick={(e) => {
-                    setActiveType(t);
-                    onRowClick(t, e);
-                  }}
-                  className={styles.adminTable} 
-                  style={{ background: "transparent" }}
-                  emptyMessage={loading ? "Loading..." : "Brak danych"}
-                >
-                  <Column
-                    field="name"
-                    header=""
-                    body={(row: RowItem) => (
-                      <div className={styles.itemBody}>
-                        <div className={styles.itemTitle}>{row.name}</div>
-                        {row.subtitle ? <small className={styles.itemSubtitle}>{row.subtitle}</small> : null}
-                      </div>
-                    )}
-                  />
-                </DataTable>
-              </div>
-            </div>
+            <AdminEntityPanel
+              key={t}
+              title={t}
+              rows={data[t]}
+              loading={loading}
+              onRowClick={(e) => {
+                setActiveType(t);
+                onRowClick(t, e);
+              }}
+            />
           ))}
         </div>
 
@@ -449,12 +391,7 @@ export const AdminPage: React.FC = () => {
           <Menu model={menuModel} />
         </OverlayPanel>
 
-        <Dialog
-          header={`Edytuj: ${activeType}`}
-          visible={editOpen}
-          className={styles.dialogNarrow}
-          onHide={() => setEditOpen(false)}
-        >
+        <Dialog header={`Edytuj: ${activeType}`} visible={editOpen} className={styles.dialogNarrow} onHide={() => setEditOpen(false)}>
           {activeType === "Users" && (
             <div className={styles.dialogGrid14}>
               <div className={styles.fieldBlock}>
@@ -472,7 +409,7 @@ export const AdminPage: React.FC = () => {
                 <MultiSelect
                   value={appUserLanguagesSpoken}
                   onChange={(e) => setAppUserLanguagesSpoken(e.value)}
-                  options={languageOptions}
+                  options={LANGUAGE_OPTIONS as any}
                   placeholder="Select languages"
                   className={styles.fullWidth}
                   display="chip"
@@ -481,7 +418,12 @@ export const AdminPage: React.FC = () => {
 
               <div className={styles.fieldBlock}>
                 <small className={styles.fieldLabelSmall}>Password</small>
-                <InputText type="password" value={appUserPassword} onChange={(e) => setUserPassword(e.target.value)} className={styles.fullWidth} />
+                <InputText
+                  type="password"
+                  value={appUserPassword}
+                  onChange={(e) => setUserPassword(e.target.value)}
+                  className={styles.fullWidth}
+                />
               </div>
             </div>
           )}
@@ -500,7 +442,11 @@ export const AdminPage: React.FC = () => {
 
               <div className={styles.fieldBlock}>
                 <small className={styles.fieldLabelSmall}>Description</small>
-                <InputText value={artPieceUserDescription} onChange={(e) => setApUserDescription(e.target.value)} className={styles.fullWidth} />
+                <InputText
+                  value={artPieceUserDescription}
+                  onChange={(e) => setApUserDescription(e.target.value)}
+                  className={styles.fullWidth}
+                />
               </div>
 
               <div className={styles.fieldBlock}>
@@ -529,7 +475,7 @@ export const AdminPage: React.FC = () => {
                   <MultiSelect
                     value={artPieceTextLanguages}
                     onChange={(e) => setApLangs(e.value)}
-                    options={languageOptions}
+                    options={LANGUAGE_OPTIONS as any}
                     placeholder="Select languages"
                     className={styles.fullWidth}
                     display="chip"
@@ -542,7 +488,7 @@ export const AdminPage: React.FC = () => {
                 <MultiSelect
                   value={artPieceTypes}
                   onChange={(e) => setApTypes(e.value)}
-                  options={typeOptions}
+                  options={ART_TYPE_OPTIONS as any}
                   placeholder="Select types"
                   className={styles.fullWidth}
                   display="chip"
@@ -554,7 +500,7 @@ export const AdminPage: React.FC = () => {
                 <MultiSelect
                   value={artPieceStyles}
                   onChange={(e) => setApStyles(e.value)}
-                  options={styleOptions}
+                  options={ART_STYLE_OPTIONS as any}
                   placeholder="Select styles"
                   className={styles.fullWidth}
                   display="chip"

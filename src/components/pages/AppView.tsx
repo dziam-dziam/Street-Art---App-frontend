@@ -1,34 +1,21 @@
-import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "../../styles/pages.module.css";
 
 import { Carousel } from "primereact/carousel";
 import { Chip } from "primereact/chip";
-import { Sidebar } from "primereact/sidebar";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
-import { Avatar } from "primereact/avatar";
-import { Divider } from "primereact/divider";
-import { Menu } from "primereact/menu";
+import { Toast } from "primereact/toast";
 import { Dialog } from "primereact/dialog";
 import { useNavigate } from "react-router-dom";
-import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
-import L from "leaflet";
-import { GeoJSON, useMap } from "react-leaflet";
+
 import poz from "../assets/poznan.json";
-import { Toast } from "primereact/toast";
 import type { ArtPieceMapPointDto } from "../dto/artpiece/ArtPieceMapPointDto";
-import { DISTRICT_OPTIONS} from "../constants/Options";
-type DistrictName = (typeof DISTRICT_OPTIONS)[number]["value"];
 
-
-type ArtPoint = {
-  id: string;
-  title: string;
-  address: string;
-  district: DistrictName;
-  lat: number;
-  lng: number;
-};
+// ✅ widgety mapy
+import { MapWidget, FloatingActions, UserSidebar } from "../../widgets/map/MapWidgets";
+import type { ArtPoint } from "../../widgets/map/MapWidgets";
+import type { DistrictName } from "../constants/Options";
 
 type PhotoResponseDto = {
   id?: number;
@@ -57,7 +44,6 @@ type ArtPieceDetailsDto = {
   photos: PhotoResponseDto[];
 };
 
-
 const BASE_URL = "http://localhost:8080";
 
 function normalizeDistrict(d: string): DistrictName {
@@ -69,34 +55,6 @@ function normalizeDistrict(d: string): DistrictName {
   if (x === "wilda") return "Wilda";
   if (x === "łazarz") return "Łazarz";
   return "Jeżyce";
-}
-
-function FitAndLockToGeoJson({ data }: { data: any }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!data) return;
-
-    try {
-      const layer = L.geoJSON(data);
-      const bounds = layer.getBounds();
-      if (!bounds.isValid()) return;
-
-      map.fitBounds(bounds, { padding: [20, 20] });
-
-      const padded = bounds.pad(0.05);
-      map.setMaxBounds(padded);
-
-      (map as any).options.maxBoundsViscosity = 1.0;
-
-      map.setMinZoom(11);
-      map.setMaxZoom(18);
-    } catch (e) {
-      console.error("Error fitting/locking GeoJSON bounds:", e);
-    }
-  }, [data, map]);
-
-  return null;
 }
 
 function pickPoznanBoundary(fc: any) {
@@ -122,32 +80,30 @@ export const AppView: React.FC = () => {
   const [detailsError, setDetailsError] = useState<string | null>(null);
 
   const loadDetails = useCallback(async (id: string) => {
-  setLoadingDetails(true);
-  setDetailsError(null);
-  setDetails(null);
+    setLoadingDetails(true);
+    setDetailsError(null);
+    setDetails(null);
 
-  try {
-    const res = await fetch(`${BASE_URL}/map/artPieces/${id}`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      credentials: "include", // może być, nie przeszkadza
-    });
+    try {
+      const res = await fetch(`${BASE_URL}/map/artPieces/${id}`, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        credentials: "include",
+      });
 
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      throw new Error(`GET /map/artPieces/${id} failed: ${res.status}. ${body}`);
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        throw new Error(`GET /map/artPieces/${id} failed: ${res.status}. ${body}`);
+      }
+
+      const dto = (await res.json()) as ArtPieceDetailsDto;
+      setDetails(dto);
+    } catch (e: any) {
+      setDetailsError(e?.message ?? "Unknown error");
+    } finally {
+      setLoadingDetails(false);
     }
-
-    const dto = (await res.json()) as ArtPieceDetailsDto;
-    setDetails(dto);
-  } catch (e: any) {
-    setDetailsError(e?.message ?? "Unknown error");
-  } finally {
-    setLoadingDetails(false);
-  }
-}, []);
-
-
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -210,7 +166,7 @@ export const AppView: React.FC = () => {
     }
   }, [navigate]);
 
-  const items = useMemo(
+  const menuItems = useMemo(
     () => [
       { label: "Mój profil", icon: "pi pi-user" },
       { label: "Moje dzieła", icon: "pi pi-images" },
@@ -280,202 +236,163 @@ export const AppView: React.FC = () => {
           </div>
 
           <div className={styles.mapShell}>
-            <div className={styles.mapViewport}>
-              <MapContainer center={[52.4064, 16.9252] as [number, number]} zoom={12} worldCopyJump={false}>
-                <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <MapWidget
+              boundary={pozBoundary as any}
+              points={points}
+              loading={loadingPoints}
+              onPickPoint={(p) => {
+                setSelected(p);
+                void loadDetails(p.id);
+              }}
+            />
 
-                <GeoJSON
-                  data={pozBoundary as any}
-                  style={() => ({
-                    color: "#ffffff",
-                    weight: 3,
-                    fillOpacity: 0.08,
-                  })}
-                />
-
-                <FitAndLockToGeoJson data={pozBoundary} />
-
-                {!loadingPoints &&
-                  points.map((p) => (
-                    <CircleMarker
-                      key={p.id}
-                      center={[p.lat, p.lng]}
-                      radius={7}
-                      eventHandlers={{
-                        click: () => {
-                          setSelected(p);
-                          void loadDetails(p.id);
-                        },
-                      }}
-                    >
-                      <Popup>
-                        <b>{p.title}</b>
-                        <br />
-                        {p.address}
-                        <br />
-                        {p.district}
-                      </Popup>
-                    </CircleMarker>
-                  ))}
-              </MapContainer>
-            </div>
-
-            <div className={styles.floatingActions}>
-              {isAdmin && (
-                <Button
-                  label="Admin Page"
-                  icon="pi pi-shield"
-                  severity="warning"
-                  onClick={() => navigate("/admin")}
-                  className={styles.btnRounded12Bold}
-                />
-              )}
-
-              <Button
-                label="Add New"
-                icon="pi pi-plus"
-                iconPos="right"
-                onClick={() => navigate("/artpieces/add")}
-                className={`${styles.btnRounded12Bold} ${styles.btnShadow}`}
-              />
-            </div>
+            <FloatingActions
+              isAdmin={isAdmin}
+              onGoAdmin={() => navigate("/admin")}
+              onAddNew={() => navigate("/artpieces/add")}
+            />
           </div>
         </div>
       </Card>
 
-      <Sidebar visible={sidebarVisible} onHide={() => setSidebarVisible(false)} position="left" className={styles.sidebar}>
-        <div className={styles.sidebarHeader}>
-          <Avatar icon="pi pi-user" size="large" shape="circle" />
-          <div>
-            <div className={styles.sidebarUserTitle}>Użytkownik</div>
-            <small className={styles.sidebarUserSubtitle}>user@email.com</small>
-          </div>
-        </div>
-
-        <Divider />
-
-        <Menu model={items} className={styles.fullWidth} />
-      </Sidebar>
+      <UserSidebar
+        visible={sidebarVisible}
+        onHide={() => setSidebarVisible(false)}
+        menuModel={menuItems}
+        userName="Użytkownik"
+        userEmail="user@email.com"
+      />
 
       <Dialog
-  header={details?.artPieceName ?? selected?.title ?? "Details"}
-  visible={!!selected}
-  style={{ width: "min(720px, 94vw)" }}
-  onHide={() => {
-    setSelected(null);
-    setDetails(null);
-    setDetailsError(null);
-  }}
->
-  {loadingDetails ? <div>Loading...</div> : null}
-  {detailsError ? <div style={{ color: "#ffd1d1", fontWeight: 700 }}>Error: {detailsError}</div> : null}
+        header={details?.artPieceName ?? selected?.title ?? "Details"}
+        visible={!!selected}
+        style={{ width: "min(720px, 94vw)" }}
+        onHide={() => {
+          setSelected(null);
+          setDetails(null);
+          setDetailsError(null);
+        }}
+      >
+        {loadingDetails ? <div>Loading...</div> : null}
+        {detailsError ? <div style={{ color: "#ffd1d1", fontWeight: 700 }}>Error: {detailsError}</div> : null}
 
-  {details && (
-    <div style={{ display: "grid", gap: 14 }}>
-      {/* Photos carousel */}
-{details.photos?.length ? (
-  <Carousel
-    value={details.photos}
-    numVisible={1}
-    numScroll={1}
-    circular
-    showIndicators={details.photos.length > 1}
-    showNavigators={details.photos.length > 1}
-    itemTemplate={(p) => {
-      const src = p.downloadUrl?.startsWith("http") ? p.downloadUrl : `${BASE_URL}${p.downloadUrl ?? ""}`;
+        {details && (
+          <div style={{ display: "grid", gap: 14 }}>
+            {/* Photos carousel */}
+            {details.photos?.length ? (
+              <Carousel
+                value={details.photos}
+                numVisible={1}
+                numScroll={1}
+                circular
+                showIndicators={details.photos.length > 1}
+                showNavigators={details.photos.length > 1}
+                itemTemplate={(p) => {
+                  const src = p.downloadUrl?.startsWith("http") ? p.downloadUrl : `${BASE_URL}${p.downloadUrl ?? ""}`;
 
-      return (
-        <div
-          style={{
-            width: "100%",
-            height: 360,            // ✅ stała wysokość okna
-            borderRadius: 12,
-            overflow: "hidden",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "rgba(255,255,255,0.04)", // delikatne tło, możesz usunąć
-          }}
-        >
-          <img
-            src={src}
-            alt={p.fileName ?? "photo"}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",  // ✅ dopasuj bez rozciągania
-              display: "block",
-            }}
-          />
-        </div>
-      );
-    }}
-  />
-) : (
-  <div style={{ opacity: 0.85 }}>(no photos)</div>
-)}
+                  return (
+                    <div
+                      style={{
+                        width: "100%",
+                        height: 360,
+                        borderRadius: 12,
+                        overflow: "hidden",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: "rgba(255,255,255,0.04)",
+                      }}
+                    >
+                      <img
+                        src={src}
+                        alt={p.fileName ?? "photo"}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "contain",
+                          display: "block",
+                        }}
+                      />
+                    </div>
+                  );
+                }}
+              />
+            ) : (
+              <div style={{ opacity: 0.85 }}>(no photos)</div>
+            )}
 
-      {/* Main info */}
-      <div className={styles.detailsGrid}>
-        <div><b>Name:</b> {details.artPieceName}</div>
-        <div><b>Address:</b> {details.artPieceAddress}</div>
-        <div><b>District:</b> {details.districtName ?? selected?.district}</div>
-        <div><b>City:</b> {details.cityName ?? "Poznań"}</div>
-        <div><b>Position:</b> {details.artPiecePosition || "-"}</div>
-        <div><b>Contains text:</b> {details.artPieceContainsText ? "Yes" : "No"}</div>
-      </div>
+            {/* Main info */}
+            <div className={styles.detailsGrid}>
+              <div>
+                <b>Name:</b> {details.artPieceName}
+              </div>
+              <div>
+                <b>Address:</b> {details.artPieceAddress}
+              </div>
+              <div>
+                <b>District:</b> {details.districtName ?? selected?.district}
+              </div>
+              <div>
+                <b>City:</b> {details.cityName ?? "Poznań"}
+              </div>
+              <div>
+                <b>Position:</b> {details.artPiecePosition || "-"}
+              </div>
+              <div>
+                <b>Contains text:</b> {details.artPieceContainsText ? "Yes" : "No"}
+              </div>
+            </div>
 
-      {/* Types */}
-      <div>
-        <b>Types:</b>{" "}
-        {details.artPieceTypes?.length ? (
-          <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
-            {details.artPieceTypes.map((t) => (
-              <Chip key={t} label={t} />
-            ))}
-          </span>
-        ) : (
-          <span> -</span>
+            {/* Types */}
+            <div>
+              <b>Types:</b>{" "}
+              {details.artPieceTypes?.length ? (
+                <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
+                  {details.artPieceTypes.map((t) => (
+                    <Chip key={t} label={t} />
+                  ))}
+                </span>
+              ) : (
+                <span> -</span>
+              )}
+            </div>
+
+            {/* Styles */}
+            <div>
+              <b>Styles:</b>{" "}
+              {details.artPieceStyles?.length ? (
+                <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
+                  {details.artPieceStyles.map((s) => (
+                    <Chip key={s} label={s} />
+                  ))}
+                </span>
+              ) : (
+                <span> -</span>
+              )}
+            </div>
+
+            {/* Text languages */}
+            <div>
+              <b>Text languages:</b>{" "}
+              {details.artPieceContainsText && details.artPieceTextLanguages?.length ? (
+                <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
+                  {details.artPieceTextLanguages.map((l) => (
+                    <Chip key={l} label={l} />
+                  ))}
+                </span>
+              ) : (
+                <span> -</span>
+              )}
+            </div>
+
+            {/* Description */}
+            <div>
+              <b>Description:</b>
+              <div style={{ marginTop: 6, opacity: 0.95 }}>{details.artPieceUserDescription || "-"}</div>
+            </div>
+          </div>
         )}
-      </div>
-
-      {/* Styles */}
-      <div>
-        <b>Styles:</b>{" "}
-        {details.artPieceStyles?.length ? (
-          <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
-            {details.artPieceStyles.map((s) => (
-              <Chip key={s} label={s} />
-            ))}
-          </span>
-        ) : (
-          <span> -</span>
-        )}
-      </div>
-
-      {/* Text languages */}
-      <div>
-        <b>Text languages:</b>{" "}
-        {details.artPieceContainsText && details.artPieceTextLanguages?.length ? (
-          <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
-            {details.artPieceTextLanguages.map((l) => (
-              <Chip key={l} label={l} />
-            ))}
-          </span>
-        ) : (
-          <span> -</span>
-        )}
-      </div>
-
-      {/* Description */}
-      <div>
-        <b>Description:</b>
-        <div style={{ marginTop: 6, opacity: 0.95 }}>{details.artPieceUserDescription || "-"}</div>
-      </div>
-    </div>
-  )}
-</Dialog>
-
+      </Dialog>
     </div>
   );
 };

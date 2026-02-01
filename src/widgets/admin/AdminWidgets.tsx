@@ -1,3 +1,4 @@
+// src/widgets/admin/AdminWidgets.tsx
 import React from "react";
 import styles from "../../styles/pages.module.css";
 import { Button } from "primereact/button";
@@ -29,8 +30,8 @@ export const AdminTiles: React.FC<TilesProps> = ({ tiles, activeType, loading, o
     <div className={styles.tilesGrid2}>
       {tiles.map((t) => (
         <div key={t.type} className={tileClass(activeType === t.type)} onClick={() => onPick(t.type)} role="button">
-          <div style={{ fontSize: 14 }}>{t.type}</div>
-          <div style={{ fontSize: 12, opacity: activeType === t.type ? 0.85 : 0.9 }}>
+          <div className={styles.tileTitle}>{t.type}</div>
+          <div className={`${styles.tileCount} ${activeType === t.type ? styles.tileCountActive : styles.tileCountInactive}`}>
             {t.count} items {loading ? "(loading...)" : ""}
           </div>
         </div>
@@ -50,11 +51,11 @@ export const AdminEntityPanel: React.FC<EntityPanelProps> = ({ title, rows, load
   return (
     <div className={styles.listPanel}>
       <div className={styles.listHeader}>
-        <div style={{ fontWeight: 800 }}>{title}</div>
-        <Button icon="pi pi-plus" rounded text style={{ color: "white" }} onClick={() => {}} tooltip="Dodaj (TODO)" disabled />
+        <div className={styles.adminListTitle}>{title}</div>
+        <Button icon="pi pi-plus" rounded text className={styles.iconWhite} onClick={() => {}} tooltip="Dodaj (TODO)" disabled />
       </div>
 
-      <div style={{ marginTop: 8 }}>
+      <div className={styles.mt8}>
         <DataTable
           value={rows}
           size="small"
@@ -62,6 +63,7 @@ export const AdminEntityPanel: React.FC<EntityPanelProps> = ({ title, rows, load
           scrollHeight="260px"
           selectionMode="single"
           onRowClick={onRowClick}
+          className={styles.adminTable}
           style={{ background: "transparent" }}
           emptyMessage={loading ? "Loading..." : "Brak danych"}
         >

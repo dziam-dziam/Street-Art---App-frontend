@@ -1,5 +1,5 @@
-import {TRANSPORT_OPTIONS } from "../../constants/Options";
-type MeansOfTransport = (typeof TRANSPORT_OPTIONS)[number]["value"];
+// src/app/dto/commute/AddCommuteDto.ts
+import type { MeansOfTransport } from "../../constants/Options";
 
 export type AddCommuteDto = {
   commuteThroughDistrictName: string;

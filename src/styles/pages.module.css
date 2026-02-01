@@ -1,3 +1,5 @@
+/* src/styles/pages.module.css */
+
 .pageCenter {
   min-height: 100vh;
   display: grid;
@@ -140,25 +142,26 @@
   border-radius: 12px;
   padding: 10px 12px;
   cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.22);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   user-select: none;
   text-align: center;
   font-weight: 800;
 }
 
 .tileActive {
-  background: rgba(126,224,129,0.95);
+  background: rgba(126, 224, 129, 0.95);
   color: #1b1b1b;
 }
 
 .tileInactive {
-  background: rgba(255,255,255,0.18);
+  background: rgba(255, 255, 255, 0.18);
   color: white;
 }
 
 .tileLoading {
   opacity: 0.85;
 }
+
 /* ===== AppView ===== */
 
 .appCardWide {
@@ -202,7 +205,6 @@
   z-index: 1;
 }
 
-/* Leaflet container inside the viewport */
 .mapViewport :global(.leaflet-container) {
   height: 100%;
   width: 100%;
@@ -357,12 +359,6 @@
   padding-right: 6px;
 }
 
-.grid2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
 /* ===== RegisterPageTwo ===== */
 
 .stackCol {
@@ -446,6 +442,7 @@
   font-weight: 700;
   padding-inline: 26px;
 }
+
 /* ===== AdminPage extras ===== */
 
 .adminError {
@@ -522,18 +519,15 @@
   display: none;
 }
 
-/* PrimeReact czasem zostawia "scrollable header" jako biały pasek */
 .adminTable :global(.p-datatable-scrollable-header),
 .adminTable :global(.p-datatable-scrollable-header-box) {
   display: none;
 }
 
-/* Upewnij się, że wrapper nie dodaje białego tła */
 .adminTable :global(.p-datatable-wrapper) {
   background: transparent;
 }
 
-/* Opcjonalnie: tło komórek i border żeby pasowały do Twojego UI */
 .adminTable :global(.p-datatable-tbody > tr > td) {
   background: transparent;
   border-color: rgba(255, 255, 255, 0.12);
@@ -548,27 +542,18 @@
   color: #1b1b1b;
 }
 
-/* label (to co widać w środku MultiSelect/Dropdown) */
 .cardShell :global(.p-multiselect-label),
 .cardShell :global(.p-dropdown-label) {
   color: #1b1b1b;
 }
 
-/* placeholder ma być trochę jaśniejszy */
 .cardShell :global(.p-multiselect-label.p-placeholder),
 .cardShell :global(.p-dropdown-label.p-placeholder) {
   color: rgba(0, 0, 0, 0.55);
 }
 
-/* żeby tekst się nie rozpychał w nieskończoność */
-.cardShell :global(.p-multiselect-label) {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 /* ===== MultiSelect chips: wrap + hide Prime overflow "+n" ===== */
 
-/* chipy mają się zawijać */
 .cardShell :global(.p-multiselect-label-container) {
   display: flex;
   flex-wrap: wrap;
@@ -577,14 +562,12 @@
   overflow: visible;
 }
 
-/* nie ucinać labela (bo masz globalne ellipsis) */
 .cardShell :global(.p-multiselect-label) {
   white-space: normal;
   overflow: visible;
   text-overflow: clip;
 }
 
-/* popraw wygląd chipów */
 .cardShell :global(.p-multiselect-token) {
   margin: 0;
   border-radius: 999px;
@@ -592,19 +575,11 @@
   white-space: nowrap;
 }
 
-/* Najczęściej działa to: */
 .cardShell :global(.p-multiselect-items-label) {
   display: none !important;
 }
 
-/* Czasem Prime używa innego elementu na "+n": */
 .cardShell :global(.p-multiselect-token.p-multiselect-token-more),
 .cardShell :global(.p-multiselect-token-more) {
   display: none !important;
 }
-
-
-
-
-
-

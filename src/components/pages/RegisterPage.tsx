@@ -50,8 +50,7 @@ export const RegisterPage: React.FC = () => {
     const pass = v.appUserPassword;
     if (!pass) e.appUserPassword = "Password is required.";
     else if (!PASSWORD_REGEX.test(pass)) {
-      e.appUserPassword =
-        "Min 10 characters + 1 uppercase letter + 1 digit + 1 special character.";
+      e.appUserPassword = "Min 10 characters + 1 uppercase letter + 1 digit + 1 special character.";
     }
 
     if (!v.appUserCity.trim()) e.appUserCity = "City is required.";
@@ -194,9 +193,7 @@ export const RegisterPage: React.FC = () => {
               filter
               showClear
             />
-            {showError("appUserLiveInDistrict") ? (
-              <small className="p-error">{errors.appUserLiveInDistrict}</small>
-            ) : null}
+            {showError("appUserLiveInDistrict") ? <small className="p-error">{errors.appUserLiveInDistrict}</small> : null}
           </div>
 
           <div className={styles.fieldBlock}>
@@ -209,9 +206,7 @@ export const RegisterPage: React.FC = () => {
               placeholder="Languages spoken"
               className={`${styles.fullWidth} ${showError("appUserLanguagesSpoken") ? "p-invalid" : ""}`}
             />
-            {showError("appUserLanguagesSpoken") ? (
-              <small className="p-error">{errors.appUserLanguagesSpoken}</small>
-            ) : null}
+            {showError("appUserLanguagesSpoken") ? <small className="p-error">{errors.appUserLanguagesSpoken}</small> : null}
           </div>
 
           <div className={styles.dialogActions}>

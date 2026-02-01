@@ -1,6 +1,5 @@
-import { DISTRICT_OPTIONS, ART_TYPE_OPTIONS, ART_STYLE_OPTIONS } from "../../constants/Options";
-type ArtPieceTypes = (typeof ART_TYPE_OPTIONS)[number]["value"];
-type ArtPieceStyles = (typeof ART_STYLE_OPTIONS)[number]["value"];
+// src/app/dto/artpiece/AddArtPieceDto.ts
+import type { ArtTypeOption, ArtStyleOption, LanguageOption } from "../../constants/Options";
 
 export type AddArtPieceDto = {
   artPieceAddress: string;
@@ -10,7 +9,8 @@ export type AddArtPieceDto = {
   artPieceUserDescription: string;
   artPieceDistrict: string;
   artPieceCity: string;
-  artPieceTypes: ArtPieceTypes[];
-  artPieceStyles: ArtPieceStyles[];
-  artPieceTextLanguages: string[];
+
+  artPieceTypes: ArtTypeOption[];
+  artPieceStyles: ArtStyleOption[];
+  artPieceTextLanguages: LanguageOption[];
 };
