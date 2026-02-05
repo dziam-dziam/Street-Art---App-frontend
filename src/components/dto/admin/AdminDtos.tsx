@@ -1,5 +1,3 @@
-// src/app/dto/admin/AdminDtos.ts
-
 export type UserEntity = {
   id: number;
   appUserName: string;
@@ -8,7 +6,16 @@ export type UserEntity = {
 
 export type ArtPieceEntity = {
   id: number;
-  artPieceAddress: string;
-  artPieceName: string;
-  artPieceUserDescription: string;
+
+  artPieceAddress?: string | null;
+  artPieceName?: string | null;
+  artPieceUserDescription?: string | null;
+
+  // ✅ te pola potrzebujesz do edycji:
+  artPiecePosition?: string | null;
+  artPieceContainsText?: boolean | null;
+
+  artPieceTypes?: string[] | null;
+  artPieceStyles?: string[] | null;
+  artPieceTextLanguages?: string[] | null;
 };

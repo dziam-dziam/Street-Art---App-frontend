@@ -16,7 +16,6 @@ import { ToggleButton } from "primereact/togglebutton";
 import { ART_TYPE_OPTIONS, ART_STYLE_OPTIONS, LANGUAGE_OPTIONS } from "../constants/Options";
 import type { UserEntity, ArtPieceEntity } from "../dto/admin/AdminDtos";
 
-// ✅ widgety admin
 import { AdminTiles, AdminEntityPanel } from "../../widgets/admin/AdminWidgets";
 import type { AdminEntityType, RowItem } from "../../widgets/admin/AdminWidgets";
 
@@ -27,12 +26,17 @@ const EMPTY: Record<AdminEntityType, RowItem[]> = {
   ArtPieces: [],
 };
 
+// helper pod MultiSelect (zawsze zwraca string[])
+const asStringArray = (v: any): string[] => (Array.isArray(v) ? v.map(String) : []);
+
 export const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const toast = useRef<Toast>(null);
 
   const [activeType, setActiveType] = useState<AdminEntityType>("Users");
   const [data, setData] = useState<Record<AdminEntityType, RowItem[]>>(EMPTY);
+
+  const [artPiecesById, setArtPiecesById] = useState<Record<string, ArtPieceEntity>>({});
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +66,7 @@ export const AdminPage: React.FC = () => {
   const [artPieceTextLanguages, setApLangs] = useState<string[]>([]);
   const [containsTextTouched, setContainsTextTouched] = useState(false);
 
+  // ----------------- FETCH -----------------
   useEffect(() => {
     const controller = new AbortController();
 
@@ -89,12 +94,18 @@ export const AdminPage: React.FC = () => {
           fetchJson<ArtPieceEntity[]>(`${BASE}/getAll/artPieces`),
         ]);
 
+        setArtPiecesById(Object.fromEntries(artPieces.map((a) => [String(a.id), a])));
+
         setData({
-          Users: users.map((u) => ({ id: String(u.id), name: u.appUserEmail, subtitle: u.appUserName })),
+          Users: users.map((u) => ({
+            id: String(u.id),
+            name: u.appUserEmail,
+            subtitle: u.appUserName,
+          })),
           ArtPieces: artPieces.map((a) => ({
             id: String(a.id),
             name: a.artPieceName ?? "ArtPiece",
-            subtitle: a.artPieceAddress,
+            subtitle: a.artPieceAddress ?? "",
           })),
         });
       } catch (e: any) {
@@ -107,6 +118,7 @@ export const AdminPage: React.FC = () => {
     return () => controller.abort();
   }, []);
 
+  // ----------------- TILES -----------------
   const topTiles = useMemo(
     () =>
       (["Users", "ArtPieces"] as AdminEntityType[]).map((t) => ({
@@ -116,6 +128,7 @@ export const AdminPage: React.FC = () => {
     [data]
   );
 
+  // ----------------- DELETE -----------------
   const deleteEndpointFor = (type: AdminEntityType, id: string) => {
     switch (type) {
       case "Users":
@@ -152,6 +165,7 @@ export const AdminPage: React.FC = () => {
 
     try {
       await deleteItem(selectedType, selectedItem.id);
+
       toast.current?.show({
         severity: "success",
         summary: "Usunięto ✅",
@@ -164,6 +178,15 @@ export const AdminPage: React.FC = () => {
         [selectedType]: prev[selectedType].filter((x) => x.id !== selectedItem.id),
       }));
 
+      // usuń też z mapy artPiecesById jeśli kasujesz artPiece
+      if (selectedType === "ArtPieces") {
+        setArtPiecesById((prev) => {
+          const copy = { ...prev };
+          delete copy[selectedItem.id];
+          return copy;
+        });
+      }
+
       setSelectedItem(null);
       setSelectedType(null);
       opRef.current?.hide();
@@ -173,6 +196,7 @@ export const AdminPage: React.FC = () => {
     }
   }, [selectedItem, selectedType]);
 
+  // ----------------- PUT -----------------
   const putEndpointFor = useCallback((type: AdminEntityType, id: string) => {
     switch (type) {
       case "ArtPieces":
@@ -204,35 +228,75 @@ export const AdminPage: React.FC = () => {
     [putEndpointFor]
   );
 
-  const openEditDialog = useCallback(() => {
-    if (!selectedItem) return;
+  type ArtPieceDetailsDto = {
+  id: number;
+  artPieceAddress: string;
+  artPieceName: string;
+  artPieceContainsText: boolean;
+  artPiecePosition: string;
+  artPieceUserDescription: string;
+  districtName?: string;
+  cityName?: string;
+  artPieceTextLanguages: string[];
+  artPieceTypes: string[];
+  artPieceStyles: string[];
+  photos: any[];
+};
 
-    if (activeType === "Users") {
-      setTargetAppUserEmail(selectedItem.name ?? "");
-      setUserEmail(selectedItem.name ?? "");
-      setUserName(selectedItem.subtitle ?? "");
-      setUserPassword("");
-      setAppUserLanguagesSpoken([]);
-    }
+const fetchArtPieceDetails = async (id: string): Promise<ArtPieceDetailsDto> => {
+  const res = await fetch(`${BASE}/map/artPieces/${id}`, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+    credentials: "include",
+  });
 
-    if (activeType === "ArtPieces") {
-      setApName(selectedItem.name ?? "");
-      setApAddress(selectedItem.subtitle ?? "");
-      setApUserDescription("");
-      setApPosition("");
+  const raw = await res.text().catch(() => "");
+  if (!res.ok) throw new Error(`GET /map/artPieces/${id} failed: ${res.status}. ${raw.slice(0, 200)}`);
+  return raw.trim() ? (JSON.parse(raw) as ArtPieceDetailsDto) : (null as any);
+};
 
-      setApContainsText(false);
-      setContainsTextTouched(false);
 
-      setApTypes([]);
-      setApStyles([]);
-      setApLangs([]);
-    }
+const openEditDialog = useCallback(async () => {
+  if (!selectedItem) return;
 
+  if (activeType === "Users") {
+    setTargetAppUserEmail(selectedItem.name ?? "");
+    setUserEmail(selectedItem.name ?? "");
+    setUserName(selectedItem.subtitle ?? "");
+    setUserPassword("");
+    setAppUserLanguagesSpoken([]);
     setEditOpen(true);
     opRef.current?.hide();
-  }, [activeType, selectedItem]);
+    return;
+  }
 
+  if (activeType === "ArtPieces") {
+    try {
+      const d = await fetchArtPieceDetails(selectedItem.id);
+
+      setApName(d.artPieceName ?? "");
+      setApAddress(d.artPieceAddress ?? "");
+      setApUserDescription(d.artPieceUserDescription ?? "");
+      setApPosition(d.artPiecePosition ?? "");
+
+      const contains = !!d.artPieceContainsText;
+      setApContainsText(contains);
+      setContainsTextTouched(false);
+
+      setApTypes(asStringArray(d.artPieceTypes));
+      setApStyles(asStringArray(d.artPieceStyles));
+      setApLangs(contains ? asStringArray(d.artPieceTextLanguages) : []);
+
+      setEditOpen(true);
+      opRef.current?.hide();
+    } catch (e: any) {
+      console.error(e);
+      alert(e?.message ?? "Nie udało się pobrać szczegółów artpiece");
+    }
+  }
+}, [activeType, selectedItem]);
+
+  // ----------------- MENU -----------------
   const menuModel = useMemo(
     () => [
       {
@@ -253,10 +317,12 @@ export const AdminPage: React.FC = () => {
     opRef.current?.toggle(e.originalEvent);
   };
 
+  // ----------------- SAVE EDIT -----------------
   const saveEdit = useCallback(async () => {
     if (!selectedItem) return;
 
     try {
+      // ---- USERS ----
       if (activeType === "Users") {
         if (!targetAppUserEmail.trim()) {
           throw new Error("Brak targetAppUserEmail (email do identyfikacji).");
@@ -302,8 +368,10 @@ export const AdminPage: React.FC = () => {
         return;
       }
 
+      // ---- ARTPIECES ----
       if (activeType === "ArtPieces") {
         const body: any = {
+          ...(true ? { artPieceCity: "Poznań" } : {}),
           ...(artPieceAddress.trim() ? { artPieceAddress: artPieceAddress.trim() } : {}),
           ...(artPieceName.trim() ? { artPieceName: artPieceName.trim() } : {}),
           ...(artPieceUserDescription.trim() ? { artPieceUserDescription: artPieceUserDescription.trim() } : {}),
@@ -318,6 +386,7 @@ export const AdminPage: React.FC = () => {
 
         await putItem("ArtPieces", selectedItem.id, body);
 
+        // update listy
         setData((prev) => ({
           ...prev,
           ArtPieces: prev.ArtPieces.map((x) =>
@@ -325,7 +394,26 @@ export const AdminPage: React.FC = () => {
           ),
         }));
 
-        setSelectedItem((p) => (p ? { ...p, name: artPieceName || p.name, subtitle: artPieceAddress || p.subtitle } : p));
+        setSelectedItem((p) =>
+          p ? { ...p, name: artPieceName || p.name, subtitle: artPieceAddress || p.subtitle } : p
+        );
+
+        // update mapy (żeby następny edit miał nowe dane)
+        setArtPiecesById((prev) => ({
+          ...prev,
+          [selectedItem.id]: {
+            ...prev[selectedItem.id],
+            artPieceName,
+            artPieceAddress,
+            artPieceUserDescription,
+            // jeśli masz te pola w DTO, usuń "as any" wyżej w openEditDialog
+            artPiecePosition,
+            artPieceContainsText,
+            artPieceTypes,
+            artPieceStyles,
+            artPieceTextLanguages,
+          } as any,
+        }));
 
         toast.current?.show({
           severity: "success",
@@ -361,6 +449,7 @@ export const AdminPage: React.FC = () => {
     containsTextTouched,
   ]);
 
+  // ----------------- RENDER -----------------
   return (
     <div className={styles.pageCenter}>
       <Toast ref={toast} position="top-right" />
@@ -391,7 +480,12 @@ export const AdminPage: React.FC = () => {
           <Menu model={menuModel} />
         </OverlayPanel>
 
-        <Dialog header={`Edytuj: ${activeType}`} visible={editOpen} className={styles.dialogNarrow} onHide={() => setEditOpen(false)}>
+        <Dialog
+          header={`Edytuj: ${activeType}`}
+          visible={editOpen}
+          className={styles.dialogNarrow}
+          onHide={() => setEditOpen(false)}
+        >
           {activeType === "Users" && (
             <div className={styles.dialogGrid14}>
               <div className={styles.fieldBlock}>
