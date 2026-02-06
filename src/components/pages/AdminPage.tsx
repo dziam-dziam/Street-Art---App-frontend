@@ -227,6 +227,28 @@ export const AdminPage: React.FC = () => {
     },
     [putEndpointFor]
   );
+  
+  type UserDetailsDto = {
+  id: number;
+  appUserName: string;
+  appUserEmail: string;
+  appUserLanguagesSpoken: string[];
+  appUserNationality?: string;
+  appUserCity?: string;
+  appUserLiveInDistrict?: string;
+};
+
+const fetchUserDetails = async (id: string) => {
+  const res = await fetch(`${BASE}/getAll/appUsers/${id}`, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+    credentials: "include",
+  });
+
+  const raw = await res.text().catch(() => "");
+  if (!res.ok) throw new Error(`GET /getAll/appUsers/${id} failed: ${res.status}. ${raw.slice(0, 200)}`);
+  return raw.trim() ? JSON.parse(raw) : null;
+};
 
   type ArtPieceDetailsDto = {
   id: number;
@@ -260,15 +282,25 @@ const openEditDialog = useCallback(async () => {
   if (!selectedItem) return;
 
   if (activeType === "Users") {
-    setTargetAppUserEmail(selectedItem.name ?? "");
-    setUserEmail(selectedItem.name ?? "");
-    setUserName(selectedItem.subtitle ?? "");
-    setUserPassword("");
-    setAppUserLanguagesSpoken([]);
+  try {
+    const u = await fetchUserDetails(selectedItem.id);
+
+    setTargetAppUserEmail(u.appUserEmail ?? "");
+    setUserEmail(u.appUserEmail ?? "");
+    setUserName(u.appUserName ?? "");
+    setUserPassword(""); // hasła nie wypełniamy
+    setAppUserLanguagesSpoken(asStringArray(u.appUserLanguagesSpoken));
+
     setEditOpen(true);
     opRef.current?.hide();
     return;
+  } catch (e: any) {
+    console.error(e);
+    alert(e?.message ?? "Nie udało się pobrać szczegółów usera");
+    return;
   }
+}
+
 
   if (activeType === "ArtPieces") {
     try {
