@@ -159,7 +159,7 @@ export const RegisterPageTwo: React.FC = () => {
 
         <div className={styles.stackCol}>
           <div className={styles.previewPanel}>
-            <div className={styles.sectionTitle}>Podgląd danych (Page 1)</div>
+            <div className={styles.sectionTitle}>Wprowadzone Dane</div>
 
             <div className={styles.previewRows}>
               {previewRows.map((r) => (
@@ -174,7 +174,7 @@ export const RegisterPageTwo: React.FC = () => {
           </div>
 
           <div className={styles.commutePanel}>
-            <div className={styles.sectionTitle}>Dodaj przejazd (Commute)</div>
+            <div className={styles.sectionTitle}>Przez jakie dzielnice przejeżdzasz?</div>
 
             <div style={{ display: "grid", gap: 12 }}>
               <div className={styles.fieldStack}>
