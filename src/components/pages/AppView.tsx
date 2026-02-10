@@ -206,7 +206,7 @@ if (!cancelled) {
   setIsAdmin(adminFlag);
   setUserName(nameFromApi);
   setUserEmail(emailFromApi);
-  setUserLanguages(langsFromApi);
+  setUserLanguages(langsFromApi); 
 }
       } catch (err) {
         // ignore
@@ -250,7 +250,7 @@ if (!cancelled) {
   const menuItems = useMemo(
     () => [
       { label: "Mój profil", icon: "pi pi-user", command: () => navigate("/profile") },
-      { label: "Moje dzieła", icon: "pi pi-images" },
+      { label: "Moje dzieła", icon: "pi pi-images", command: () => navigate("/my-artpieces") },
       { separator: true },
       { label: "Wyloguj", icon: "pi pi-sign-out", command: onLogout },
     ],
