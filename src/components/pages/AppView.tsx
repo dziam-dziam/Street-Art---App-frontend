@@ -187,7 +187,22 @@ export const AppView: React.FC = () => {
         const roles: string[] = data?.roles ?? [];
         const adminFlag = roles.includes("ROLE_ADMIN");
 
-        if (!cancelled) setIsAdmin(adminFlag);
+        const nameFromApi =
+  data?.name ??
+  data?.username ??
+  data?.fullName ??
+  "Użytkownik";
+
+const emailFromApi =
+  data?.email ??
+  data?.userEmail ??
+  "user@email.com";
+
+if (!cancelled) {
+  setIsAdmin(adminFlag);
+  setUserName(nameFromApi);
+  setUserEmail(emailFromApi);
+}
       } catch (err) {
         // ignore
       }
@@ -231,7 +246,6 @@ export const AppView: React.FC = () => {
     () => [
       { label: "Mój profil", icon: "pi pi-user" },
       { label: "Moje dzieła", icon: "pi pi-images" },
-      { label: "Ustawienia", icon: "pi pi-cog" },
       { separator: true },
       { label: "Wyloguj", icon: "pi pi-sign-out", command: onLogout },
     ],
@@ -275,9 +289,10 @@ export const AppView: React.FC = () => {
         visible={sidebarVisible}
         onHide={() => setSidebarVisible(false)}
         menuModel={menuItems}
-        userName="Użytkownik"
-        userEmail="user@email.com"
+        userName={userName}
+        userEmail={userEmail}
       />
+
 
       {/* ✅ tylko district */}
       <Sidebar
