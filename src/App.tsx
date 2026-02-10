@@ -7,6 +7,7 @@ import { RegisterPage } from "./components/pages/RegisterPage";
 import { RegisterPageTwo } from "./components/pages/RegisterPageTwo";
 import { AppView } from "./components/pages/AppView";
 import { AddArtPiecePage } from "./components/pages/AddArtPiecePage";
+import { ProfilePage } from "./components/pages/ProfilePage";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
       <Route path="/app" element={<AppView />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/artpieces/add" element={<AddArtPiecePage />} />
+      <Route path="/profile" element={<ProfilePage />} />
 
       <Route
         path="/register/2"

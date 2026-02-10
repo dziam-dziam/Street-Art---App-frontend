@@ -81,6 +81,7 @@ export const AppView: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [userName, setUserName] = useState<string>("Użytkownik");
   const [userEmail, setUserEmail] = useState<string>("user@email.com");
+  const [userLanguages, setUserLanguages] = useState<string[]>([]);
 
 
   const [details, setDetails] = useState<ArtPieceDetailsDto | null>(null);
@@ -184,6 +185,9 @@ export const AppView: React.FC = () => {
         if (!res.ok) return;
 
         const data = await res.json().catch(() => null);
+        const langsFromApi: string[] = Array.isArray(data?.languagesSpoken)
+          ? data.languagesSpoken.map(String)
+          : [];
         const roles: string[] = data?.roles ?? [];
         const adminFlag = roles.includes("ROLE_ADMIN");
 
@@ -202,6 +206,7 @@ if (!cancelled) {
   setIsAdmin(adminFlag);
   setUserName(nameFromApi);
   setUserEmail(emailFromApi);
+  setUserLanguages(langsFromApi);
 }
       } catch (err) {
         // ignore
@@ -244,7 +249,7 @@ if (!cancelled) {
 
   const menuItems = useMemo(
     () => [
-      { label: "Mój profil", icon: "pi pi-user" },
+      { label: "Mój profil", icon: "pi pi-user", command: () => navigate("/profile") },
       { label: "Moje dzieła", icon: "pi pi-images" },
       { separator: true },
       { label: "Wyloguj", icon: "pi pi-sign-out", command: onLogout },
