@@ -8,6 +8,12 @@ import { Card } from "primereact/card";
 import { Toast } from "primereact/toast";
 import { Dialog } from "primereact/dialog";
 import { useNavigate } from "react-router-dom";
+import { Sidebar } from "primereact/sidebar";
+import { Dropdown } from "primereact/dropdown";
+import { Divider } from "primereact/divider";
+
+import { DISTRICT_OPTIONS } from "../constants/Options";
+import type { DistrictName } from "../constants/Options";
 
 import poz from "../assets/poznan.json";
 import type { ArtPieceMapPointDto } from "../dto/artpiece/ArtPieceMapPointDto";
@@ -15,7 +21,6 @@ import type { ArtPieceMapPointDto } from "../dto/artpiece/ArtPieceMapPointDto";
 // ✅ widgety mapy
 import { MapWidget, FloatingActions, UserSidebar } from "../../widgets/map/MapWidgets";
 import type { ArtPoint } from "../../widgets/map/MapWidgets";
-import type { DistrictName } from "../constants/Options";
 
 type PhotoResponseDto = {
   id?: number;
@@ -74,10 +79,18 @@ function pickPoznanBoundary(fc: any) {
 
 export const AppView: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userName, setUserName] = useState<string>("Użytkownik");
+  const [userEmail, setUserEmail] = useState<string>("user@email.com");
+
 
   const [details, setDetails] = useState<ArtPieceDetailsDto | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
+
+  const [filtersVisible, setFiltersVisible] = useState(false);
+
+  // ✅ tylko district
+  const [filterDistrict, setFilterDistrict] = useState<DistrictName | null>(null);
 
   const loadDetails = useCallback(async (id: string) => {
     setLoadingDetails(true);
@@ -105,12 +118,64 @@ export const AppView: React.FC = () => {
     }
   }, []);
 
+  const [points, setPoints] = useState<ArtPoint[]>([]);
+  const [loadingPoints, setLoadingPoints] = useState(false);
+  const [pointsError, setPointsError] = useState<string | null>(null);
+
+  const loadPoints = useCallback(async () => {
+    setLoadingPoints(true);
+    setPointsError(null);
+
+    try {
+      const params = new URLSearchParams();
+
+      // ✅ tylko district jako query param
+      if (filterDistrict) params.set("district", filterDistrict);
+
+      const url = `${BASE_URL}/map/artPieces${params.toString() ? `?${params.toString()}` : ""}`;
+
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        throw new Error(`GET ${url} failed: ${res.status}. ${body}`);
+      }
+
+      const data: ArtPieceMapPointDto[] = await res.json();
+
+      const mapped: ArtPoint[] = (data ?? [])
+        .filter((d) => Number.isFinite(d.lat) && Number.isFinite(d.lng))
+        .map((d) => ({
+          id: String(d.id),
+          title: d.title ?? "(no title)",
+          address: d.address ?? "",
+          district: normalizeDistrict(d.district),
+          lat: d.lat,
+          lng: d.lng,
+        }));
+
+      setPoints(mapped);
+    } catch (e: any) {
+      setPointsError(e?.message ?? "Unknown error");
+    } finally {
+      setLoadingPoints(false);
+    }
+  }, [filterDistrict]);
+
+  useEffect(() => {
+    void loadPoints();
+  }, [loadPoints]);
+
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       try {
-        const res = await fetch("http://localhost:8080/auth/me", {
+        const res = await fetch(`${BASE_URL}/auth/me`, {
           method: "GET",
           credentials: "include",
           headers: { Accept: "application/json" },
@@ -120,10 +185,10 @@ export const AppView: React.FC = () => {
 
         const data = await res.json().catch(() => null);
         const roles: string[] = data?.roles ?? [];
-        const admin = roles.includes("ROLE_ADMIN");
+        const adminFlag = roles.includes("ROLE_ADMIN");
 
-        if (!cancelled) setIsAdmin(admin);
-      } catch {
+        if (!cancelled) setIsAdmin(adminFlag);
+      } catch (err) {
         // ignore
       }
     })();
@@ -141,13 +206,9 @@ export const AppView: React.FC = () => {
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [selected, setSelected] = useState<ArtPoint | null>(null);
 
-  const [points, setPoints] = useState<ArtPoint[]>([]);
-  const [loadingPoints, setLoadingPoints] = useState(false);
-  const [pointsError, setPointsError] = useState<string | null>(null);
-
   const onLogout = useCallback(async () => {
     try {
-      const res = await fetch("http://localhost:8080/auth/logout", {
+      const res = await fetch(`${BASE_URL}/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
@@ -177,62 +238,21 @@ export const AppView: React.FC = () => {
     [onLogout]
   );
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadPoints() {
-      setLoadingPoints(true);
-      setPointsError(null);
-
-      try {
-        const res = await fetch(`${BASE_URL}/map/artPieces`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        });
-
-        if (!res.ok) {
-          const body = await res.text().catch(() => "");
-          throw new Error(`GET /map/artPieces failed: ${res.status}. ${body}`);
-        }
-
-        const data: ArtPieceMapPointDto[] = await res.json();
-
-        const mapped: ArtPoint[] = (data ?? [])
-          .filter((d) => Number.isFinite(d.lat) && Number.isFinite(d.lng))
-          .map((d) => ({
-            id: String(d.id),
-            title: d.title ?? "(no title)",
-            address: d.address ?? "",
-            district: normalizeDistrict(d.district),
-            lat: d.lat,
-            lng: d.lng,
-          }));
-
-        if (!cancelled) setPoints(mapped);
-      } catch (e: any) {
-        if (!cancelled) setPointsError(e?.message ?? "Unknown error");
-      } finally {
-        if (!cancelled) setLoadingPoints(false);
-      }
-    }
-
-    loadPoints();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   return (
     <div className={styles.pageCenter}>
       <Toast ref={toast} position="center" />
 
       <Card title="App View" className={styles.appCardWide}>
-        {pointsError ? <div style={{ marginBottom: 10, color: "#ffd1d1", fontWeight: 700 }}>Error: {pointsError}</div> : null}
+        {pointsError ? (
+          <div style={{ marginBottom: 10, color: "#ffd1d1", fontWeight: 700 }}>
+            Error: {pointsError}
+          </div>
+        ) : null}
 
         <div className={styles.appLayout}>
           <div className={styles.iconRail}>
             <Button icon="pi pi-bars" rounded text aria-label="menu" onClick={() => setSidebarVisible(true)} style={{ color: "white" }} />
+            <Button icon="pi pi-filter" rounded text aria-label="filters" onClick={() => setFiltersVisible(true)} style={{ color: "white" }} />
           </div>
 
           <div className={styles.mapShell}>
@@ -246,11 +266,7 @@ export const AppView: React.FC = () => {
               }}
             />
 
-            <FloatingActions
-              isAdmin={isAdmin}
-              onGoAdmin={() => navigate("/admin")}
-              onAddNew={() => navigate("/artpieces/add")}
-            />
+            <FloatingActions isAdmin={isAdmin} onGoAdmin={() => navigate("/admin")} onAddNew={() => navigate("/artpieces/add")} />
           </div>
         </div>
       </Card>
@@ -262,6 +278,53 @@ export const AppView: React.FC = () => {
         userName="Użytkownik"
         userEmail="user@email.com"
       />
+
+      {/* ✅ tylko district */}
+      <Sidebar
+        visible={filtersVisible}
+        position="right"
+        onHide={() => setFiltersVisible(false)}
+        style={{ width: "min(360px, 92vw)" }}
+      >
+        <h3 style={{ marginTop: 0 }}>Filtry 🧩</h3>
+        <Divider />
+
+        <div style={{ display: "grid", gap: 14 }}>
+          <div>
+            <div style={{ marginBottom: 6 }}>District</div>
+            <Dropdown
+              value={filterDistrict}
+              options={[...DISTRICT_OPTIONS]}
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Any"
+              showClear
+              onChange={(e) => setFilterDistrict(e.value ?? null)}
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+            <Button
+              label="Apply"
+              icon="pi pi-check"
+              onClick={() => {
+                void loadPoints();
+                setFiltersVisible(false);
+              }}
+            />
+            <Button
+              label="Reset"
+              icon="pi pi-refresh"
+              outlined
+              onClick={() => {
+                setFilterDistrict(null);
+                setTimeout(() => void loadPoints(), 0);
+              }}
+            />
+          </div>
+        </div>
+      </Sidebar>
 
       <Dialog
         header={details?.artPieceName ?? selected?.title ?? "Details"}
