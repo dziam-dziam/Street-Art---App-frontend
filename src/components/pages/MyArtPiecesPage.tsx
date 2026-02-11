@@ -6,6 +6,10 @@ import { Toast } from "primereact/toast";
 import { Chip } from "primereact/chip";
 import { Carousel } from "primereact/carousel";
 import { useNavigate } from "react-router-dom";
+import { InputText } from "primereact/inputtext";
+import { MultiSelect } from "primereact/multiselect";
+import { ToggleButton } from "primereact/togglebutton";
+import { ART_TYPE_OPTIONS, ART_STYLE_OPTIONS, LANGUAGE_OPTIONS } from "../constants/Options";
 
 const BASE_URL = "http://localhost:8080";
 
@@ -41,19 +45,92 @@ type ArtPieceDetailsDto = {
   photos: PhotoResponseDto[];
 };
 
+type ApErrors = {
+  artPieceName?: string;
+  artPieceAddress?: string;
+  artPiecePosition?: string;
+  artPieceUserDescription?: string;
+  artPieceTypes?: string;
+  artPieceStyles?: string;
+  artPieceTextLanguages?: string;
+};
+
+type ApTouched = Partial<Record<keyof ApErrors, boolean>>;
+
 export const MyArtPiecesPage: React.FC = () => {
   const navigate = useNavigate();
   const toast = useRef<Toast>(null);
 
+  // ----------------- LIST -----------------
   const [items, setItems] = useState<ArtPieceMapPointDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // ----------------- DETAILS DIALOG -----------------
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [details, setDetails] = useState<ArtPieceDetailsDto | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
 
+  // ----------------- EDIT DIALOG -----------------
+  const [editOpen, setEditOpen] = useState(false);
+
+  const [artPieceName, setApName] = useState("");
+  const [artPieceAddress, setApAddress] = useState("");
+  const [artPieceUserDescription, setApUserDescription] = useState("");
+  const [artPiecePosition, setApPosition] = useState("");
+  const [artPieceContainsText, setApContainsText] = useState(false);
+  const [artPieceTypes, setApTypes] = useState<string[]>([]);
+  const [artPieceStyles, setApStyles] = useState<string[]>([]);
+  const [artPieceTextLanguages, setApLangs] = useState<string[]>([]);
+
+  const [apTouched, setApTouched] = useState<ApTouched>({});
+  const markApTouched = (k: keyof ApErrors) => setApTouched((p) => ({ ...p, [k]: true }));
+  const showApErr = (k: keyof ApErrors, errors: ApErrors) => Boolean(apTouched[k] && errors[k]);
+
+  const MAX_NAME = 50;
+  const MAX_POS = 50;
+  const MAX_DESC = 200;
+
+  const validateAp = useCallback((): ApErrors => {
+    const e: ApErrors = {};
+
+    const name = artPieceName.trim();
+    if (!name) e.artPieceName = "Name is required.";
+    else if (name.length > MAX_NAME) e.artPieceName = `Max ${MAX_NAME} chars.`;
+
+    const addr = artPieceAddress.trim();
+    if (!addr) e.artPieceAddress = "Address is required.";
+
+    const pos = artPiecePosition.trim();
+    if (pos.length > MAX_POS) e.artPiecePosition = `Max ${MAX_POS} chars.`;
+
+    const desc = artPieceUserDescription.trim();
+    if (desc.length > MAX_DESC) e.artPieceUserDescription = `Max ${MAX_DESC} chars.`;
+
+    if (!artPieceTypes.length) e.artPieceTypes = "Select at least one type.";
+    if (!artPieceStyles.length) e.artPieceStyles = "Select at least one style.";
+
+    if (artPieceContainsText && !artPieceTextLanguages.length) {
+      e.artPieceTextLanguages = "Select at least one text language.";
+    }
+
+    return e;
+  }, [
+    artPieceName,
+    artPieceAddress,
+    artPiecePosition,
+    artPieceUserDescription,
+    artPieceTypes,
+    artPieceStyles,
+    artPieceContainsText,
+    artPieceTextLanguages,
+  ]);
+
+  const apErrors = useMemo(() => validateAp(), [validateAp]);
+  const canSave = Object.keys(apErrors).length === 0;
+
+  // ----------------- FETCH LIST -----------------
   const loadMy = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -77,6 +154,7 @@ export const MyArtPiecesPage: React.FC = () => {
     }
   }, []);
 
+  // ----------------- FETCH DETAILS -----------------
   const loadDetails = useCallback(async (id: number) => {
     setLoadingDetails(true);
     setDetails(null);
@@ -109,6 +187,110 @@ export const MyArtPiecesPage: React.FC = () => {
     return it?.title ?? "Details";
   }, [items, selectedId]);
 
+  // ----------------- OPEN EDIT -----------------
+  const openEdit = useCallback(() => {
+    if (!details) return;
+
+    setApName(details.artPieceName ?? "");
+    setApAddress(details.artPieceAddress ?? "");
+    setApUserDescription(details.artPieceUserDescription ?? "");
+    setApPosition(details.artPiecePosition ?? "");
+    setApContainsText(!!details.artPieceContainsText);
+
+    setApTypes((details.artPieceTypes ?? []).map(String));
+    setApStyles((details.artPieceStyles ?? []).map(String));
+    setApLangs((details.artPieceTextLanguages ?? []).map(String));
+
+    setApTouched({});
+    setEditOpen(true);
+  }, [details]);
+
+  // ----------------- SAVE EDIT -----------------
+  const saveEdit = useCallback(async () => {
+    const id = selectedId ?? details?.id;
+    if (!id) return;
+
+    setApTouched({
+      artPieceName: true,
+      artPieceAddress: true,
+      artPiecePosition: true,
+      artPieceUserDescription: true,
+      artPieceTypes: true,
+      artPieceStyles: true,
+      artPieceTextLanguages: true,
+    });
+
+    if (!canSave) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Fix errors",
+        detail: "Please correct highlighted fields.",
+        life: 2200,
+      });
+      return;
+    }
+
+    try {
+      const body = {
+        artPieceCity: "Poznań",
+        artPieceAddress: artPieceAddress.trim(),
+        artPieceName: artPieceName.trim(),
+        artPieceUserDescription: artPieceUserDescription.trim(),
+        artPiecePosition: artPiecePosition.trim(),
+        artPieceContainsText,
+        artPieceTypes,
+        artPieceStyles,
+        artPieceTextLanguages: artPieceContainsText ? artPieceTextLanguages : [],
+      };
+
+      const res = await fetch(`${BASE_URL}/my/artPieces/${id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json; charset=UTF-8", Accept: "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const raw = await res.text().catch(() => "");
+      if (!res.ok) throw new Error(`PUT /my/artPieces/${id} failed: ${res.status}. ${raw.slice(0, 200)}`);
+
+      toast.current?.show({
+        severity: "success",
+        summary: "Zapisano ✅",
+        detail: "Zaktualizowano ArtPiece",
+        life: 2000,
+      });
+
+      setEditOpen(false);
+
+      // refresh list + details
+      await loadMy();
+      await loadDetails(id);
+    } catch (e: any) {
+      alert(e?.message ?? "Update error");
+    }
+  }, [
+    selectedId,
+    details?.id,
+    canSave,
+    artPieceAddress,
+    artPieceName,
+    artPieceUserDescription,
+    artPiecePosition,
+    artPieceContainsText,
+    artPieceTypes,
+    artPieceStyles,
+    artPieceTextLanguages,
+    loadMy,
+    loadDetails,
+  ]);
+
+  const closeDetailsDialog = useCallback(() => {
+    setSelectedId(null);
+    setDetails(null);
+    setDetailsError(null);
+    setEditOpen(false);
+  }, []);
+
   return (
     <div style={{ padding: 16, maxWidth: 900 }}>
       <Toast ref={toast} position="top-right" />
@@ -120,9 +302,7 @@ export const MyArtPiecesPage: React.FC = () => {
         </div>
 
         {error ? <div style={{ color: "#ffb3b3", fontWeight: 700 }}>{error}</div> : null}
-
         {loading ? <div>Loading...</div> : null}
-
         {!loading && items.length === 0 ? <div>(Brak dodanych artpieces)</div> : null}
 
         <div style={{ display: "grid", gap: 10 }}>
@@ -158,16 +338,19 @@ export const MyArtPiecesPage: React.FC = () => {
         </div>
       </Card>
 
+      {/* DETAILS */}
       <Dialog
         header={details?.artPieceName ?? selectedTitle}
         visible={selectedId != null}
         style={{ width: "min(720px, 94vw)" }}
-        onHide={() => {
-          setSelectedId(null);
-          setDetails(null);
-          setDetailsError(null);
-        }}
+        onHide={closeDetailsDialog}
       >
+        {details && !loadingDetails && !detailsError ? (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+            <Button label="Edytuj" icon="pi pi-pencil" onClick={openEdit} />
+          </div>
+        ) : null}
+
         {loadingDetails ? <div>Loading...</div> : null}
         {detailsError ? <div style={{ color: "#ffb3b3", fontWeight: 700 }}>{detailsError}</div> : null}
 
@@ -185,7 +368,11 @@ export const MyArtPiecesPage: React.FC = () => {
                   const src = p.downloadUrl?.startsWith("http") ? p.downloadUrl : `${BASE_URL}${p.downloadUrl ?? ""}`;
                   return (
                     <div style={{ width: "100%", height: 360, borderRadius: 12, overflow: "hidden" }}>
-                      <img src={src} alt={p.fileName ?? "photo"} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                      <img
+                        src={src}
+                        alt={p.fileName ?? "photo"}
+                        style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                      />
                     </div>
                   );
                 }}
@@ -195,19 +382,33 @@ export const MyArtPiecesPage: React.FC = () => {
             )}
 
             <div style={{ display: "grid", gap: 6 }}>
-              <div><b>Name:</b> {details.artPieceName}</div>
-              <div><b>Address:</b> {details.artPieceAddress}</div>
-              <div><b>District:</b> {details.districtName ?? "-"}</div>
-              <div><b>City:</b> {details.cityName ?? "Poznań"}</div>
-              <div><b>Position:</b> {details.artPiecePosition || "-"}</div>
-              <div><b>Contains text:</b> {details.artPieceContainsText ? "Yes" : "No"}</div>
+              <div>
+                <b>Name:</b> {details.artPieceName}
+              </div>
+              <div>
+                <b>Address:</b> {details.artPieceAddress}
+              </div>
+              <div>
+                <b>District:</b> {details.districtName ?? "-"}
+              </div>
+              <div>
+                <b>City:</b> {details.cityName ?? "Poznań"}
+              </div>
+              <div>
+                <b>Position:</b> {details.artPiecePosition || "-"}
+              </div>
+              <div>
+                <b>Contains text:</b> {details.artPieceContainsText ? "Yes" : "No"}
+              </div>
             </div>
 
             <div>
               <b>Types:</b>{" "}
               {details.artPieceTypes?.length ? (
                 <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
-                  {details.artPieceTypes.map((t) => <Chip key={t} label={t} />)}
+                  {details.artPieceTypes.map((t) => (
+                    <Chip key={t} label={t} />
+                  ))}
                 </span>
               ) : (
                 <span> -</span>
@@ -218,7 +419,9 @@ export const MyArtPiecesPage: React.FC = () => {
               <b>Styles:</b>{" "}
               {details.artPieceStyles?.length ? (
                 <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
-                  {details.artPieceStyles.map((s) => <Chip key={s} label={s} />)}
+                  {details.artPieceStyles.map((s) => (
+                    <Chip key={s} label={s} />
+                  ))}
                 </span>
               ) : (
                 <span> -</span>
@@ -229,7 +432,9 @@ export const MyArtPiecesPage: React.FC = () => {
               <b>Text languages:</b>{" "}
               {details.artPieceContainsText && details.artPieceTextLanguages?.length ? (
                 <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
-                  {details.artPieceTextLanguages.map((l) => <Chip key={l} label={l} />)}
+                  {details.artPieceTextLanguages.map((l) => (
+                    <Chip key={l} label={l} />
+                  ))}
                 </span>
               ) : (
                 <span> -</span>
@@ -242,6 +447,148 @@ export const MyArtPiecesPage: React.FC = () => {
             </div>
           </div>
         )}
+      </Dialog>
+
+      {/* EDIT */}
+      <Dialog
+        header={`Edytuj: ${details?.artPieceName ?? ""}`}
+        visible={editOpen}
+        style={{ width: "min(720px, 94vw)" }}
+        onHide={() => setEditOpen(false)}
+      >
+        <div style={{ display: "grid", gap: 12 }}>
+          <div>
+            <small>Name</small>
+            <InputText
+              value={artPieceName}
+              onChange={(e) => setApName(e.target.value)}
+              onBlur={() => markApTouched("artPieceName")}
+              className={showApErr("artPieceName", apErrors) ? "p-invalid" : ""}
+              style={{ width: "100%" }}
+            />
+            {showApErr("artPieceName", apErrors) ? <small className="p-error">{apErrors.artPieceName}</small> : null}
+            <small style={{ opacity: 0.8 }}>
+              {artPieceName.trim().length}/{MAX_NAME}
+            </small>
+          </div>
+
+          <div>
+            <small>Address</small>
+            <InputText
+              value={artPieceAddress}
+              onChange={(e) => setApAddress(e.target.value)}
+              onBlur={() => markApTouched("artPieceAddress")}
+              className={showApErr("artPieceAddress", apErrors) ? "p-invalid" : ""}
+              style={{ width: "100%" }}
+            />
+            {showApErr("artPieceAddress", apErrors) ? (
+              <small className="p-error">{apErrors.artPieceAddress}</small>
+            ) : null}
+          </div>
+
+          <div>
+            <small>Description</small>
+            <InputText
+              value={artPieceUserDescription}
+              onChange={(e) => setApUserDescription(e.target.value)}
+              onBlur={() => markApTouched("artPieceUserDescription")}
+              className={showApErr("artPieceUserDescription", apErrors) ? "p-invalid" : ""}
+              style={{ width: "100%" }}
+            />
+            {showApErr("artPieceUserDescription", apErrors) ? (
+              <small className="p-error">{apErrors.artPieceUserDescription}</small>
+            ) : null}
+            <small style={{ opacity: 0.8 }}>
+              {artPieceUserDescription.trim().length}/{MAX_DESC}
+            </small>
+          </div>
+
+          <div>
+            <small>Position</small>
+            <InputText
+              value={artPiecePosition}
+              onChange={(e) => setApPosition(e.target.value)}
+              onBlur={() => markApTouched("artPiecePosition")}
+              className={showApErr("artPiecePosition", apErrors) ? "p-invalid" : ""}
+              style={{ width: "100%" }}
+            />
+            {showApErr("artPiecePosition", apErrors) ? (
+              <small className="p-error">{apErrors.artPiecePosition}</small>
+            ) : null}
+            <small style={{ opacity: 0.8 }}>
+              {artPiecePosition.trim().length}/{MAX_POS}
+            </small>
+          </div>
+
+          <div>
+            <small>Contains text</small>
+            <ToggleButton
+              checked={artPieceContainsText}
+              onChange={(e) => {
+                setApContainsText(e.value);
+                if (!e.value) setApLangs([]);
+                markApTouched("artPieceTextLanguages");
+              }}
+              onLabel="Yes"
+              offLabel="No"
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          {artPieceContainsText && (
+            <div>
+              <small>Text languages</small>
+              <MultiSelect
+                value={artPieceTextLanguages}
+                onChange={(e) => setApLangs(e.value)}
+                onBlur={() => markApTouched("artPieceTextLanguages")}
+                options={LANGUAGE_OPTIONS as any}
+                placeholder="Select languages"
+                className={showApErr("artPieceTextLanguages", apErrors) ? "p-invalid" : ""}
+                display="chip"
+                style={{ width: "100%" }}
+              />
+              {showApErr("artPieceTextLanguages", apErrors) ? (
+                <small className="p-error">{apErrors.artPieceTextLanguages}</small>
+              ) : null}
+            </div>
+          )}
+
+          <div>
+            <small>Types</small>
+            <MultiSelect
+              value={artPieceTypes}
+              onChange={(e) => setApTypes(e.value)}
+              onBlur={() => markApTouched("artPieceTypes")}
+              options={ART_TYPE_OPTIONS as any}
+              placeholder="Select types"
+              className={showApErr("artPieceTypes", apErrors) ? "p-invalid" : ""}
+              display="chip"
+              style={{ width: "100%" }}
+            />
+            {showApErr("artPieceTypes", apErrors) ? <small className="p-error">{apErrors.artPieceTypes}</small> : null}
+          </div>
+
+          <div>
+            <small>Styles</small>
+            <MultiSelect
+              value={artPieceStyles}
+              onChange={(e) => setApStyles(e.value)}
+              onBlur={() => markApTouched("artPieceStyles")}
+              options={ART_STYLE_OPTIONS as any}
+              placeholder="Select styles"
+              className={showApErr("artPieceStyles", apErrors) ? "p-invalid" : ""}
+              display="chip"
+              style={{ width: "100%" }}
+            />
+            {showApErr("artPieceStyles", apErrors) ? <small className="p-error">{apErrors.artPieceStyles}</small> : null}
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
+            <Button label="Cancel" severity="secondary" onClick={() => setEditOpen(false)} />
+            <Button label="Save" icon="pi pi-check" onClick={saveEdit} disabled={!canSave} />
+          </div>
+        </div>
       </Dialog>
     </div>
   );
