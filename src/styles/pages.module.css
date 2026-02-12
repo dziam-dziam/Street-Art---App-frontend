@@ -420,6 +420,7 @@
 .fieldStack {
   display: grid;
   gap: 6px;
+  min-width: 0;
 }
 
 .tableShell {
@@ -553,33 +554,172 @@
 }
 
 /* ===== MultiSelect chips: wrap + hide Prime overflow "+n" ===== */
+/* Apply to: cardShell, cardNarrow, and dialogs */
 
-.cardShell :global(.p-multiselect-label-container) {
+.cardShell :global(.p-multiselect-label-container),
+.cardNarrow :global(.p-multiselect-label-container),
+.dialogWide :global(.p-multiselect-label-container),
+.dialogNarrow :global(.p-multiselect-label-container) {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
   overflow: visible;
+  max-width: 100%;
 }
 
-.cardShell :global(.p-multiselect-label) {
+.cardShell :global(.p-multiselect-label),
+.cardNarrow :global(.p-multiselect-label),
+.dialogWide :global(.p-multiselect-label),
+.dialogNarrow :global(.p-multiselect-label) {
   white-space: normal;
   overflow: visible;
   text-overflow: clip;
+  max-width: 100%;
 }
 
-.cardShell :global(.p-multiselect-token) {
+.cardShell :global(.p-multiselect-token),
+.cardNarrow :global(.p-multiselect-token),
+.dialogWide :global(.p-multiselect-token),
+.dialogNarrow :global(.p-multiselect-token) {
   margin: 0;
   border-radius: 999px;
   padding: 6px 10px;
   white-space: nowrap;
 }
 
-.cardShell :global(.p-multiselect-items-label) {
+.cardShell :global(.p-multiselect-items-label),
+.cardNarrow :global(.p-multiselect-items-label),
+.dialogWide :global(.p-multiselect-items-label),
+.dialogNarrow :global(.p-multiselect-items-label) {
   display: none !important;
 }
 
 .cardShell :global(.p-multiselect-token.p-multiselect-token-more),
-.cardShell :global(.p-multiselect-token-more) {
+.cardNarrow :global(.p-multiselect-token.p-multiselect-token-more),
+.dialogWide :global(.p-multiselect-token.p-multiselect-token-more),
+.dialogNarrow :global(.p-multiselect-token.p-multiselect-token-more),
+.cardShell :global(.p-multiselect-token-more),
+.cardNarrow :global(.p-multiselect-token-more),
+.dialogWide :global(.p-multiselect-token-more),
+.dialogNarrow :global(.p-multiselect-token-more) {
   display: none !important;
+}
+
+/* ===== MultiSelect chips: wrap + hide Prime overflow "+n" ===== */
+/* Add auth cards + panels */
+
+.cardShell :global(.p-multiselect-label-container),
+.cardNarrow :global(.p-multiselect-label-container),
+.authCardRegister :global(.p-multiselect-label-container),
+.authCardLogin :global(.p-multiselect-label-container),
+.commutePanel :global(.p-multiselect-label-container) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  overflow: visible;
+  max-width: 100%;
+}
+
+.cardShell :global(.p-multiselect-label),
+.cardNarrow :global(.p-multiselect-label),
+.authCardRegister :global(.p-multiselect-label),
+.authCardLogin :global(.p-multiselect-label),
+.commutePanel :global(.p-multiselect-label) {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  max-width: 100%;
+}
+
+.cardShell :global(.p-multiselect-token),
+.cardNarrow :global(.p-multiselect-token),
+.authCardRegister :global(.p-multiselect-token),
+.authCardLogin :global(.p-multiselect-token),
+.commutePanel :global(.p-multiselect-token) {
+  margin: 0;
+  border-radius: 999px;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.cardShell :global(.p-multiselect-items-label),
+.cardNarrow :global(.p-multiselect-items-label),
+.authCardRegister :global(.p-multiselect-items-label),
+.authCardLogin :global(.p-multiselect-items-label),
+.commutePanel :global(.p-multiselect-items-label) {
+  display: none !important;
+}
+
+.cardShell :global(.p-multiselect-token.p-multiselect-token-more),
+.cardNarrow :global(.p-multiselect-token.p-multiselect-token-more),
+.authCardRegister :global(.p-multiselect-token.p-multiselect-token-more),
+.authCardLogin :global(.p-multiselect-token.p-multiselect-token-more),
+.commutePanel :global(.p-multiselect-token.p-multiselect-token-more),
+.cardShell :global(.p-multiselect-token-more),
+.cardNarrow :global(.p-multiselect-token-more),
+.authCardRegister :global(.p-multiselect-token-more),
+.authCardLogin :global(.p-multiselect-token-more),
+.commutePanel :global(.p-multiselect-token-more) {
+  display: none !important;
+}
+
+/* ===== MyArtPieces + Profile extras ===== */
+
+.cardNarrow {
+  width: min(560px, 96vw);
+  background: #4b55a3;
+  color: white;
+  border-radius: 14px;
+}
+
+.listGrid1 {
+  display: grid;
+  gap: 12px;
+}
+
+.itemCard {
+  background: rgba(0, 0, 0, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.itemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.itemMeta {
+  display: grid;
+  gap: 2px;
+}
+
+.dialogWide {
+  width: min(720px, 94vw);
+}
+
+.photoFrame {
+  width: 100%;
+  height: 360px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* RegisterPageTwo: Trips/week small + transport wide */
+.gridTripsTransport {
+  display: grid;
+  grid-template-columns: 96px 1fr; /* left fixed, right flexible */
+  gap: 12px;
+  align-items: end;
+}
+
+.tripsNumber :global(.p-inputnumber-input) {
+  width: 100%;
+  text-align: center;
 }

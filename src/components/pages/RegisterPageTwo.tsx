@@ -191,8 +191,8 @@ export const RegisterPageTwo: React.FC = () => {
                 {showError("commuteThroughDistrictName") ? <small className="p-error">{commuteErrors.commuteThroughDistrictName}</small> : null}
               </div>
 
-              <div className={styles.grid2}>
-                <div className={styles.fieldStack}>
+              <div className={styles.gridTripsTransport}>
+                <div className={`${styles.fieldStack} ${styles.tripsNumber}`}>
                   <label className={styles.fieldLabel}>Trips per week</label>
                   <InputNumber
                     value={commuteForm.commuteTripsPerWeek}
@@ -200,7 +200,6 @@ export const RegisterPageTwo: React.FC = () => {
                     min={1}
                     max={99}
                     className={`${styles.fullWidth} ${showError("commuteTripsPerWeek") ? "p-invalid" : ""}`}
-                    inputStyle={{ width: "100%" }}
                     useGrouping={false}
                   />
                   {showError("commuteTripsPerWeek") ? <small className="p-error">{commuteErrors.commuteTripsPerWeek}</small> : null}
@@ -216,9 +215,12 @@ export const RegisterPageTwo: React.FC = () => {
                     placeholder="Select transport"
                     className={`${styles.fullWidth} ${showError("commuteMeansOfTransport") ? "p-invalid" : ""}`}
                   />
-                  {showError("commuteMeansOfTransport") ? <small className="p-error">{commuteErrors.commuteMeansOfTransport}</small> : null}
+                  {showError("commuteMeansOfTransport") ? (
+                    <small className="p-error">{commuteErrors.commuteMeansOfTransport}</small>
+                  ) : null}
                 </div>
               </div>
+
 
               <div className={styles.grid2}>
                 <div className={styles.fieldStack}>

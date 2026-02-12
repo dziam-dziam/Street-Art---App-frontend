@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import styles from "../../styles/pages.module.css";
 import { useNavigate } from "react-router-dom";
 
 import { Toast } from "primereact/toast";
@@ -6,6 +7,7 @@ import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { MultiSelect } from "primereact/multiselect";
 import { Divider } from "primereact/divider";
+import { Card } from "primereact/card";
 
 import { LANGUAGE_OPTIONS } from "../constants/Options";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/validators";
@@ -22,7 +24,7 @@ type MeResponse = {
 type UpdateBody = {
   appUserName: string;
   appUserEmail: string;
-  appUserPassword?: string; // opcjonalne
+  appUserPassword?: string;
   appUserLanguagesSpoken: string[];
 };
 
@@ -31,7 +33,6 @@ export const ProfilePage: React.FC = () => {
   const toast = useRef<Toast>(null);
 
   const [loading, setLoading] = useState(false);
-
   const [initialEmail, setInitialEmail] = useState("");
 
   const [name, setName] = useState("");
@@ -39,7 +40,6 @@ export const ProfilePage: React.FC = () => {
   const [languages, setLanguages] = useState<string[]>([]);
   const [password, setPassword] = useState("");
 
-  // proste touched do walidacji
   const [tName, setTName] = useState(false);
   const [tEmail, setTEmail] = useState(false);
   const [tLang, setTLang] = useState(false);
@@ -156,16 +156,16 @@ export const ProfilePage: React.FC = () => {
         life: 1800,
       });
 
+      const passwordChanged = password.trim().length > 0;
+      const emailChanged = oldEmail && oldEmail !== newEmail;
+
       setPassword("");
 
-        const passwordChanged = password.trim().length > 0;
-        const emailChanged = oldEmail && oldEmail !== newEmail;
-
-        if (emailChanged || passwordChanged) {
+      if (emailChanged || passwordChanged) {
         await fetch(`${BASE}/auth/logout`, { method: "POST", credentials: "include" }).catch(() => {});
         navigate("/login", { replace: true });
         return;
-        }
+      }
 
       setInitialEmail(newEmail);
     } catch (e: any) {
@@ -181,74 +181,70 @@ export const ProfilePage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: 16, maxWidth: 520 }}>
+    <div className={styles.pageCenter}>
       <Toast ref={toast} position="top-right" />
 
-      <h2 style={{ marginTop: 0 }}>Mój profil</h2>
-
-      <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-        <Button label="Wróć" icon="pi pi-arrow-left" severity="secondary" onClick={() => navigate("/app")} />
-        <Button label="Zapisz" icon="pi pi-check" onClick={save} disabled={!canSave} />
-      </div>
-
-      <Divider />
-
-      <div style={{ display: "grid", gap: 12 }}>
-        <div>
-          <div style={{ marginBottom: 6 }}>Email</div>
-          <InputText
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onBlur={() => setTEmail(true)}
-            className={tEmail && errors.email ? "p-invalid" : ""}
-            style={{ width: "100%" }}
-          />
-          {tEmail && errors.email ? <small className="p-error">{errors.email}</small> : null}
+      <Card title="Mój profil" className={styles.cardNarrow}>
+        <div className={styles.row}>
+          <Button label="Wróć" icon="pi pi-arrow-left" severity="secondary" onClick={() => navigate("/app")} />
+          <Button label="Zapisz" icon="pi pi-check" onClick={save} disabled={!canSave} />
         </div>
 
-        <div>
-          <div style={{ marginBottom: 6 }}>Name</div>
-          <InputText
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onBlur={() => setTName(true)}
-            className={tName && errors.name ? "p-invalid" : ""}
-            style={{ width: "100%" }}
-          />
-          {tName && errors.name ? <small className="p-error">{errors.name}</small> : null}
+        <Divider className={styles.dividerSoft} />
+
+        <div className={styles.dialogGrid14}>
+          <div className={styles.fieldBlock}>
+            <small className={styles.fieldLabelSmall}>Email</small>
+            <InputText
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => setTEmail(true)}
+              className={`${styles.fullWidth} ${tEmail && errors.email ? "p-invalid" : ""}`}
+            />
+            {tEmail && errors.email ? <small className="p-error">{errors.email}</small> : null}
+          </div>
+
+          <div className={styles.fieldBlock}>
+            <small className={styles.fieldLabelSmall}>Name</small>
+            <InputText
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={() => setTName(true)}
+              className={`${styles.fullWidth} ${tName && errors.name ? "p-invalid" : ""}`}
+            />
+            {tName && errors.name ? <small className="p-error">{errors.name}</small> : null}
+          </div>
+
+          <div className={styles.fieldBlock}>
+            <small className={styles.fieldLabelSmall}>Languages spoken</small>
+            <MultiSelect
+              value={languages}
+              onChange={(e) => setLanguages(e.value)}
+              onBlur={() => setTLang(true)}
+              options={LANGUAGE_OPTIONS as any}
+              placeholder="Select languages"
+              className={`${styles.fullWidth} ${tLang && errors.languages ? "p-invalid" : ""}`}
+              display="chip"
+            />
+            {tLang && errors.languages ? <small className="p-error">{errors.languages}</small> : null}
+          </div>
+
+          <div className={styles.fieldBlock}>
+            <small className={styles.fieldLabelSmall}>New password (optional)</small>
+            <InputText
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onBlur={() => setTPass(true)}
+              className={`${styles.fullWidth} ${tPass && errors.password ? "p-invalid" : ""}`}
+            />
+            {tPass && errors.password ? <small className="p-error">{errors.password}</small> : null}
+            <small style={{ opacity: 0.85 }}>Zostaw puste jeśli nie chcesz zmieniać hasła.</small>
+          </div>
         </div>
 
-        <div>
-          <div style={{ marginBottom: 6 }}>Languages spoken</div>
-          <MultiSelect
-            value={languages}
-            onChange={(e) => setLanguages(e.value)}
-            onBlur={() => setTLang(true)}
-            options={LANGUAGE_OPTIONS as any}
-            placeholder="Select languages"
-            className={tLang && errors.languages ? "p-invalid" : ""}
-            style={{ width: "100%" }}
-            display="chip"
-          />
-          {tLang && errors.languages ? <small className="p-error">{errors.languages}</small> : null}
-        </div>
-
-        <div>
-          <div style={{ marginBottom: 6 }}>New password (optional)</div>
-          <InputText
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onBlur={() => setTPass(true)}
-            className={tPass && errors.password ? "p-invalid" : ""}
-            style={{ width: "100%" }}
-          />
-          {tPass && errors.password ? <small className="p-error">{errors.password}</small> : null}
-          <small style={{ opacity: 0.8 }}>Zostaw puste jeśli nie chcesz zmieniać hasła.</small>
-        </div>
-      </div>
-
-      {loading ? <div style={{ marginTop: 12, opacity: 0.8 }}>Loading...</div> : null}
+        {loading ? <div className={styles.mt8} style={{ opacity: 0.85 }}>Loading...</div> : null}
+      </Card>
     </div>
   );
 };

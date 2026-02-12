@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import styles from "../../styles/pages.module.css";
+
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
@@ -9,6 +11,8 @@ import { useNavigate } from "react-router-dom";
 import { InputText } from "primereact/inputtext";
 import { MultiSelect } from "primereact/multiselect";
 import { ToggleButton } from "primereact/togglebutton";
+import { Divider } from "primereact/divider";
+
 import { ART_TYPE_OPTIONS, ART_STYLE_OPTIONS, LANGUAGE_OPTIONS } from "../constants/Options";
 
 const BASE_URL = "http://localhost:8080";
@@ -73,6 +77,7 @@ export const MyArtPiecesPage: React.FC = () => {
   const [detailsError, setDetailsError] = useState<string | null>(null);
 
   // ----------------- EDIT DIALOG -----------------
+  
   const [editOpen, setEditOpen] = useState(false);
 
   const [artPieceName, setApName] = useState("");
@@ -129,6 +134,12 @@ export const MyArtPiecesPage: React.FC = () => {
 
   const apErrors = useMemo(() => validateAp(), [validateAp]);
   const canSave = Object.keys(apErrors).length === 0;
+
+    // ---- Address validator (Nominatim) ----
+  const [addressStatus, setAddressStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle");
+  const [addressHint, setAddressHint] = useState("");
+
+  const shouldShowAddressHint = !apErrors.artPieceAddress && artPieceAddress.trim().length > 0;
 
   // ----------------- FETCH LIST -----------------
   const loadMy = useCallback(async () => {
@@ -188,7 +199,65 @@ export const MyArtPiecesPage: React.FC = () => {
   }, [items, selectedId]);
 
   // ----------------- OPEN EDIT -----------------
+  const validateAddressWithNominatim = useCallback(async () => {
+    const addr = artPieceAddress.trim();
+
+    if (!addr) {
+      setAddressStatus("idle");
+      setAddressHint("");
+      return false;
+    }
+
+    setAddressStatus("checking");
+    setAddressHint("Checking address...");
+
+    try {
+      const q = `${addr}, Poznań, Poland`;
+
+      const url = new URL("https://nominatim.openstreetmap.org/search");
+      url.searchParams.set("format", "json");
+      url.searchParams.set("q", q);
+      url.searchParams.set("addressdetails", "1");
+      url.searchParams.set("limit", "1");
+
+      const res = await fetch(url.toString(), { headers: { Accept: "application/json" } });
+
+      if (!res.ok) {
+        setAddressStatus("invalid");
+        setAddressHint("Could not verify address right now. Try again.");
+        return false;
+      }
+
+      const data = (await res.json()) as any[];
+      if (!Array.isArray(data) || data.length === 0) {
+        setAddressStatus("invalid");
+        setAddressHint("Address not found. Add street number / be more specific.");
+        return false;
+      }
+
+      const display = String(data[0]?.display_name ?? "");
+      const inPoznan = display.toLowerCase().includes("poznań") || display.toLowerCase().includes("poznan");
+      if (!inPoznan) {
+        setAddressStatus("invalid");
+        setAddressHint("Found an address, but it doesn't look like Poznań.");
+        return false;
+      }
+
+      setAddressStatus("valid");
+      setAddressHint("Address looks valid ✅");
+      return true;
+    } catch {
+      setAddressStatus("invalid");
+      setAddressHint("Could not verify address. Check connection and try again.");
+      return false;
+    }
+  }, [artPieceAddress]);
+
+
   const openEdit = useCallback(() => {
+    setAddressStatus("idle");
+    setAddressHint("");
+
     if (!details) return;
 
     setApName(details.artPieceName ?? "");
@@ -229,6 +298,17 @@ export const MyArtPiecesPage: React.FC = () => {
       });
       return;
     }
+        const okAddress = await validateAddressWithNominatim();
+    if (!okAddress) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Invalid address",
+        detail: "Please provide a valid address in Poznań.",
+        life: 2500,
+      });
+      return;
+    }
+
 
     try {
       const body = {
@@ -262,11 +342,15 @@ export const MyArtPiecesPage: React.FC = () => {
 
       setEditOpen(false);
 
-      // refresh list + details
       await loadMy();
       await loadDetails(id);
     } catch (e: any) {
-      alert(e?.message ?? "Update error");
+      toast.current?.show({
+        severity: "error",
+        summary: "Błąd zapisu",
+        detail: e?.message ?? "Update error",
+        life: 3500,
+      });
     }
   }, [
     selectedId,
@@ -292,41 +376,36 @@ export const MyArtPiecesPage: React.FC = () => {
   }, []);
 
   return (
-    <div style={{ padding: 16, maxWidth: 900 }}>
+    <div className={styles.pageCenter}>
       <Toast ref={toast} position="top-right" />
 
-      <Card title="Moje dzieła">
-        <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+      <Card title="Moje dzieła" className={styles.cardShell}>
+        {error ? <div className={styles.adminError}>Error: {error}</div> : null}
+
+        <div className={styles.row}>
           <Button label="Wróć" icon="pi pi-arrow-left" severity="secondary" onClick={() => navigate("/app")} />
           <Button label="Odśwież" icon="pi pi-refresh" onClick={() => void loadMy()} loading={loading} />
         </div>
 
-        {error ? <div style={{ color: "#ffb3b3", fontWeight: 700 }}>{error}</div> : null}
-        {loading ? <div>Loading...</div> : null}
-        {!loading && items.length === 0 ? <div>(Brak dodanych artpieces)</div> : null}
+        <Divider className={styles.dividerSoft} />
 
-        <div style={{ display: "grid", gap: 10 }}>
+        {loading ? <div style={{ opacity: 0.85 }}>Loading...</div> : null}
+        {!loading && items.length === 0 ? <div style={{ opacity: 0.9 }}>(Brak dodanych artpieces)</div> : null}
+
+        <div className={styles.listGrid1}>
           {items.map((x) => (
-            <div
-              key={x.id}
-              style={{
-                border: "1px solid rgba(255,255,255,0.12)",
-                borderRadius: 10,
-                padding: 12,
-                display: "grid",
-                gap: 6,
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                <div>
-                  <b>{x.title}</b>
-                  <div style={{ opacity: 0.85 }}>{x.address}</div>
-                  <div style={{ opacity: 0.85 }}>District: {x.district}</div>
+            <div key={x.id} className={styles.itemCard}>
+              <div className={styles.itemHeader}>
+                <div className={styles.itemMeta}>
+                  <div className={styles.itemTitle}>{x.title}</div>
+                  <div className={styles.itemSubtitle}>{x.address}</div>
+                  <div className={styles.itemSubtitle}>District: {x.district}</div>
                 </div>
 
                 <Button
                   label="Otwórz"
                   icon="pi pi-external-link"
+                  className={styles.btnRounded12Bold}
                   onClick={() => {
                     setSelectedId(x.id);
                     void loadDetails(x.id);
@@ -336,260 +415,290 @@ export const MyArtPiecesPage: React.FC = () => {
             </div>
           ))}
         </div>
-      </Card>
 
-      {/* DETAILS */}
-      <Dialog
-        header={details?.artPieceName ?? selectedTitle}
-        visible={selectedId != null}
-        style={{ width: "min(720px, 94vw)" }}
-        onHide={closeDetailsDialog}
-      >
-        {details && !loadingDetails && !detailsError ? (
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-            <Button label="Edytuj" icon="pi pi-pencil" onClick={openEdit} />
-          </div>
-        ) : null}
-
-        {loadingDetails ? <div>Loading...</div> : null}
-        {detailsError ? <div style={{ color: "#ffb3b3", fontWeight: 700 }}>{detailsError}</div> : null}
-
-        {details && (
-          <div style={{ display: "grid", gap: 14 }}>
-            {details.photos?.length ? (
-              <Carousel
-                value={details.photos}
-                numVisible={1}
-                numScroll={1}
-                circular
-                showIndicators={details.photos.length > 1}
-                showNavigators={details.photos.length > 1}
-                itemTemplate={(p) => {
-                  const src = p.downloadUrl?.startsWith("http") ? p.downloadUrl : `${BASE_URL}${p.downloadUrl ?? ""}`;
-                  return (
-                    <div style={{ width: "100%", height: 360, borderRadius: 12, overflow: "hidden" }}>
-                      <img
-                        src={src}
-                        alt={p.fileName ?? "photo"}
-                        style={{ width: "100%", height: "100%", objectFit: "contain" }}
-                      />
-                    </div>
-                  );
-                }}
-              />
-            ) : (
-              <div style={{ opacity: 0.85 }}>(no photos)</div>
-            )}
-
-            <div style={{ display: "grid", gap: 6 }}>
-              <div>
-                <b>Name:</b> {details.artPieceName}
-              </div>
-              <div>
-                <b>Address:</b> {details.artPieceAddress}
-              </div>
-              <div>
-                <b>District:</b> {details.districtName ?? "-"}
-              </div>
-              <div>
-                <b>City:</b> {details.cityName ?? "Poznań"}
-              </div>
-              <div>
-                <b>Position:</b> {details.artPiecePosition || "-"}
-              </div>
-              <div>
-                <b>Contains text:</b> {details.artPieceContainsText ? "Yes" : "No"}
-              </div>
+        {/* DETAILS */}
+        <Dialog
+          header={details?.artPieceName ?? selectedTitle}
+          visible={selectedId != null}
+          className={styles.dialogWide}
+          onHide={closeDetailsDialog}
+        >
+          {details && !loadingDetails && !detailsError ? (
+            <div className={styles.dialogActions}>
+              <Button label="Edytuj" icon="pi pi-pencil" onClick={openEdit} />
             </div>
+          ) : null}
 
-            <div>
-              <b>Types:</b>{" "}
-              {details.artPieceTypes?.length ? (
-                <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
-                  {details.artPieceTypes.map((t) => (
-                    <Chip key={t} label={t} />
-                  ))}
-                </span>
+          {loadingDetails ? <div style={{ opacity: 0.85 }}>Loading...</div> : null}
+          {detailsError ? <div className={styles.adminError}>{detailsError}</div> : null}
+
+          {details && (
+            <div className={styles.dialogGrid14}>
+              {details.photos?.length ? (
+                <Carousel
+                  value={details.photos}
+                  numVisible={1}
+                  numScroll={1}
+                  circular
+                  showIndicators={details.photos.length > 1}
+                  showNavigators={details.photos.length > 1}
+                  itemTemplate={(p) => {
+                    const src = p.downloadUrl?.startsWith("http") ? p.downloadUrl : `${BASE_URL}${p.downloadUrl ?? ""}`;
+                    return (
+                      <div className={styles.photoFrame}>
+                        <img
+                          src={src}
+                          alt={p.fileName ?? "photo"}
+                          style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                        />
+                      </div>
+                    );
+                  }}
+                />
               ) : (
-                <span> -</span>
+                <div style={{ opacity: 0.85 }}>(no photos)</div>
               )}
-            </div>
 
-            <div>
-              <b>Styles:</b>{" "}
-              {details.artPieceStyles?.length ? (
-                <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
-                  {details.artPieceStyles.map((s) => (
-                    <Chip key={s} label={s} />
-                  ))}
-                </span>
-              ) : (
-                <span> -</span>
-              )}
-            </div>
+              <div className={styles.detailsGrid}>
+                <div>
+                  <b>Name:</b> {details.artPieceName}
+                </div>
+                <div>
+                  <b>Address:</b> {details.artPieceAddress}
+                </div>
+                <div>
+                  <b>District:</b> {details.districtName ?? "-"}
+                </div>
+                <div>
+                  <b>City:</b> {details.cityName ?? "Poznań"}
+                </div>
+                <div>
+                  <b>Position:</b> {details.artPiecePosition || "-"}
+                </div>
+                <div>
+                  <b>Contains text:</b> {details.artPieceContainsText ? "Yes" : "No"}
+                </div>
+              </div>
 
-            <div>
-              <b>Text languages:</b>{" "}
-              {details.artPieceContainsText && details.artPieceTextLanguages?.length ? (
-                <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
-                  {details.artPieceTextLanguages.map((l) => (
-                    <Chip key={l} label={l} />
-                  ))}
-                </span>
-              ) : (
-                <span> -</span>
-              )}
-            </div>
+              <div>
+                <b>Types:</b>{" "}
+                {details.artPieceTypes?.length ? (
+                  <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
+                    {details.artPieceTypes.map((t) => (
+                      <Chip key={t} label={t} />
+                    ))}
+                  </span>
+                ) : (
+                  <span> -</span>
+                )}
+              </div>
 
-            <div>
-              <b>Description:</b>
-              <div style={{ marginTop: 6, opacity: 0.95 }}>{details.artPieceUserDescription || "-"}</div>
-            </div>
-          </div>
-        )}
-      </Dialog>
+              <div>
+                <b>Styles:</b>{" "}
+                {details.artPieceStyles?.length ? (
+                  <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
+                    {details.artPieceStyles.map((s) => (
+                      <Chip key={s} label={s} />
+                    ))}
+                  </span>
+                ) : (
+                  <span> -</span>
+                )}
+              </div>
 
-      {/* EDIT */}
-      <Dialog
-        header={`Edytuj: ${details?.artPieceName ?? ""}`}
-        visible={editOpen}
-        style={{ width: "min(720px, 94vw)" }}
-        onHide={() => setEditOpen(false)}
-      >
-        <div style={{ display: "grid", gap: 12 }}>
-          <div>
-            <small>Name</small>
-            <InputText
-              value={artPieceName}
-              onChange={(e) => setApName(e.target.value)}
-              onBlur={() => markApTouched("artPieceName")}
-              className={showApErr("artPieceName", apErrors) ? "p-invalid" : ""}
-              style={{ width: "100%" }}
-            />
-            {showApErr("artPieceName", apErrors) ? <small className="p-error">{apErrors.artPieceName}</small> : null}
-            <small style={{ opacity: 0.8 }}>
-              {artPieceName.trim().length}/{MAX_NAME}
-            </small>
-          </div>
+              <div>
+                <b>Text languages:</b>{" "}
+                {details.artPieceContainsText && details.artPieceTextLanguages?.length ? (
+                  <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
+                    {details.artPieceTextLanguages.map((l) => (
+                      <Chip key={l} label={l} />
+                    ))}
+                  </span>
+                ) : (
+                  <span> -</span>
+                )}
+              </div>
 
-          <div>
-            <small>Address</small>
-            <InputText
-              value={artPieceAddress}
-              onChange={(e) => setApAddress(e.target.value)}
-              onBlur={() => markApTouched("artPieceAddress")}
-              className={showApErr("artPieceAddress", apErrors) ? "p-invalid" : ""}
-              style={{ width: "100%" }}
-            />
-            {showApErr("artPieceAddress", apErrors) ? (
-              <small className="p-error">{apErrors.artPieceAddress}</small>
-            ) : null}
-          </div>
-
-          <div>
-            <small>Description</small>
-            <InputText
-              value={artPieceUserDescription}
-              onChange={(e) => setApUserDescription(e.target.value)}
-              onBlur={() => markApTouched("artPieceUserDescription")}
-              className={showApErr("artPieceUserDescription", apErrors) ? "p-invalid" : ""}
-              style={{ width: "100%" }}
-            />
-            {showApErr("artPieceUserDescription", apErrors) ? (
-              <small className="p-error">{apErrors.artPieceUserDescription}</small>
-            ) : null}
-            <small style={{ opacity: 0.8 }}>
-              {artPieceUserDescription.trim().length}/{MAX_DESC}
-            </small>
-          </div>
-
-          <div>
-            <small>Position</small>
-            <InputText
-              value={artPiecePosition}
-              onChange={(e) => setApPosition(e.target.value)}
-              onBlur={() => markApTouched("artPiecePosition")}
-              className={showApErr("artPiecePosition", apErrors) ? "p-invalid" : ""}
-              style={{ width: "100%" }}
-            />
-            {showApErr("artPiecePosition", apErrors) ? (
-              <small className="p-error">{apErrors.artPiecePosition}</small>
-            ) : null}
-            <small style={{ opacity: 0.8 }}>
-              {artPiecePosition.trim().length}/{MAX_POS}
-            </small>
-          </div>
-
-          <div>
-            <small>Contains text</small>
-            <ToggleButton
-              checked={artPieceContainsText}
-              onChange={(e) => {
-                setApContainsText(e.value);
-                if (!e.value) setApLangs([]);
-                markApTouched("artPieceTextLanguages");
-              }}
-              onLabel="Yes"
-              offLabel="No"
-              style={{ width: "100%" }}
-            />
-          </div>
-
-          {artPieceContainsText && (
-            <div>
-              <small>Text languages</small>
-              <MultiSelect
-                value={artPieceTextLanguages}
-                onChange={(e) => setApLangs(e.value)}
-                onBlur={() => markApTouched("artPieceTextLanguages")}
-                options={LANGUAGE_OPTIONS as any}
-                placeholder="Select languages"
-                className={showApErr("artPieceTextLanguages", apErrors) ? "p-invalid" : ""}
-                display="chip"
-                style={{ width: "100%" }}
-              />
-              {showApErr("artPieceTextLanguages", apErrors) ? (
-                <small className="p-error">{apErrors.artPieceTextLanguages}</small>
-              ) : null}
+              <div>
+                <b>Description:</b>
+                <div style={{ marginTop: 6, opacity: 0.95 }}>{details.artPieceUserDescription || "-"}</div>
+              </div>
             </div>
           )}
+        </Dialog>
 
-          <div>
-            <small>Types</small>
-            <MultiSelect
-              value={artPieceTypes}
-              onChange={(e) => setApTypes(e.value)}
-              onBlur={() => markApTouched("artPieceTypes")}
-              options={ART_TYPE_OPTIONS as any}
-              placeholder="Select types"
-              className={showApErr("artPieceTypes", apErrors) ? "p-invalid" : ""}
-              display="chip"
-              style={{ width: "100%" }}
-            />
-            {showApErr("artPieceTypes", apErrors) ? <small className="p-error">{apErrors.artPieceTypes}</small> : null}
+        {/* EDIT */}
+        <Dialog
+          header={`Edytuj: ${details?.artPieceName ?? ""}`}
+          visible={editOpen}
+          className={styles.dialogWide}
+          onHide={() => setEditOpen(false)}
+        >
+          <div className={styles.dialogGrid14}>
+            <div className={styles.fieldBlock}>
+              <small className={styles.fieldLabelSmall}>Name</small>
+              <InputText
+                value={artPieceName}
+                onChange={(e) => setApName(e.target.value)}
+                onBlur={() => markApTouched("artPieceName")}
+                className={`${styles.fullWidth} ${showApErr("artPieceName", apErrors) ? "p-invalid" : ""}`}
+              />
+              {showApErr("artPieceName", apErrors) ? <small className="p-error">{apErrors.artPieceName}</small> : null}
+              <small style={{ opacity: 0.85 }}>
+                {artPieceName.trim().length}/{MAX_NAME}
+              </small>
+            </div>
+
+                        <div className={styles.fieldBlock}>
+              <small className={styles.fieldLabelSmall}>Address</small>
+              <InputText
+                value={artPieceAddress}
+                onChange={(e) => {
+                  setApAddress(e.target.value);
+                  setAddressStatus("idle");
+                  setAddressHint("");
+                }}
+                onBlur={() => {
+                  markApTouched("artPieceAddress");
+                  void validateAddressWithNominatim();
+                }}
+                className={`${styles.fullWidth} ${
+                  showApErr("artPieceAddress", apErrors) ||
+                  (shouldShowAddressHint && addressStatus === "invalid")
+                    ? "p-invalid"
+                    : ""
+                }`}
+              />
+
+              {showApErr("artPieceAddress", apErrors) ? (
+                <small className="p-error">{apErrors.artPieceAddress}</small>
+              ) : null}
+
+              {shouldShowAddressHint && addressStatus === "checking" ? (
+                <small style={{ opacity: 0.9 }}>{addressHint}</small>
+              ) : null}
+              {shouldShowAddressHint && addressStatus === "valid" ? (
+                <small style={{ opacity: 0.95 }}>{addressHint}</small>
+              ) : null}
+              {shouldShowAddressHint && addressStatus === "invalid" ? (
+                <small className="p-error">{addressHint}</small>
+              ) : null}
+            </div>
+
+
+            <div className={styles.fieldBlock}>
+              <small className={styles.fieldLabelSmall}>Description</small>
+              <InputText
+                value={artPieceUserDescription}
+                onChange={(e) => setApUserDescription(e.target.value)}
+                onBlur={() => markApTouched("artPieceUserDescription")}
+                className={`${styles.fullWidth} ${showApErr("artPieceUserDescription", apErrors) ? "p-invalid" : ""}`}
+              />
+              {showApErr("artPieceUserDescription", apErrors) ? (
+                <small className="p-error">{apErrors.artPieceUserDescription}</small>
+              ) : null}
+              <small style={{ opacity: 0.85 }}>
+                {artPieceUserDescription.trim().length}/{MAX_DESC}
+              </small>
+            </div>
+
+            <div className={styles.fieldBlock}>
+              <small className={styles.fieldLabelSmall}>Position</small>
+              <InputText
+                value={artPiecePosition}
+                onChange={(e) => setApPosition(e.target.value)}
+                onBlur={() => markApTouched("artPiecePosition")}
+                className={`${styles.fullWidth} ${showApErr("artPiecePosition", apErrors) ? "p-invalid" : ""}`}
+              />
+              {showApErr("artPiecePosition", apErrors) ? (
+                <small className="p-error">{apErrors.artPiecePosition}</small>
+              ) : null}
+              <small style={{ opacity: 0.85 }}>
+                {artPiecePosition.trim().length}/{MAX_POS}
+              </small>
+            </div>
+
+            <div className={styles.fieldToggleStack}>
+              <small className={styles.fieldLabelSmall}>Contains text</small>
+              <ToggleButton
+                checked={artPieceContainsText}
+                onChange={(e) => {
+                  setApContainsText(e.value);
+                  if (!e.value) setApLangs([]);
+                  markApTouched("artPieceTextLanguages");
+                }}
+                onLabel="Yes"
+                offLabel="No"
+                className={styles.fullWidth}
+              />
+            </div>
+
+            {artPieceContainsText && (
+              <div className={styles.fieldBlock}>
+                <small className={styles.fieldLabelSmall}>Text languages</small>
+                <MultiSelect
+                  value={artPieceTextLanguages}
+                  onChange={(e) => setApLangs(e.value)}
+                  onBlur={() => markApTouched("artPieceTextLanguages")}
+                  options={LANGUAGE_OPTIONS as any}
+                  placeholder="Select languages"
+                  className={`${styles.fullWidth} ${showApErr("artPieceTextLanguages", apErrors) ? "p-invalid" : ""}`}
+                  display="chip"
+                />
+                {showApErr("artPieceTextLanguages", apErrors) ? (
+                  <small className="p-error">{apErrors.artPieceTextLanguages}</small>
+                ) : null}
+              </div>
+            )}
+
+            <div className={styles.fieldBlock}>
+              <small className={styles.fieldLabelSmall}>Types</small>
+              <MultiSelect
+                value={artPieceTypes}
+                onChange={(e) => setApTypes(e.value)}
+                onBlur={() => markApTouched("artPieceTypes")}
+                options={ART_TYPE_OPTIONS as any}
+                placeholder="Select types"
+                className={`${styles.fullWidth} ${showApErr("artPieceTypes", apErrors) ? "p-invalid" : ""}`}
+                display="chip"
+              />
+              {showApErr("artPieceTypes", apErrors) ? <small className="p-error">{apErrors.artPieceTypes}</small> : null}
+            </div>
+
+            <div className={styles.fieldBlock}>
+              <small className={styles.fieldLabelSmall}>Styles</small>
+              <MultiSelect
+                value={artPieceStyles}
+                onChange={(e) => setApStyles(e.value)}
+                onBlur={() => markApTouched("artPieceStyles")}
+                options={ART_STYLE_OPTIONS as any}
+                placeholder="Select styles"
+                className={`${styles.fullWidth} ${showApErr("artPieceStyles", apErrors) ? "p-invalid" : ""}`}
+                display="chip"
+              />
+              {showApErr("artPieceStyles", apErrors) ? (
+                <small className="p-error">{apErrors.artPieceStyles}</small>
+              ) : null}
+            </div>
           </div>
 
-          <div>
-            <small>Styles</small>
-            <MultiSelect
-              value={artPieceStyles}
-              onChange={(e) => setApStyles(e.value)}
-              onBlur={() => markApTouched("artPieceStyles")}
-              options={ART_STYLE_OPTIONS as any}
-              placeholder="Select styles"
-              className={showApErr("artPieceStyles", apErrors) ? "p-invalid" : ""}
-              display="chip"
-              style={{ width: "100%" }}
-            />
-            {showApErr("artPieceStyles", apErrors) ? <small className="p-error">{apErrors.artPieceStyles}</small> : null}
-          </div>
-
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
+          <div className={styles.dialogActions}>
             <Button label="Cancel" severity="secondary" onClick={() => setEditOpen(false)} />
-            <Button label="Save" icon="pi pi-check" onClick={saveEdit} disabled={!canSave} />
+            <Button
+  label="Save"
+  icon="pi pi-check"
+  onClick={saveEdit}
+  disabled={!canSave || addressStatus !== "valid"}
+/>
+{!canSave ? (
+  <small className="p-error">Fix errors above to enable Save.</small>
+) : addressStatus !== "valid" ? (
+  <small className="p-error">Please provide a valid address (verified).</small>
+) : null}
+
           </div>
-        </div>
-      </Dialog>
+        </Dialog>
+      </Card>
     </div>
   );
 };
