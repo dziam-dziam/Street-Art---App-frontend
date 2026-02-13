@@ -3,15 +3,18 @@ import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
 import { Button } from "primereact/button";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import streetArtGreen from "../images/streetArtGreen.jpeg";
 import styles from "../../styles/pages.module.css";
 
 import { AuthShell } from "../../widgets/auth/AutoShell";
 import { AuthImagePanel } from "../../widgets/auth/ImagePanel";
+import { LanguageSwitch } from "../../widgets/LanguageSwitch";
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [appUserEmail, setEmail] = useState("");
   const [appUserPassword, setPassword] = useState("");
@@ -32,7 +35,7 @@ export const LoginPage: React.FC = () => {
       });
 
       if (!res.ok) {
-        alert("Login failed. Please check your credentials and try again.");
+        alert(t("auth.loginFailed"));
         throw new Error(`HTTP error by login! status: ${res.status}`);
       }
 
@@ -46,28 +49,30 @@ export const LoginPage: React.FC = () => {
 
   return (
     <AuthShell cardClassName={styles.authCardLogin}>
+        <LanguageSwitch />
+
       <div className={styles.authGrid2}>
         <AuthImagePanel src={streetArtGreen} alt="street art" imgClassName={styles.imageFill420} />
 
         <div className={styles.formRightPad}>
           <div className={styles.headline}>
-            Welcome to StreetApp!
+            {t("auth.welcomeTitle")}
             <br />
-            Let us explore
+            {t("auth.welcomeSubtitle")}
           </div>
 
           <form onSubmit={onLogin} className={styles.formCol}>
             <InputText
               value={appUserEmail}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
+              placeholder={t("auth.email")}
               className={`${styles.fullWidth} ${styles.radius10}`}
             />
 
             <Password
               value={appUserPassword}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
+              placeholder={t("auth.password")}
               toggleMask
               feedback={false}
               inputStyle={{ width: "100%" }}
@@ -75,11 +80,11 @@ export const LoginPage: React.FC = () => {
             />
 
             <div className={styles.buttonsCol}>
-              <Button type="submit" label="Login" className={styles.btnW140} />
+              <Button type="submit" label={t("auth.login")} className={styles.btnW140} />
 
               <Button
                 type="button"
-                label="Sign Up"
+                label={t("auth.signup")}
                 outlined
                 onClick={() => navigate("/register")}
                 className={`${styles.btnW140} ${styles.btnOutlinedWhite}`}

@@ -1,0 +1,12 @@
+{
+  "common": { "language": "Language", "pl": "PL", "en": "EN" },
+  "auth": {
+    "welcomeTitle": "Welcome to StreetApp!",
+    "welcomeSubtitle": "Let us explore",
+    "email": "Email",
+    "password": "Password",
+    "login": "Login",
+    "signup": "Sign Up",
+    "loginFailed": "Login failed. Please check your credentials and try again."
+  }
+}
