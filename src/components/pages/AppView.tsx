@@ -249,10 +249,10 @@ if (!cancelled) {
 
   const menuItems = useMemo(
     () => [
-      { label: "Mój profil", icon: "pi pi-user", command: () => navigate("/profile") },
-      { label: "Moje dzieła", icon: "pi pi-images", command: () => navigate("/my-artpieces") },
+      { label: "My Profile", icon: "pi pi-user", command: () => navigate("/profile") },
+      { label: "My Artpieces", icon: "pi pi-images", command: () => navigate("/my-artpieces") },
       { separator: true },
-      { label: "Wyloguj", icon: "pi pi-sign-out", command: onLogout },
+      { label: "Logout", icon: "pi pi-sign-out", command: onLogout },
     ],
     [onLogout]
   );
@@ -306,7 +306,7 @@ if (!cancelled) {
         onHide={() => setFiltersVisible(false)}
         style={{ width: "min(360px, 92vw)" }}
       >
-        <h3 style={{ marginTop: 0 }}>Filtry 🧩</h3>
+        <h3 style={{ marginTop: 0 }}>Filters</h3>
         <Divider />
 
         <div style={{ display: "grid", gap: 14 }}>

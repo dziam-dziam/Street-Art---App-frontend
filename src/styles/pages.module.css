@@ -215,7 +215,7 @@
   position: absolute;
   right: 18px;
   bottom: 18px;
-  z-index: 9999;
+  z-index: 10;
   pointer-events: auto;
   display: flex;
   flex-direction: column;
@@ -722,4 +722,106 @@
 .tripsNumber :global(.p-inputnumber-input) {
   width: 100%;
   text-align: center;
+}
+/* ===== Carousel shell: make it stand out ===== */
+.commuteCarouselShell {
+  flex: 0 0 auto;
+
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 14px;
+  padding: 12px;
+  overflow: hidden;
+
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
+}
+
+.commuteCarouselHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  font-weight: 800;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.commuteCarouselCount {
+  min-width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  font-size: 13px;
+}
+
+/* Make carousel fill the remaining height under header */
+.commuteCarouselShell :global(.p-carousel),
+.commuteCarouselShell :global(.p-carousel-content),
+.commuteCarouselShell :global(.p-carousel-container) {
+  height: calc(100% - 48px); /* header height approximation */
+}
+
+.commuteCarouselShell :global(.p-carousel-items-content) {
+  height: 100%;
+}
+
+/* Commute card inside carousel */
+.commuteCard {
+  height: 100%;
+  border-radius: 12px;
+  padding: 12px 12px 49px;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+
+  display: grid;
+  gap: 10px;
+  align-content: start;
+
+  position: relative; /* for X button */
+}
+
+/* Red X in top-right corner */
+.commuteRemoveX {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+
+  border: 1px solid rgba(255, 120, 120, 0.6);
+  background: rgba(255, 60, 60, 0.15);
+  color: #ff6b6b;
+
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.commuteRemoveX:hover {
+  background: rgba(255, 60, 60, 0.28);
+}
+
+/* Improve navigators (arrows) a bit */
+.commuteCarouselShell :global(.p-carousel-prev),
+.commuteCarouselShell :global(.p-carousel-next) {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.commuteCarouselShell :global(.p-carousel-prev:hover),
+.commuteCarouselShell :global(.p-carousel-next:hover) {
+  background: rgba(255, 255, 255, 0.22);
 }

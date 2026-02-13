@@ -2,11 +2,11 @@ import React, { useMemo, useState } from "react";
 import { InputNumber } from "primereact/inputnumber";
 import { MultiSelect } from "primereact/multiselect";
 import { Button } from "primereact/button";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
 import { Divider } from "primereact/divider";
 import { Dropdown } from "primereact/dropdown";
+import { Carousel } from "primereact/carousel";
 import { useNavigate, useLocation } from "react-router-dom";
+
 import type { RegisterDto } from "../dto/auth/RegisterDto";
 import type { AddCommuteDto } from "../dto/commute/AddCommuteDto";
 
@@ -23,6 +23,9 @@ type CommuteErrors = Partial<Record<keyof AddCommuteDto, string>>;
 export const RegisterPageTwo: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const MAX_COMMUTES = 7;
+  const [limitError, setLimitError] = useState<string | null>(null);
+  
 
   const registerData = location.state as RegisterDto | undefined;
 
@@ -73,41 +76,53 @@ export const RegisterPageTwo: React.FC = () => {
   const commuteErrors = useMemo(() => validateCommute(commuteForm), [commuteForm]);
 
   const isNextDay = Number(commuteForm.commuteStartHour ?? 0) >= Number(commuteForm.commuteStopHour ?? 0);
-
-  const isAddDisabled = Object.keys(commuteErrors).length > 0;
+  const isMaxReached = commutes.length >= MAX_COMMUTES;
+  const isAddDisabled = Object.keys(commuteErrors).length > 0 || isMaxReached;
 
   const addCommute = () => {
-    setTouchedAdd(true);
-    if (Object.keys(commuteErrors).length > 0) return;
+  setTouchedAdd(true);
 
-    const d = commuteForm.commuteThroughDistrictName.trim();
-    const start = Math.max(0, Math.min(23, Number(commuteForm.commuteStartHour ?? 0)));
-    const stop = Math.max(0, Math.min(23, Number(commuteForm.commuteStopHour ?? 0)));
-    const trips = Math.max(1, Math.min(99, Number(commuteForm.commuteTripsPerWeek ?? 1)));
+  if (commutes.length >= MAX_COMMUTES) {
+    setLimitError(`You can add up to ${MAX_COMMUTES} commutes.`);
+    return;
+  }
 
-    const cleaned: AddCommuteDto = {
-      commuteThroughDistrictName: d,
-      commuteTripsPerWeek: trips,
-      commuteStartHour: start,
-      commuteStopHour: stop,
-      commuteMeansOfTransport: commuteForm.commuteMeansOfTransport ?? [],
-    };
+  if (Object.keys(commuteErrors).length > 0) return;
 
-    setCommutes((prev) => [...prev, cleaned]);
+  setLimitError(null);
 
-    setCommuteForm({
-      commuteThroughDistrictName: "",
-      commuteTripsPerWeek: 1,
-      commuteStartHour: 8,
-      commuteStopHour: 17,
-      commuteMeansOfTransport: [],
-    });
-    setTouchedAdd(false);
+  const d = (commuteForm.commuteThroughDistrictName ?? "").trim();
+  const start = Math.max(0, Math.min(23, Number(commuteForm.commuteStartHour ?? 0)));
+  const stop = Math.max(0, Math.min(23, Number(commuteForm.commuteStopHour ?? 0)));
+  const trips = Math.max(1, Math.min(99, Number(commuteForm.commuteTripsPerWeek ?? 1)));
+
+  const cleaned: AddCommuteDto = {
+    commuteThroughDistrictName: d,
+    commuteTripsPerWeek: trips,
+    commuteStartHour: start,
+    commuteStopHour: stop,
+    commuteMeansOfTransport: commuteForm.commuteMeansOfTransport ?? [],
   };
+
+  setCommutes((prev) => [...prev, cleaned]);
+
+  setCommuteForm({
+    commuteThroughDistrictName: "",
+    commuteTripsPerWeek: 1,
+    commuteStartHour: 8,
+    commuteStopHour: 17,
+    commuteMeansOfTransport: [],
+  });
+  setTouchedAdd(false);
+};
 
   const removeCommute = (index: number) => {
-    setCommutes((prev) => prev.filter((_, i) => i !== index));
-  };
+  setCommutes((prev) => {
+    const next = prev.filter((_, i) => i !== index);
+    if (next.length < MAX_COMMUTES) setLimitError(null);
+    return next;
+  });
+};
 
   const finalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,6 +137,7 @@ export const RegisterPageTwo: React.FC = () => {
       return;
     }
 
+    // UWAGA: wysyłasz TYLKO ostatni commute (jak miałeś wcześniej)
     const lastCommute = commutes[commutes.length - 1];
 
     const url = new URL("http://localhost:8080/auth/addCommute");
@@ -141,9 +157,7 @@ export const RegisterPageTwo: React.FC = () => {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
 
-      const data = await res.json().catch(() => null);
-      console.log("Response from server:\n", data);
-
+      await res.json().catch(() => null);
       navigate("/login", { replace: true });
     } catch (err) {
       console.error("Fetch error:", err);
@@ -152,29 +166,55 @@ export const RegisterPageTwo: React.FC = () => {
 
   const showError = (key: keyof AddCommuteDto) => touchedAdd && Boolean(commuteErrors[key]);
 
+  const commuteCarouselItem = (c: AddCommuteDto & { _idx: number }) => {
+    const transport = (c.commuteMeansOfTransport ?? []).join(", ");
+    const start = String(c.commuteStartHour ?? "").padStart(2, "0") + ":00";
+    const stop = String(c.commuteStopHour ?? "").padStart(2, "0") + ":00";
+
+    return (
+      <div className={styles.commuteCard}>
+        <div className={styles.commuteCardTop}>
+          <div className={styles.commuteCardTitle}>{c.commuteThroughDistrictName || "—"}</div>
+          <button
+  type="button"
+  className={styles.commuteRemoveX}
+  onClick={() => removeCommute(c._idx)}
+  aria-label="remove commute"
+  title="Remove"
+>
+  ×
+</button>
+
+        </div>
+
+        <div className={styles.commuteCardMeta}>
+          <div>
+            <b>Trips per week:</b> {c.commuteTripsPerWeek}
+          </div>
+          <div>
+            <b>Start:</b> {start}
+          </div>
+          <div>
+            <b>Stop:</b> {stop}
+          </div>
+        </div>
+
+        <div className={styles.commuteCardTransport} title={transport}>
+          <b>Transport:</b> {transport || "—"}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <AuthShell title="Sign Up - Add Commutes" cardClassName={styles.authCardRegister}>
       <div className={styles.registerGrid}>
         <AuthImagePanel src={streetArtBrown} alt="art" imgClassName={styles.imageFill420} />
 
         <div className={styles.stackCol}>
-          <div className={styles.previewPanel}>
-            <div className={styles.sectionTitle}>Wprowadzone Dane</div>
-
-            <div className={styles.previewRows}>
-              {previewRows.map((r) => (
-                <div key={r.label} className={styles.previewRow}>
-                  <span className={styles.previewLabel}>{r.label}</span>
-                  <span className={styles.previewValue} title={String(r.value ?? "")}>
-                    {r.value || "—"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
 
           <div className={styles.commutePanel}>
-            <div className={styles.sectionTitle}>Przez jakie dzielnice przejeżdzasz?</div>
+            <div className={styles.sectionTitle}>Through which districts do you commute?</div>
 
             <div style={{ display: "grid", gap: 12 }}>
               <div className={styles.fieldStack}>
@@ -188,7 +228,9 @@ export const RegisterPageTwo: React.FC = () => {
                   filter
                   showClear
                 />
-                {showError("commuteThroughDistrictName") ? <small className="p-error">{commuteErrors.commuteThroughDistrictName}</small> : null}
+                {showError("commuteThroughDistrictName") ? (
+                  <small className="p-error">{commuteErrors.commuteThroughDistrictName}</small>
+                ) : null}
               </div>
 
               <div className={styles.gridTripsTransport}>
@@ -221,7 +263,6 @@ export const RegisterPageTwo: React.FC = () => {
                 </div>
               </div>
 
-
               <div className={styles.grid2}>
                 <div className={styles.fieldStack}>
                   <label className={styles.fieldLabel}>Start time</label>
@@ -251,26 +292,32 @@ export const RegisterPageTwo: React.FC = () => {
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
                 <Button type="button" label="Add commute" icon="pi pi-plus" onClick={addCommute} disabled={isAddDisabled} />
               </div>
+              {limitError ? <small className="p-error">{limitError}</small> : null}
+              {isMaxReached ? <small className="p-error">Limit reached ({MAX_COMMUTES}). Remove one to add more.</small> : null}
+
 
               <Divider style={{ margin: "16px 0", opacity: 0.4 }} />
 
-              <div style={{ fontWeight: 700, marginBottom: 10 }}>Twoje commutes</div>
+              <div style={{ fontWeight: 700, marginBottom: 10 }}>Your commutes</div>
 
-              <div className={styles.tableShell}>
-                <DataTable value={commutes.map((c, idx) => ({ ...c, _idx: idx }))} emptyMessage="No commutes added yet." size="small" style={{ background: "transparent" }}>
-                  <Column field="commuteThroughDistrictName" header="District" />
-                  <Column field="commuteTripsPerWeek" header="Trips/week" />
-                  <Column field="commuteStartHour" header="Start" />
-                  <Column field="commuteStopHour" header="Stop" />
-                  <Column header="Transport" body={(row) => (row.commuteMeansOfTransport ?? []).join(", ")} />
-                  <Column
-                    header=""
-                    body={(row) => (
-                      <Button type="button" icon="pi pi-trash" severity="danger" text onClick={() => removeCommute(row._idx)} />
-                    )}
-                    style={{ width: 60 }}
-                  />
-                </DataTable>
+              <div className={styles.commuteCarouselShell}>
+                    <div className={styles.commuteCarouselHeader}>
+                      <span>Saved commutes</span>
+                      <span className={styles.commuteCarouselCount}>{commutes.length}</span>
+                    </div>
+                {commutes.length === 0 ? (
+                  <div className={styles.emptyCommutes}>No commutes added yet.</div>
+                ) : (
+                  <Carousel
+                      value={commutes.map((c, idx) => ({ ...c, _idx: idx }))}
+                      numVisible={1}
+                      numScroll={1}
+                      circular={false}
+                      showIndicators={true}
+                      showNavigators={true}
+                      itemTemplate={commuteCarouselItem as any}
+                    />
+                )}
               </div>
             </div>
           </div>
