@@ -1,5 +1,5 @@
 {
-  "common": { "language": "Language", "pl": "PL", "en": "EN" },
+  "common": { "language": "Language", "pl": "PL", "en": "EN","error": "Error" },
   "auth": {
     "welcomeTitle": "Welcome to StreetApp!",
     "welcomeSubtitle": "Let us explore",
@@ -7,6 +7,28 @@
     "password": "Password",
     "login": "Login",
     "signup": "Sign Up",
-    "loginFailed": "Login failed. Please check your credentials and try again."
+    "loginFailed": "Login failed. Please check your credentials and try again.",
+    "signUpTitle": "Sign Up",
+    "name": "Name",
+    "city": "City",
+    "nationality": "Nationality",
+    "liveInDistrict": "Live in district",
+    "languagesSpoken": "Languages spoken",
+    "next": "Next",
+    "submitting": "Submitting..."
+  },
+  "validation": {
+    "nameRequired": "Name is required.",
+    "nameMin": "Name must be at least 5 characters.",
+    "nameMax": "Name cannot be longer than 30 characters.",
+    "emailRequired": "Email is required.",
+    "emailInvalid": "Email format is invalid.",
+    "passwordRequired": "Password is required.",
+    "passwordRules": "Min 10 characters + 1 uppercase letter + 1 digit + 1 special character.",
+    "cityRequired": "City is required.",
+    "nationalityRequired": "Nationality is required.",
+    "districtRequired": "District is required.",
+    "selectAtLeastOne": "Select at least one language.",
+    "networkError": "Network error"
   }
 }

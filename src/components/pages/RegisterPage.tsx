@@ -5,6 +5,7 @@ import { MultiSelect } from "primereact/multiselect";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type { RegisterDto } from "../dto/auth/RegisterDto";
 
 import streetArtBlue from "../images/streetArtBlue.jpeg";
@@ -12,6 +13,7 @@ import styles from "../../styles/pages.module.css";
 
 import { AuthShell } from "../../widgets/auth/AutoShell";
 import { AuthImagePanel } from "../../widgets/auth/ImagePanel";
+import { LanguageSwitch } from "../../widgets/LanguageSwitch";
 
 import { LANGUAGE_OPTIONS, DISTRICT_OPTIONS, NATIONALITY_OPTIONS } from "../constants/Options";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/validators";
@@ -21,6 +23,7 @@ type Touched = Partial<Record<keyof RegisterDto, boolean>>;
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [form, setForm] = useState<RegisterDto>({
     appUserName: "",
@@ -39,32 +42,30 @@ export const RegisterPage: React.FC = () => {
     const e: FormErrors = {};
 
     const name = v.appUserName.trim();
-    if (!name) e.appUserName = "Name is required.";
-    else if (name.length < 5) e.appUserName = "Name must be at least 5 characters.";
-    else if (name.length > 30) e.appUserName = "Name cannot be longer than 30 characters.";
+    if (!name) e.appUserName = t("validation.nameRequired");
+    else if (name.length < 5) e.appUserName = t("validation.nameMin");
+    else if (name.length > 30) e.appUserName = t("validation.nameMax");
 
     const email = v.appUserEmail.trim();
-    if (!email) e.appUserEmail = "Email is required.";
-    else if (!EMAIL_REGEX.test(email)) e.appUserEmail = "Email format is invalid.";
+    if (!email) e.appUserEmail = t("validation.emailRequired");
+    else if (!EMAIL_REGEX.test(email)) e.appUserEmail = t("validation.emailInvalid");
 
     const pass = v.appUserPassword;
-    if (!pass) e.appUserPassword = "Password is required.";
-    else if (!PASSWORD_REGEX.test(pass)) {
-      e.appUserPassword = "Min 10 characters + 1 uppercase letter + 1 digit + 1 special character.";
-    }
+    if (!pass) e.appUserPassword = t("validation.passwordRequired");
+    else if (!PASSWORD_REGEX.test(pass)) e.appUserPassword = t("validation.passwordRules");
 
-    if (!v.appUserCity.trim()) e.appUserCity = "City is required.";
-    if (!v.appUserNationality.trim()) e.appUserNationality = "Nationality is required.";
-    if (!v.appUserLiveInDistrict.trim()) e.appUserLiveInDistrict = "District is required.";
+    if (!v.appUserCity.trim()) e.appUserCity = t("validation.cityRequired");
+    if (!v.appUserNationality.trim()) e.appUserNationality = t("validation.nationalityRequired");
+    if (!v.appUserLiveInDistrict.trim()) e.appUserLiveInDistrict = t("validation.districtRequired");
 
     if (!v.appUserLanguagesSpoken || v.appUserLanguagesSpoken.length === 0) {
-      e.appUserLanguagesSpoken = "Select at least one language.";
+      e.appUserLanguagesSpoken = t("validation.selectAtLeastOne");
     }
 
     return e;
   };
 
-  const errors = useMemo(() => validate(form), [form]);
+  const errors = useMemo(() => validate(form), [form]); // t() is inside validate via closure
   const canGoNext = Object.keys(errors).length === 0 && !submitting;
 
   const markTouched = (k: keyof RegisterDto) => setTouched((p) => ({ ...p, [k]: true }));
@@ -97,7 +98,7 @@ export const RegisterPage: React.FC = () => {
 
       if (!res.ok) {
         const raw = await res.text().catch(() => "");
-        alert(`Błąd ${res.status}: ${raw || res.statusText}`);
+        alert(`${t("common.error")} ${res.status}: ${raw || res.statusText}`);
         return;
       }
 
@@ -114,7 +115,9 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <AuthShell title="Sign Up" cardClassName={styles.authCardRegister}>
+    <AuthShell title={t("auth.signUpTitle")} cardClassName={styles.authCardRegister}>
+      <LanguageSwitch />
+
       <div className={styles.registerGrid}>
         <AuthImagePanel src={streetArtBlue} alt="street art" imgClassName={styles.imageFill460} />
 
@@ -124,7 +127,7 @@ export const RegisterPage: React.FC = () => {
               value={form.appUserName}
               onChange={(e) => setForm((p) => ({ ...p, appUserName: e.target.value }))}
               onBlur={() => markTouched("appUserName")}
-              placeholder="Name"
+              placeholder={t("validation.nameRequired") /* możesz zmienić na osobny klucz np. auth.name */}
               className={`${styles.fullWidth} ${styles.radius10} ${showError("appUserName") ? "p-invalid" : ""}`}
             />
             {showError("appUserName") ? <small className="p-error">{errors.appUserName}</small> : null}
@@ -135,7 +138,7 @@ export const RegisterPage: React.FC = () => {
               value={form.appUserEmail}
               onChange={(e) => setForm((p) => ({ ...p, appUserEmail: e.target.value }))}
               onBlur={() => markTouched("appUserEmail")}
-              placeholder="Email"
+              placeholder={t("auth.email")}
               className={`${styles.fullWidth} ${styles.radius10} ${showError("appUserEmail") ? "p-invalid" : ""}`}
             />
             {showError("appUserEmail") ? <small className="p-error">{errors.appUserEmail}</small> : null}
@@ -146,7 +149,7 @@ export const RegisterPage: React.FC = () => {
               value={form.appUserPassword}
               onChange={(e) => setForm((p) => ({ ...p, appUserPassword: e.target.value }))}
               onBlur={() => markTouched("appUserPassword")}
-              placeholder="Password"
+              placeholder={t("auth.password")}
               toggleMask
               feedback={false}
               inputStyle={{ width: "100%" }}
@@ -160,7 +163,7 @@ export const RegisterPage: React.FC = () => {
               <InputText
                 value={form.appUserCity}
                 disabled
-                placeholder="City"
+                placeholder={t("addArtPiece.city")}
                 onBlur={() => markTouched("appUserCity")}
                 className={`${styles.fullWidth} ${styles.radius10} ${showError("appUserCity") ? "p-invalid" : ""}`}
               />
@@ -173,7 +176,7 @@ export const RegisterPage: React.FC = () => {
                 options={NATIONALITY_OPTIONS as any}
                 onChange={(e) => setForm((p) => ({ ...p, appUserNationality: e.value ?? "" }))}
                 onBlur={() => markTouched("appUserNationality")}
-                placeholder="Nationality"
+                placeholder={t("validation.nationalityRequired") /* najlepiej dać klucz auth.nationality */}
                 className={`${styles.fullWidth} ${showError("appUserNationality") ? "p-invalid" : ""}`}
                 filter
                 showClear
@@ -188,7 +191,7 @@ export const RegisterPage: React.FC = () => {
               options={DISTRICT_OPTIONS as any}
               onChange={(e) => setForm((p) => ({ ...p, appUserLiveInDistrict: e.value ?? "" }))}
               onBlur={() => markTouched("appUserLiveInDistrict")}
-              placeholder="Live in district"
+              placeholder={t("validation.districtRequired") /* najlepiej dać klucz auth.liveInDistrict */}
               className={`${styles.fullWidth} ${showError("appUserLiveInDistrict") ? "p-invalid" : ""}`}
               filter
               showClear
@@ -203,7 +206,7 @@ export const RegisterPage: React.FC = () => {
               onChange={(e) => setForm((p) => ({ ...p, appUserLanguagesSpoken: e.value }))}
               onBlur={() => markTouched("appUserLanguagesSpoken")}
               display="chip"
-              placeholder="Languages spoken"
+              placeholder={t("validation.selectAtLeastOne") /* najlepiej dać klucz auth.languagesSpoken */}
               className={`${styles.fullWidth} ${showError("appUserLanguagesSpoken") ? "p-invalid" : ""}`}
             />
             {showError("appUserLanguagesSpoken") ? <small className="p-error">{errors.appUserLanguagesSpoken}</small> : null}
@@ -212,7 +215,7 @@ export const RegisterPage: React.FC = () => {
           <div className={styles.dialogActions}>
             <Button
               type="submit"
-              label={submitting ? "Submitting..." : "Next"}
+              label={submitting ? t("auth.submitting") : t("auth.next")}
               icon="pi pi-arrow-right"
               iconPos="right"
               disabled={!canGoNext}

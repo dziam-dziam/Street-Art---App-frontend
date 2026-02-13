@@ -1,5 +1,5 @@
 {
-  "common": { "language": "Język", "pl": "PL", "en": "EN" },
+  "common": { "language": "Język", "pl": "PL", "en": "EN", "error": "Błąd" },
   "auth": {
     "welcomeTitle": "Witaj w StreetApp!",
     "welcomeSubtitle": "Chodźmy odkrywać",
@@ -7,6 +7,28 @@
     "password": "Hasło",
     "login": "Zaloguj",
     "signup": "Załóż konto",
-    "loginFailed": "Logowanie nieudane. Sprawdź dane i spróbuj ponownie."
+    "loginFailed": "Logowanie nieudane. Sprawdź dane i spróbuj ponownie.",
+    "signUpTitle": "Rejestracja",
+    "name": "Imię i nazwisko",
+    "city": "Miasto",
+    "nationality": "Narodowość",
+    "liveInDistrict": "Mieszkam w dzielnicy",
+    "languagesSpoken": "Języki",
+    "next": "Dalej",
+    "submitting": "Wysyłanie..."
+  },
+  "validation": {
+    "nameRequired": "Imię jest wymagane.",
+    "nameMin": "Imię musi mieć co najmniej 5 znaków.",
+    "nameMax": "Imię nie może mieć więcej niż 30 znaków.",
+    "emailRequired": "Email jest wymagany.",
+    "emailInvalid": "Niepoprawny format email.",
+    "passwordRequired": "Hasło jest wymagane.",
+    "passwordRules": "Min 10 znaków + 1 duża litera + 1 cyfra + 1 znak specjalny.",
+    "cityRequired": "Miasto jest wymagane.",
+    "nationalityRequired": "Narodowość jest wymagana.",
+    "districtRequired": "Dzielnica jest wymagana.",
+    "selectAtLeastOne": "Wybierz co najmniej jeden język.",
+    "networkError": "Błąd sieci"
   }
 }
