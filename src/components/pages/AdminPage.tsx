@@ -813,7 +813,7 @@ export const AdminPage: React.FC = () => {
           {activeType === "ArtPieces" && (
             <div className={styles.dialogGrid14}>
               <div className={styles.fieldBlock}>
-                <small className={styles.fieldLabelSmall}>{t("fields.name")}</small>
+                <small className={styles.fieldLabelSmall}>{t("appView.name")}</small>
                 <InputText
                   value={artPieceName}
                   onChange={(e) => setApName(e.target.value)}

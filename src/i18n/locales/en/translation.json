@@ -218,5 +218,43 @@
     "clear": "Clear",
     "remove": "Remove photo",
     "lastAddedTitle": "Last added (shown)"
+  },
+  "options": {
+  "languages": {
+    "Polish": "Polish",
+    "English": "English",
+    "German": "German",
+    "Spanish": "Spanish",
+    "French": "French"
+  },
+  "artTypes": {
+    "GRAFFITI_TAG": "Graffiti tag",
+    "GRAFFITI_PIECE": "Graffiti piece",
+    "STENCIL": "Stencil",
+    "WHEAT_PASTE_POSTER": "Wheat paste poster",
+    "STICKER": "Sticker",
+    "MURAL": "Mural",
+    "INSTALLATION_3D": "3D installation"
+  },
+  "artStyles": {
+    "POLITICAL": "Political",
+    "RELIGIOUS": "Religious",
+    "SOCIAL_COMMENTARY": "Social commentary",
+    "HUMOR": "Humor",
+    "LOVE_ROMANCE": "Love / romance",
+    "HOMESICKNESS": "Homesickness",
+    "PHILOSOPHICAL": "Philosophical",
+    "ACTIVISM": "Activism",
+    "ANTI_CONSUMERISM": "Anti-consumerism",
+    "COMMERCIAL": "Commercial"
+  },
+  "transport": {
+    "WALK": "Walk",
+    "BIKE": "Bike",
+    "CAR": "Car",
+    "TRAM": "Tram",
+    "BUS": "Bus",
+    "TRAIN": "Train"
   }
+}
 }

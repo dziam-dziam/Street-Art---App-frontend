@@ -218,6 +218,43 @@
     "clear": "Wyczyść",
     "remove": "Usuń zdjęcie",
     "lastAddedTitle": "Ostatnio dodane (pokazane)"
+  },
+  "options": {
+  "languages": {
+    "Polish": "Polski",
+    "English": "Angielski",
+    "German": "Niemiecki",
+    "Spanish": "Hiszpański",
+    "French": "Francuski"
+  },
+  "artTypes": {
+    "GRAFFITI_TAG": "Tag",
+    "GRAFFITI_PIECE": "Piece",
+    "STENCIL": "Szablon",
+    "WHEAT_PASTE_POSTER": "Plakat (wlepiany)",
+    "STICKER": "Naklejka",
+    "MURAL": "Mural",
+    "INSTALLATION_3D": "Instalacja 3D"
+  },
+  "artStyles": {
+    "POLITICAL": "Polityczny",
+    "RELIGIOUS": "Religijny",
+    "SOCIAL_COMMENTARY": "Komentarz społeczny",
+    "HUMOR": "Humor",
+    "LOVE_ROMANCE": "Miłość / romans",
+    "HOMESICKNESS": "Tęsknota",
+    "PHILOSOPHICAL": "Filozoficzny",
+    "ACTIVISM": "Aktywizm",
+    "ANTI_CONSUMERISM": "Antykonsumpcjonizm",
+    "COMMERCIAL": "Komercyjny"
+  },
+  "transport": {
+    "WALK": "Pieszo",
+    "BIKE": "Rower",
+    "CAR": "Samochód",
+    "TRAM": "Tramwaj",
+    "BUS": "Autobus",
+    "TRAIN": "Pociąg"
   }
-
+}
 }
