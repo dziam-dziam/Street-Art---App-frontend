@@ -13,6 +13,9 @@ import { Toast } from "primereact/toast";
 import { MultiSelect } from "primereact/multiselect";
 import { ToggleButton } from "primereact/togglebutton";
 
+
+import { useTranslation } from "react-i18next";
+
 import { ART_TYPE_OPTIONS, ART_STYLE_OPTIONS, LANGUAGE_OPTIONS } from "../constants/Options";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/validators";
 import type { UserEntity, ArtPieceEntity } from "../dto/admin/AdminDtos";
@@ -35,6 +38,12 @@ const MAX_POS = 50;
 const MAX_DESC = 200;
 
 export const AdminPage: React.FC = () => {
+  const { t, i18n } = useTranslation();
+
+  const activeLang = (i18n.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en";
+  const setLang = (lng: "pl" | "en") => void i18n.changeLanguage(lng);
+
+
   const navigate = useNavigate();
   const toast = useRef<Toast>(null);
 
@@ -73,7 +82,6 @@ export const AdminPage: React.FC = () => {
   const [addressStatus, setAddressStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle");
   const [addressHint, setAddressHint] = useState("");
 
-
   // ----------------- VALIDATION (Admin Edit) -----------------
   type UserEditErrors = {
     appUserEmail?: string;
@@ -108,22 +116,21 @@ export const AdminPage: React.FC = () => {
     const e: UserEditErrors = {};
 
     const name = appUserName.trim();
-    if (!name) e.appUserName = "Name is required.";
-    else if (name.length < 5) e.appUserName = "Name must be at least 5 characters.";
-    else if (name.length > 30) e.appUserName = "Name cannot be longer than 30 characters.";
+    if (!name) e.appUserName = t("validation.nameRequired");
+    else if (name.length < 5) e.appUserName = t("validation.nameMin");
+    else if (name.length > 30) e.appUserName = t("validation.nameMax");
 
     const email = appUserEmail.trim();
-    if (!email) e.appUserEmail = "Email is required.";
-    else if (!EMAIL_REGEX.test(email)) e.appUserEmail = "Email format is invalid.";
+    if (!email) e.appUserEmail = t("validation.emailRequired");
+    else if (!EMAIL_REGEX.test(email)) e.appUserEmail = t("validation.emailInvalid");
 
-    // hasło w edycji: opcjonalne (jak wpiszesz -> musi spełniać regex)
     const pass = appUserPassword;
     if (pass.trim().length > 0 && !PASSWORD_REGEX.test(pass)) {
-      e.appUserPassword = "Min 10 characters + 1 uppercase letter + 1 digit + 1 special character.";
+      e.appUserPassword = t("validation.passwordRules");
     }
 
     if (!appUserLanguagesSpoken || appUserLanguagesSpoken.length === 0) {
-      e.appUserLanguagesSpoken = "Select at least one language.";
+      e.appUserLanguagesSpoken = t("validation.selectAtLeastOne");
     }
 
     return e;
@@ -133,104 +140,93 @@ export const AdminPage: React.FC = () => {
     const e: ArtPieceEditErrors = {};
 
     const name = artPieceName.trim();
-    if (!name) e.artPieceName = "Name is required.";
-    else if (name.length > MAX_NAME) e.artPieceName = `Name cannot exceed ${MAX_NAME} characters.`;
+    if (!name) e.artPieceName = t("validation.nameRequired");
+    else if (name.length > MAX_NAME) e.artPieceName = t("validation.nameMax");
 
     const addr = artPieceAddress.trim();
-    if (!addr) e.artPieceAddress = "Address is required.";
+    if (!addr) e.artPieceAddress = t("validation.addressRequired", { defaultValue: "Address is required." });
 
     const pos = artPiecePosition.trim();
-    if (pos.length > MAX_POS) e.artPiecePosition = `Position cannot exceed ${MAX_POS} characters.`;
+    if (pos.length > MAX_POS) e.artPiecePosition = t("validation.positionMax", { defaultValue: `Position cannot exceed ${MAX_POS} characters.` });
 
-    if (!artPieceTypes || artPieceTypes.length === 0) e.artPieceTypes = "Select at least one type.";
-    if (!artPieceStyles || artPieceStyles.length === 0) e.artPieceStyles = "Select at least one style.";
+    if (!artPieceTypes || artPieceTypes.length === 0) e.artPieceTypes = t("validation.selectAtLeastOne");
+    if (!artPieceStyles || artPieceStyles.length === 0) e.artPieceStyles = t("validation.selectAtLeastOne");
 
     const desc = artPieceUserDescription.trim();
-    if (desc.length > MAX_DESC) e.artPieceUserDescription = `Description cannot exceed ${MAX_DESC} characters.`;
+    if (desc.length > MAX_DESC) e.artPieceUserDescription = t("validation.descMax", { defaultValue: `Description cannot exceed ${MAX_DESC} characters.` });
 
     if (artPieceContainsText && (!artPieceTextLanguages || artPieceTextLanguages.length === 0)) {
-      e.artPieceTextLanguages = "Select at least one text language.";
+      e.artPieceTextLanguages = t("validation.selectAtLeastOne");
     }
 
     return e;
   };
 
-  const userErrors = useMemo(() => validateUserEdit(), [
-    appUserName,
-    appUserEmail,
-    appUserPassword,
-    appUserLanguagesSpoken,
-  ]);
+  const userErrors = useMemo(() => validateUserEdit(), [appUserName, appUserEmail, appUserPassword, appUserLanguagesSpoken, t]);
 
-  const apErrors = useMemo(() => validateArtPieceEdit(), [
-    artPieceName,
-    artPieceAddress,
-    artPiecePosition,
-    artPieceUserDescription,
-    artPieceTypes,
-    artPieceStyles,
-    artPieceContainsText,
-    artPieceTextLanguages,
-  ]);
+  const apErrors = useMemo(
+    () => validateArtPieceEdit(),
+    [artPieceName, artPieceAddress, artPiecePosition, artPieceUserDescription, artPieceTypes, artPieceStyles, artPieceContainsText, artPieceTextLanguages, t]
+  );
 
   const canSaveUsers = Object.keys(userErrors).length === 0;
   const canSaveArtPieces = Object.keys(apErrors).length === 0;
 
   const shouldShowAddressHint = artPieceAddress.trim().length > 0;
 
-const validateAddressWithNominatim = useCallback(async () => {
-  const addr = artPieceAddress.trim();
+  const validateAddressWithNominatim = useCallback(async () => {
+    const addr = artPieceAddress.trim();
 
-  if (!addr) {
-    setAddressStatus("idle");
-    setAddressHint("");
-    return false;
-  }
-
-  setAddressStatus("checking");
-  setAddressHint("Checking address...");
-
-  try {
-    const q = `${addr}, Poznań, Poland`;
-
-    const url = new URL("https://nominatim.openstreetmap.org/search");
-    url.searchParams.set("format", "json");
-    url.searchParams.set("q", q);
-    url.searchParams.set("addressdetails", "1");
-    url.searchParams.set("limit", "1");
-
-    const res = await fetch(url.toString(), { headers: { Accept: "application/json" } });
-
-    if (!res.ok) {
-      setAddressStatus("invalid");
-      setAddressHint("Could not verify address right now. Try again.");
+    if (!addr) {
+      setAddressStatus("idle");
+      setAddressHint("");
       return false;
     }
 
-    const data = (await res.json()) as any[];
-    if (!Array.isArray(data) || data.length === 0) {
+    setAddressStatus("checking");
+    setAddressHint(t("common.loading"));
+
+    try {
+      const q = `${addr}, Poznań, Poland`;
+
+      const url = new URL("https://nominatim.openstreetmap.org/search");
+      url.searchParams.set("format", "json");
+      url.searchParams.set("q", q);
+      url.searchParams.set("addressdetails", "1");
+      url.searchParams.set("limit", "1");
+
+      const res = await fetch(url.toString(), { headers: { Accept: "application/json" } });
+
+      if (!res.ok) {
+        setAddressStatus("invalid");
+        setAddressHint(t("toasts.invalidAddressDetail"));
+        return false;
+      }
+
+      const data = (await res.json()) as any[];
+      if (!Array.isArray(data) || data.length === 0) {
+        setAddressStatus("invalid");
+        setAddressHint(t("toasts.invalidAddressDetail"));
+        return false;
+      }
+
+      const display = String(data[0]?.display_name ?? "");
+      const inPoznan = display.toLowerCase().includes("poznań") || display.toLowerCase().includes("poznan");
+      if (!inPoznan) {
+        setAddressStatus("invalid");
+        setAddressHint(t("toasts.invalidAddressDetail"));
+        return false;
+      }
+
+      setAddressStatus("valid");
+      setAddressHint("✅");
+      return true;
+    } catch {
       setAddressStatus("invalid");
-      setAddressHint("Address not found. Add street number / be more specific.");
+      setAddressHint(t("validation.networkError"));
       return false;
     }
-
-    const display = String(data[0]?.display_name ?? "");
-    const inPoznan = display.toLowerCase().includes("poznań") || display.toLowerCase().includes("poznan");
-    if (!inPoznan) {
-      setAddressStatus("invalid");
-      setAddressHint("Found an address, but it doesn't look like Poznań.");
-      return false;
-    }
-
-    setAddressStatus("valid");
-    setAddressHint("Address looks valid ✅");
-    return true;
-  } catch {
-    setAddressStatus("invalid");
-    setAddressHint("Could not verify address. Check connection and try again.");
-    return false;
-  }
-}, [artPieceAddress]);
+  }, [artPieceAddress, t]);
 
   // ----------------- FETCH -----------------
   useEffect(() => {
@@ -275,21 +271,21 @@ const validateAddressWithNominatim = useCallback(async () => {
           })),
         });
       } catch (e: any) {
-        if (e.name !== "AbortError") setError(e.message ?? "Fetch error");
+        if (e.name !== "AbortError") setError(e.message ?? t("common.unknownError"));
       } finally {
         setLoading(false);
       }
     })();
 
     return () => controller.abort();
-  }, []);
+  }, [t]);
 
   // ----------------- TILES -----------------
   const topTiles = useMemo(
     () =>
-      (["Users", "ArtPieces"] as AdminEntityType[]).map((t) => ({
-        type: t,
-        count: data[t].length,
+      (["Users", "ArtPieces"] as AdminEntityType[]).map((tt) => ({
+        type: tt,
+        count: data[tt].length,
       })),
     [data]
   );
@@ -334,8 +330,8 @@ const validateAddressWithNominatim = useCallback(async () => {
 
       toast.current?.show({
         severity: "success",
-        summary: "Usunięto ✅",
-        detail: `${selectedType === "Users" ? "User" : "ArtPiece"} został usunięty`,
+        summary: t("toasts.deletedSummary"),
+        detail: selectedType === "Users" ? t("toasts.deletedUserDetail") : t("toasts.deletedArtPieceDetail"),
         life: 2000,
       });
 
@@ -359,7 +355,7 @@ const validateAddressWithNominatim = useCallback(async () => {
       console.error(e);
       alert(e.message ?? "Delete error");
     }
-  }, [selectedItem, selectedType]);
+  }, [selectedItem, selectedType, t]);
 
   // ----------------- PUT (ArtPieces) -----------------
   const putEndpointFor = useCallback((type: AdminEntityType, id: string) => {
@@ -463,7 +459,7 @@ const validateAddressWithNominatim = useCallback(async () => {
         return;
       } catch (e: any) {
         console.error(e);
-        alert(e?.message ?? "Nie udało się pobrać szczegółów usera");
+        alert(e?.message ?? t("common.unknownError"));
         return;
       }
     }
@@ -492,23 +488,23 @@ const validateAddressWithNominatim = useCallback(async () => {
         opRef.current?.hide();
       } catch (e: any) {
         console.error(e);
-        alert(e?.message ?? "Nie udało się pobrać szczegółów artpiece");
+        alert(e?.message ?? t("common.unknownError"));
       }
     }
-  }, [activeType, selectedItem]);
+  }, [activeType, selectedItem, t]);
 
   // ----------------- MENU -----------------
   const menuModel = useMemo(
     () => [
       {
-        label: "Opcje",
+        label: t("menu.title"),
         items: [
-          { label: "Edytuj", icon: "pi pi-pencil", command: openEditDialog },
-          { label: "Usuń", icon: "pi pi-trash", command: onDelete },
+          { label: t("menu.edit"), icon: "pi pi-pencil", command: openEditDialog },
+          { label: t("menu.delete"), icon: "pi pi-trash", command: onDelete },
         ],
       },
     ],
-    [openEditDialog, onDelete]
+    [openEditDialog, onDelete, t]
   );
 
   const onRowClick = (type: AdminEntityType, e: any) => {
@@ -533,8 +529,8 @@ const validateAddressWithNominatim = useCallback(async () => {
       if (!canSaveUsers) {
         toast.current?.show({
           severity: "warn",
-          summary: "Fix errors",
-          detail: "Please correct the highlighted fields.",
+          summary: t("toasts.fixErrorsSummary"),
+          detail: t("toasts.fixErrorsDetail"),
           life: 2200,
         });
         return;
@@ -551,12 +547,13 @@ const validateAddressWithNominatim = useCallback(async () => {
         artPieceStyles: true,
         artPieceTextLanguages: true,
       });
+
       const okAddr = await validateAddressWithNominatim();
       if (!okAddr) {
         toast.current?.show({
           severity: "warn",
-          summary: "Invalid address",
-          detail: "Please provide a valid address in Poznań.",
+          summary: t("toasts.invalidAddressSummary"),
+          detail: t("toasts.invalidAddressDetail"),
           life: 2500,
         });
         return;
@@ -565,8 +562,8 @@ const validateAddressWithNominatim = useCallback(async () => {
       if (!canSaveArtPieces) {
         toast.current?.show({
           severity: "warn",
-          summary: "Fix errors",
-          detail: "Please correct the highlighted fields.",
+          summary: t("toasts.fixErrorsSummary"),
+          detail: t("toasts.fixErrorsDetail"),
           life: 2200,
         });
         return;
@@ -611,8 +608,8 @@ const validateAddressWithNominatim = useCallback(async () => {
 
         toast.current?.show({
           severity: "success",
-          summary: "Zapisano ✅",
-          detail: "Zaktualizowano użytkownika",
+          summary: t("toasts.savedSummary"),
+          detail: t("toasts.savedUserDetail"),
           life: 2000,
         });
 
@@ -643,9 +640,7 @@ const validateAddressWithNominatim = useCallback(async () => {
           ),
         }));
 
-        setSelectedItem((p) =>
-          p ? { ...p, name: artPieceName || p.name, subtitle: artPieceAddress || p.subtitle } : p
-        );
+        setSelectedItem((p) => (p ? { ...p, name: artPieceName || p.name, subtitle: artPieceAddress || p.subtitle } : p));
 
         setArtPiecesById((prev) => ({
           ...prev,
@@ -664,8 +659,8 @@ const validateAddressWithNominatim = useCallback(async () => {
 
         toast.current?.show({
           severity: "success",
-          summary: "Zapisano ✅",
-          detail: "Zaktualizowano ArtPiece",
+          summary: t("toasts.savedSummary"),
+          detail: t("toasts.savedArtPieceDetail"),
           life: 2000,
         });
 
@@ -696,30 +691,52 @@ const validateAddressWithNominatim = useCallback(async () => {
     containsTextTouched,
     canSaveUsers,
     canSaveArtPieces,
+    validateAddressWithNominatim,
+    t,
   ]);
 
   // ----------------- RENDER -----------------
   return (
     <div className={styles.pageCenter}>
+      <div style={{ position: "absolute", top: 18, right: 18, display: "flex", gap: 8, zIndex: 5 }}>
+        <Button
+          label={t("common.pl")}
+          size="small"
+          outlined={activeLang !== "pl"}
+          onClick={() => setLang("pl")}
+        />
+        <Button
+          label={t("common.en")}
+          size="small"
+          outlined={activeLang !== "en"}
+          onClick={() => setLang("en")}
+        />
+      </div>
       <Toast ref={toast} position="top-right" />
 
-      <Card title="Admin Page" className={styles.cardShell}>
-        {error ? <div className={styles.adminError}>Error: {error}</div> : null}
+      <Card title={t("admin.pageTitle")} className={styles.cardShell}>
+        
+        {error ? (
+          <div className={styles.adminError}>
+            {t("common.error")}: {error}
+          </div>
+        ) : null}
 
         <AdminTiles tiles={topTiles} activeType={activeType} loading={loading} onPick={setActiveType} />
 
         <Divider className={styles.dividerSoft} />
 
+        {/* ✅ NIE ruszamy wrapperów layoutu */}
         <div className={styles.tilesGrid2}>
-          {(Object.keys(data) as AdminEntityType[]).map((t) => (
+          {(Object.keys(data) as AdminEntityType[]).map((tKey) => (
             <AdminEntityPanel
-              key={t}
-              title={t}
-              rows={data[t]}
+              key={tKey}
+              title={tKey} // ✅ MUST stay AdminEntityType, not translated string
+              rows={data[tKey]}
               loading={loading}
               onRowClick={(e) => {
-                setActiveType(t);
-                onRowClick(t, e);
+                setActiveType(tKey);
+                onRowClick(tKey, e);
               }}
             />
           ))}
@@ -730,7 +747,9 @@ const validateAddressWithNominatim = useCallback(async () => {
         </OverlayPanel>
 
         <Dialog
-          header={`Edytuj: ${activeType}`}
+          header={t("dialog.editHeader", {
+            type: activeType === "Users" ? t("entities.users") : t("entities.artPieces"),
+          })}
           visible={editOpen}
           className={styles.dialogNarrow}
           onHide={() => setEditOpen(false)}
@@ -738,7 +757,7 @@ const validateAddressWithNominatim = useCallback(async () => {
           {activeType === "Users" && (
             <div className={styles.dialogGrid14}>
               <div className={styles.fieldBlock}>
-                <small className={styles.fieldLabelSmall}>Email</small>
+                <small className={styles.fieldLabelSmall}>{t("fields.email")}</small>
                 <InputText
                   value={appUserEmail}
                   onChange={(e) => setUserEmail(e.target.value)}
@@ -749,7 +768,7 @@ const validateAddressWithNominatim = useCallback(async () => {
               </div>
 
               <div className={styles.fieldBlock}>
-                <small className={styles.fieldLabelSmall}>Name</small>
+                <small className={styles.fieldLabelSmall}>{t("fields.name")}</small>
                 <InputText
                   value={appUserName}
                   onChange={(e) => setUserName(e.target.value)}
@@ -760,13 +779,13 @@ const validateAddressWithNominatim = useCallback(async () => {
               </div>
 
               <div className={styles.fieldBlock}>
-                <small className={styles.fieldLabelSmall}>Languages spoken</small>
+                <small className={styles.fieldLabelSmall}>{t("fields.languagesSpoken")}</small>
                 <MultiSelect
                   value={appUserLanguagesSpoken}
                   onChange={(e) => setAppUserLanguagesSpoken(e.value)}
                   onBlur={() => markUserTouched("appUserLanguagesSpoken")}
                   options={LANGUAGE_OPTIONS as any}
-                  placeholder="Select languages"
+                  placeholder={t("placeholders.selectLanguages")}
                   className={`${styles.fullWidth} ${showUserErr("appUserLanguagesSpoken", userErrors) ? "p-invalid" : ""}`}
                   display="chip"
                 />
@@ -776,7 +795,7 @@ const validateAddressWithNominatim = useCallback(async () => {
               </div>
 
               <div className={styles.fieldBlock}>
-                <small className={styles.fieldLabelSmall}>Password</small>
+                <small className={styles.fieldLabelSmall}>{t("fields.password")}</small>
                 <InputText
                   type="password"
                   value={appUserPassword}
@@ -784,9 +803,7 @@ const validateAddressWithNominatim = useCallback(async () => {
                   onBlur={() => markUserTouched("appUserPassword")}
                   className={`${styles.fullWidth} ${showUserErr("appUserPassword", userErrors) ? "p-invalid" : ""}`}
                 />
-                {showUserErr("appUserPassword", userErrors) ? (
-                  <small className="p-error">{userErrors.appUserPassword}</small>
-                ) : null}
+                {showUserErr("appUserPassword", userErrors) ? <small className="p-error">{userErrors.appUserPassword}</small> : null}
               </div>
             </div>
           )}
@@ -794,7 +811,7 @@ const validateAddressWithNominatim = useCallback(async () => {
           {activeType === "ArtPieces" && (
             <div className={styles.dialogGrid14}>
               <div className={styles.fieldBlock}>
-                <small className={styles.fieldLabelSmall}>Name</small>
+                <small className={styles.fieldLabelSmall}>{t("fields.name")}</small>
                 <InputText
                   value={artPieceName}
                   onChange={(e) => setApName(e.target.value)}
@@ -808,65 +825,60 @@ const validateAddressWithNominatim = useCallback(async () => {
               </div>
 
               <div className={styles.fieldBlock}>
-  <small className={styles.fieldLabelSmall}>Address</small>
-  <InputText
-    value={artPieceAddress}
-    onChange={(e) => {
-      setApAddress(e.target.value);
-      setAddressStatus("idle");
-      setAddressHint("");
-    }}
-    onBlur={() => {
-      markApTouched("artPieceAddress");
-      void validateAddressWithNominatim();
-    }}
-    className={`${styles.fullWidth} ${
-      showApErr("artPieceAddress", apErrors) || (shouldShowAddressHint && addressStatus === "invalid") ? "p-invalid" : ""
-    }`}
-  />
+                <small className={styles.fieldLabelSmall}>{t("fields.address")}</small>
+                <InputText
+                  value={artPieceAddress}
+                  onChange={(e) => {
+                    setApAddress(e.target.value);
+                    setAddressStatus("idle");
+                    setAddressHint("");
+                  }}
+                  onBlur={() => {
+                    markApTouched("artPieceAddress");
+                    void validateAddressWithNominatim();
+                  }}
+                  className={`${styles.fullWidth} ${
+                    showApErr("artPieceAddress", apErrors) || (shouldShowAddressHint && addressStatus === "invalid") ? "p-invalid" : ""
+                  }`}
+                />
 
-  {showApErr("artPieceAddress", apErrors) ? <small className="p-error">{apErrors.artPieceAddress}</small> : null}
+                {showApErr("artPieceAddress", apErrors) ? <small className="p-error">{apErrors.artPieceAddress}</small> : null}
 
-  {shouldShowAddressHint && addressStatus === "checking" ? <small style={{ opacity: 0.9 }}>{addressHint}</small> : null}
-  {shouldShowAddressHint && addressStatus === "valid" ? <small style={{ opacity: 0.95 }}>{addressHint}</small> : null}
-  {shouldShowAddressHint && addressStatus === "invalid" ? <small className="p-error">{addressHint}</small> : null}
-</div>
-
+                {shouldShowAddressHint && addressStatus === "checking" ? <small style={{ opacity: 0.9 }}>{addressHint}</small> : null}
+                {shouldShowAddressHint && addressStatus === "valid" ? <small style={{ opacity: 0.95 }}>{addressHint}</small> : null}
+                {shouldShowAddressHint && addressStatus === "invalid" ? <small className="p-error">{addressHint}</small> : null}
+              </div>
 
               <div className={styles.fieldBlock}>
-                <small className={styles.fieldLabelSmall}>Description</small>
+                <small className={styles.fieldLabelSmall}>{t("fields.description")}</small>
                 <InputText
                   value={artPieceUserDescription}
                   onChange={(e) => setApUserDescription(e.target.value)}
                   onBlur={() => markApTouched("artPieceUserDescription")}
                   className={`${styles.fullWidth} ${showApErr("artPieceUserDescription", apErrors) ? "p-invalid" : ""}`}
                 />
-                {showApErr("artPieceUserDescription", apErrors) ? (
-                  <small className="p-error">{apErrors.artPieceUserDescription}</small>
-                ) : null}
+                {showApErr("artPieceUserDescription", apErrors) ? <small className="p-error">{apErrors.artPieceUserDescription}</small> : null}
                 <small style={{ opacity: 0.85 }}>
                   {artPieceUserDescription.trim().length}/{MAX_DESC}
                 </small>
               </div>
 
               <div className={styles.fieldBlock}>
-                <small className={styles.fieldLabelSmall}>Position</small>
+                <small className={styles.fieldLabelSmall}>{t("fields.position")}</small>
                 <InputText
                   value={artPiecePosition}
                   onChange={(e) => setApPosition(e.target.value)}
                   onBlur={() => markApTouched("artPiecePosition")}
                   className={`${styles.fullWidth} ${showApErr("artPiecePosition", apErrors) ? "p-invalid" : ""}`}
                 />
-                {showApErr("artPiecePosition", apErrors) ? (
-                  <small className="p-error">{apErrors.artPiecePosition}</small>
-                ) : null}
+                {showApErr("artPiecePosition", apErrors) ? <small className="p-error">{apErrors.artPiecePosition}</small> : null}
                 <small style={{ opacity: 0.85 }}>
                   {artPiecePosition.trim().length}/{MAX_POS}
                 </small>
               </div>
 
               <div className={styles.fieldToggleStack}>
-                <small className={styles.fieldLabelSmall}>Contains text</small>
+                <small className={styles.fieldLabelSmall}>{t("fields.containsText")}</small>
                 <ToggleButton
                   checked={artPieceContainsText}
                   onChange={(e) => {
@@ -875,38 +887,36 @@ const validateAddressWithNominatim = useCallback(async () => {
                     if (!e.value) setApLangs([]);
                     markApTouched("artPieceTextLanguages");
                   }}
-                  onLabel="Yes"
-                  offLabel="No"
+                  onLabel={t("common.yes")}
+                  offLabel={t("common.no")}
                   className={styles.fullWidth}
                 />
               </div>
 
               {artPieceContainsText && (
                 <div className={styles.fieldBlock}>
-                  <small className={styles.fieldLabelSmall}>Text languages</small>
+                  <small className={styles.fieldLabelSmall}>{t("fields.textLanguages")}</small>
                   <MultiSelect
                     value={artPieceTextLanguages}
                     onChange={(e) => setApLangs(e.value)}
                     onBlur={() => markApTouched("artPieceTextLanguages")}
                     options={LANGUAGE_OPTIONS as any}
-                    placeholder="Select languages"
+                    placeholder={t("placeholders.selectLanguages")}
                     className={`${styles.fullWidth} ${showApErr("artPieceTextLanguages", apErrors) ? "p-invalid" : ""}`}
                     display="chip"
                   />
-                  {showApErr("artPieceTextLanguages", apErrors) ? (
-                    <small className="p-error">{apErrors.artPieceTextLanguages}</small>
-                  ) : null}
+                  {showApErr("artPieceTextLanguages", apErrors) ? <small className="p-error">{apErrors.artPieceTextLanguages}</small> : null}
                 </div>
               )}
 
               <div className={styles.fieldBlock}>
-                <small className={styles.fieldLabelSmall}>Types</small>
+                <small className={styles.fieldLabelSmall}>{t("fields.types")}</small>
                 <MultiSelect
                   value={artPieceTypes}
                   onChange={(e) => setApTypes(e.value)}
                   onBlur={() => markApTouched("artPieceTypes")}
                   options={ART_TYPE_OPTIONS as any}
-                  placeholder="Select types"
+                  placeholder={t("placeholders.selectTypes")}
                   className={`${styles.fullWidth} ${showApErr("artPieceTypes", apErrors) ? "p-invalid" : ""}`}
                   display="chip"
                 />
@@ -914,13 +924,13 @@ const validateAddressWithNominatim = useCallback(async () => {
               </div>
 
               <div className={styles.fieldBlock}>
-                <small className={styles.fieldLabelSmall}>Styles</small>
+                <small className={styles.fieldLabelSmall}>{t("fields.styles")}</small>
                 <MultiSelect
                   value={artPieceStyles}
                   onChange={(e) => setApStyles(e.value)}
                   onBlur={() => markApTouched("artPieceStyles")}
                   options={ART_STYLE_OPTIONS as any}
-                  placeholder="Select styles"
+                  placeholder={t("placeholders.selectStyles")}
                   className={`${styles.fullWidth} ${showApErr("artPieceStyles", apErrors) ? "p-invalid" : ""}`}
                   display="chip"
                 />
@@ -930,25 +940,25 @@ const validateAddressWithNominatim = useCallback(async () => {
           )}
 
           <div className={styles.dialogActions}>
-            <Button label="Cancel" severity="secondary" onClick={() => setEditOpen(false)} />
+            <Button label={t("buttons.cancel")} severity="secondary" onClick={() => setEditOpen(false)} />
             <Button
-              label="Save"
+              label={t("buttons.save")}
               icon="pi pi-check"
               onClick={saveEdit}
               disabled={
-  activeType === "Users"
-    ? !canSaveUsers
-    : activeType === "ArtPieces"
-    ? !canSaveArtPieces || addressStatus !== "valid"
-    : false
-}
+                activeType === "Users"
+                  ? !canSaveUsers
+                  : activeType === "ArtPieces"
+                  ? !canSaveArtPieces || addressStatus !== "valid"
+                  : false
+              }
             />
           </div>
         </Dialog>
 
         <div className={styles.actionsFooter}>
           <Button
-            label="Leave Admin Page"
+            label={t("buttons.leave")}
             icon="pi pi-arrow-left"
             severity="secondary"
             onClick={() => navigate("/app")}

@@ -11,6 +11,7 @@ import { Divider } from "primereact/divider";
 import { Menu } from "primereact/menu";
 
 import type { DistrictName } from "../../components/constants/Options";
+import { useTranslation } from "react-i18next";
 
 export type ArtPoint = {
   id: string;
@@ -95,14 +96,15 @@ type FloatingActionsProps = {
 };
 
 export const FloatingActions: React.FC<FloatingActionsProps> = ({ isAdmin, onGoAdmin, onAddNew }) => {
+  const { t } = useTranslation();
   return (
     <div className={styles.floatingActions}>
       {isAdmin && (
-        <Button label="Admin Page" icon="pi pi-shield" severity="warning" onClick={onGoAdmin} className={styles.btnRounded12Bold} />
+        <Button label={t("buttons.adminPage")}  icon="pi pi-shield" severity="warning" onClick={onGoAdmin} className={styles.btnRounded12Bold} />
       )}
 
       <Button
-        label="Add New"
+        label={t("buttons.addNew")}
         icon="pi pi-plus"
         iconPos="right"
         onClick={onAddNew}

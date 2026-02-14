@@ -1,5 +1,17 @@
 {
-  "common": { "language": "Language", "pl": "PL", "en": "EN","error": "Error" },
+  "common": {
+    "language": "Language",
+    "pl": "PL",
+    "en": "EN",
+    "error": "Error",
+    "loading": "Loading...",
+    "unknownError": "Unknown error",
+    "yes": "Yes",
+    "no": "No",
+    "items": "items",
+    "noData": "No data",
+    "addTodo": "Add (TODO)"
+  },
   "auth": {
     "welcomeTitle": "Welcome to StreetApp!",
     "welcomeSubtitle": "Let us explore",
@@ -29,6 +41,123 @@
     "nationalityRequired": "Nationality is required.",
     "districtRequired": "District is required.",
     "selectAtLeastOne": "Select at least one language.",
-    "networkError": "Network error"
+    "networkError": "Network error",
+    "addressRequired": "Address is required.",
+    "positionMax": "Position cannot exceed {{max}} characters.",
+    "descMax": "Description cannot exceed {{max}} characters."
+  },
+  "register2": {
+    "title": "Sign Up - Add Commutes",
+    "question": "Through which districts do you commute?",
+    "commuteDistrict": "Commute through district",
+    "selectDistrictPlaceholder": "Select district",
+    "selectDistrict": "Select district.",
+    "tripsPerWeek": "Trips per week",
+    "tripsRange": "Trips per week must be > 0 and < 100.",
+    "transport": "Means of transport",
+    "selectTransportPlaceholder": "Select transport",
+    "selectTransport": "Select at least one means of transport.",
+    "startTime": "Start time",
+    "stopTime": "Stop time",
+    "stopTimeNextDay": "Stop time (next day)",
+    "timeRange": "Time must be between 0 and 23.",
+    "addCommute": "Add commute",
+    "limitMax": "You can add up to {{max}} commutes.",
+    "limitReached": "Limit reached ({{max}}). Remove one to add more.",
+    "yourCommutes": "Your commutes",
+    "savedCommutes": "Saved commutes",
+    "noCommutes": "No commutes added yet.",
+    "register": "Register",
+    "missingEmail": "Missing appUserEmail (did not pass from page 1).",
+    "addAtLeastOne": "Add at least one commute (click Add commute).",
+    "remove": "Remove",
+    "removeCommute": "remove commute",
+    "start": "Start",
+    "stop": "Stop"
+  },
+  "appView": {
+    "title": "City Overview",
+    "user": "User",
+    "noTitle": "(no title)",
+    "menu": "menu",
+    "filters": "filters",
+    "filtersTitle": "Filters",
+    "district": "District",
+    "any": "Any",
+    "apply": "Apply",
+    "reset": "Reset",
+    "details": "Details",
+    "noPhotos": "(no photos)",
+    "name": "Name",
+    "address": "Address",
+    "city": "City",
+    "position": "Position",
+    "containsText": "Contains text",
+    "types": "Types",
+    "styles": "Styles",
+    "textLanguages": "Text languages",
+    "description": "Description",
+    "myProfile": "My Profile",
+    "myArtpieces": "My Artpieces",
+    "logout": "Logout",
+    "logoutFailed": "Logout failed",
+    "logoutError": "Logout error"
+  },
+  "buttons": {
+    "adminPage": "Admin Page",
+    "addNew": "Add New",
+    "cancel": "Cancel",
+    "save": "Save",
+    "leave": "Leave Admin Page"
+  },
+  "admin": {
+    "pageTitle": "Admin Page"
+  },
+  "entities": {
+    "users": "Users",
+    "artPieces": "Art pieces"
+  },
+  "menu": {
+    "title": "Options",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "dialog": {
+    "editHeader": "Edit: {{type}}"
+  },
+  "toasts": {
+    "deletedSummary": "Deleted ✅",
+    "deletedUserDetail": "User was deleted",
+    "deletedArtPieceDetail": "Art piece was deleted",
+    "savedSummary": "Saved ✅",
+    "savedUserDetail": "User updated",
+    "savedArtPieceDetail": "Art piece updated",
+    "fixErrorsSummary": "Fix errors",
+    "fixErrorsDetail": "Please correct the highlighted fields.",
+    "invalidAddressSummary": "Invalid address",
+    "invalidAddressDetail": "Please provide a valid address in Poznań."
+  },
+  "fields": {
+    "email": "Email",
+    "name": "Name",
+    "languagesSpoken": "Languages spoken",
+    "password": "Password",
+    "address": "Address",
+    "description": "Description",
+    "position": "Position",
+    "containsText": "Contains text",
+    "textLanguages": "Text languages",
+    "types": "Types",
+    "styles": "Styles"
+  },
+  "placeholders": {
+    "selectLanguages": "Select languages",
+    "selectDistrict": "Select district",
+    "selectTypes": "Select types",
+    "selectStyles": "Select styles"
+  },
+  "toggle": {
+    "yes": "Yes",
+    "no": "No"
   }
 }

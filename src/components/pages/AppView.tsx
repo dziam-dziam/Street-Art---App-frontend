@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { Sidebar } from "primereact/sidebar";
 import { Dropdown } from "primereact/dropdown";
 import { Divider } from "primereact/divider";
+import { useTranslation } from "react-i18next";
 
 import { DISTRICT_OPTIONS } from "../constants/Options";
 import type { DistrictName } from "../constants/Options";
@@ -21,6 +22,8 @@ import type { ArtPieceMapPointDto } from "../dto/artpiece/ArtPieceMapPointDto";
 // ✅ widgety mapy
 import { MapWidget, FloatingActions, UserSidebar } from "../../widgets/map/MapWidgets";
 import type { ArtPoint } from "../../widgets/map/MapWidgets";
+
+import { LanguageSwitch } from "../../widgets/LanguageSwitch";
 
 type PhotoResponseDto = {
   id?: number;
@@ -78,11 +81,12 @@ function pickPoznanBoundary(fc: any) {
 }
 
 export const AppView: React.FC = () => {
+  const { t } = useTranslation();
+
   const [isAdmin, setIsAdmin] = useState(false);
   const [userName, setUserName] = useState<string>("Użytkownik");
   const [userEmail, setUserEmail] = useState<string>("user@email.com");
   const [userLanguages, setUserLanguages] = useState<string[]>([]);
-
 
   const [details, setDetails] = useState<ArtPieceDetailsDto | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
@@ -152,7 +156,7 @@ export const AppView: React.FC = () => {
         .filter((d) => Number.isFinite(d.lat) && Number.isFinite(d.lng))
         .map((d) => ({
           id: String(d.id),
-          title: d.title ?? "(no title)",
+          title: d.title ?? t("appView.noTitle"),
           address: d.address ?? "",
           district: normalizeDistrict(d.district),
           lat: d.lat,
@@ -161,11 +165,11 @@ export const AppView: React.FC = () => {
 
       setPoints(mapped);
     } catch (e: any) {
-      setPointsError(e?.message ?? "Unknown error");
+      setPointsError(e?.message ?? t("common.unknownError"));
     } finally {
       setLoadingPoints(false);
     }
-  }, [filterDistrict]);
+  }, [filterDistrict, t]);
 
   useEffect(() => {
     void loadPoints();
@@ -191,24 +195,16 @@ export const AppView: React.FC = () => {
         const roles: string[] = data?.roles ?? [];
         const adminFlag = roles.includes("ROLE_ADMIN");
 
-        const nameFromApi =
-  data?.name ??
-  data?.username ??
-  data?.fullName ??
-  "Użytkownik";
+        const nameFromApi = data?.name ?? data?.username ?? data?.fullName ?? t("appView.user");
+        const emailFromApi = data?.email ?? data?.userEmail ?? "user@email.com";
 
-const emailFromApi =
-  data?.email ??
-  data?.userEmail ??
-  "user@email.com";
-
-if (!cancelled) {
-  setIsAdmin(adminFlag);
-  setUserName(nameFromApi);
-  setUserEmail(emailFromApi);
-  setUserLanguages(langsFromApi); 
-}
-      } catch (err) {
+        if (!cancelled) {
+          setIsAdmin(adminFlag);
+          setUserName(nameFromApi);
+          setUserEmail(emailFromApi);
+          setUserLanguages(langsFromApi);
+        }
+      } catch {
         // ignore
       }
     })();
@@ -216,7 +212,7 @@ if (!cancelled) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   const pozBoundary = useMemo(() => pickPoznanBoundary(poz as any), []);
 
@@ -235,7 +231,7 @@ if (!cancelled) {
 
       if (!res.ok) {
         const body = await res.text().catch(() => "");
-        alert(`Logout failed: ${res.status} ${body}`);
+        alert(`${t("appView.logoutFailed")}: ${res.status} ${body}`);
         return;
       }
 
@@ -243,35 +239,52 @@ if (!cancelled) {
       navigate("/login", { replace: true });
     } catch (e) {
       console.error(e);
-      alert("Logout error");
+      alert(t("appView.logoutError"));
     }
-  }, [navigate]);
+  }, [navigate, t]);
 
   const menuItems = useMemo(
     () => [
-      { label: "My Profile", icon: "pi pi-user", command: () => navigate("/profile") },
-      { label: "My Artpieces", icon: "pi pi-images", command: () => navigate("/my-artpieces") },
+      { label: t("appView.myProfile"), icon: "pi pi-user", command: () => navigate("/profile") },
+      { label: t("appView.myArtpieces"), icon: "pi pi-images", command: () => navigate("/my-artpieces") },
       { separator: true },
-      { label: "Logout", icon: "pi pi-sign-out", command: onLogout },
+      { label: t("appView.logout"), icon: "pi pi-sign-out", command: onLogout },
     ],
-    [onLogout]
+    [onLogout, navigate, t]
   );
 
   return (
     <div className={styles.pageCenter}>
       <Toast ref={toast} position="center" />
 
-      <Card title="App View" className={styles.appCardWide}>
+      {/* przełącznik w prawym górnym rogu strony */}
+      <LanguageSwitch />
+
+      <Card title={t("appView.title")} className={styles.appCardWide}>
         {pointsError ? (
           <div style={{ marginBottom: 10, color: "#ffd1d1", fontWeight: 700 }}>
-            Error: {pointsError}
+            {t("common.error")}: {pointsError}
           </div>
         ) : null}
 
         <div className={styles.appLayout}>
           <div className={styles.iconRail}>
-            <Button icon="pi pi-bars" rounded text aria-label="menu" onClick={() => setSidebarVisible(true)} style={{ color: "white" }} />
-            <Button icon="pi pi-filter" rounded text aria-label="filters" onClick={() => setFiltersVisible(true)} style={{ color: "white" }} />
+            <Button
+              icon="pi pi-bars"
+              rounded
+              text
+              aria-label={t("appView.menu")}
+              onClick={() => setSidebarVisible(true)}
+              style={{ color: "white" }}
+            />
+            <Button
+              icon="pi pi-filter"
+              rounded
+              text
+              aria-label={t("appView.filters")}
+              onClick={() => setFiltersVisible(true)}
+              style={{ color: "white" }}
+            />
           </div>
 
           <div className={styles.mapShell}>
@@ -285,7 +298,11 @@ if (!cancelled) {
               }}
             />
 
-            <FloatingActions isAdmin={isAdmin} onGoAdmin={() => navigate("/admin")} onAddNew={() => navigate("/artpieces/add")} />
+            <FloatingActions
+              isAdmin={isAdmin}
+              onGoAdmin={() => navigate("/admin")}
+              onAddNew={() => navigate("/artpieces/add")}
+            />
           </div>
         </div>
       </Card>
@@ -298,7 +315,6 @@ if (!cancelled) {
         userEmail={userEmail}
       />
 
-
       {/* ✅ tylko district */}
       <Sidebar
         visible={filtersVisible}
@@ -306,18 +322,18 @@ if (!cancelled) {
         onHide={() => setFiltersVisible(false)}
         style={{ width: "min(360px, 92vw)" }}
       >
-        <h3 style={{ marginTop: 0 }}>Filters</h3>
+        <h3 style={{ marginTop: 0 }}>{t("appView.filtersTitle")}</h3>
         <Divider />
 
         <div style={{ display: "grid", gap: 14 }}>
           <div>
-            <div style={{ marginBottom: 6 }}>District</div>
+            <div style={{ marginBottom: 6 }}>{t("appView.district")}</div>
             <Dropdown
               value={filterDistrict}
               options={[...DISTRICT_OPTIONS]}
               optionLabel="label"
               optionValue="value"
-              placeholder="Any"
+              placeholder={t("appView.any")}
               showClear
               onChange={(e) => setFilterDistrict(e.value ?? null)}
               style={{ width: "100%" }}
@@ -326,7 +342,7 @@ if (!cancelled) {
 
           <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
             <Button
-              label="Apply"
+              label={t("appView.apply")}
               icon="pi pi-check"
               onClick={() => {
                 void loadPoints();
@@ -334,7 +350,7 @@ if (!cancelled) {
               }}
             />
             <Button
-              label="Reset"
+              label={t("appView.reset")}
               icon="pi pi-refresh"
               outlined
               onClick={() => {
@@ -347,7 +363,7 @@ if (!cancelled) {
       </Sidebar>
 
       <Dialog
-        header={details?.artPieceName ?? selected?.title ?? "Details"}
+        header={details?.artPieceName ?? selected?.title ?? t("appView.details")}
         visible={!!selected}
         style={{ width: "min(720px, 94vw)" }}
         onHide={() => {
@@ -356,8 +372,8 @@ if (!cancelled) {
           setDetailsError(null);
         }}
       >
-        {loadingDetails ? <div>Loading...</div> : null}
-        {detailsError ? <div style={{ color: "#ffd1d1", fontWeight: 700 }}>Error: {detailsError}</div> : null}
+        {loadingDetails ? <div>{t("common.loading")}</div> : null}
+        {detailsError ? <div style={{ color: "#ffd1d1", fontWeight: 700 }}>{t("common.error")}: {detailsError}</div> : null}
 
         {details && (
           <div style={{ display: "grid", gap: 14 }}>
@@ -401,38 +417,38 @@ if (!cancelled) {
                 }}
               />
             ) : (
-              <div style={{ opacity: 0.85 }}>(no photos)</div>
+              <div style={{ opacity: 0.85 }}>{t("appView.noPhotos")}</div>
             )}
 
             {/* Main info */}
             <div className={styles.detailsGrid}>
               <div>
-                <b>Name:</b> {details.artPieceName}
+                <b>{t("appView.name")}:</b> {details.artPieceName}
               </div>
               <div>
-                <b>Address:</b> {details.artPieceAddress}
+                <b>{t("appView.address")}:</b> {details.artPieceAddress}
               </div>
               <div>
-                <b>District:</b> {details.districtName ?? selected?.district}
+                <b>{t("appView.district")}:</b> {details.districtName ?? selected?.district}
               </div>
               <div>
-                <b>City:</b> {details.cityName ?? "Poznań"}
+                <b>{t("appView.city")}:</b> {details.cityName ?? "Poznań"}
               </div>
               <div>
-                <b>Position:</b> {details.artPiecePosition || "-"}
+                <b>{t("appView.position")}:</b> {details.artPiecePosition || "-"}
               </div>
               <div>
-                <b>Contains text:</b> {details.artPieceContainsText ? "Yes" : "No"}
+                <b>{t("appView.containsText")}:</b> {details.artPieceContainsText ? t("common.yes") : t("common.no")}
               </div>
             </div>
 
             {/* Types */}
             <div>
-              <b>Types:</b>{" "}
+              <b>{t("appView.types")}:</b>{" "}
               {details.artPieceTypes?.length ? (
                 <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
-                  {details.artPieceTypes.map((t) => (
-                    <Chip key={t} label={t} />
+                  {details.artPieceTypes.map((x) => (
+                    <Chip key={x} label={x} />
                   ))}
                 </span>
               ) : (
@@ -442,11 +458,11 @@ if (!cancelled) {
 
             {/* Styles */}
             <div>
-              <b>Styles:</b>{" "}
+              <b>{t("appView.styles")}:</b>{" "}
               {details.artPieceStyles?.length ? (
                 <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
-                  {details.artPieceStyles.map((s) => (
-                    <Chip key={s} label={s} />
+                  {details.artPieceStyles.map((x) => (
+                    <Chip key={x} label={x} />
                   ))}
                 </span>
               ) : (
@@ -456,11 +472,11 @@ if (!cancelled) {
 
             {/* Text languages */}
             <div>
-              <b>Text languages:</b>{" "}
+              <b>{t("appView.textLanguages")}:</b>{" "}
               {details.artPieceContainsText && details.artPieceTextLanguages?.length ? (
                 <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
-                  {details.artPieceTextLanguages.map((l) => (
-                    <Chip key={l} label={l} />
+                  {details.artPieceTextLanguages.map((x) => (
+                    <Chip key={x} label={x} />
                   ))}
                 </span>
               ) : (
@@ -470,7 +486,7 @@ if (!cancelled) {
 
             {/* Description */}
             <div>
-              <b>Description:</b>
+              <b>{t("appView.description")}:</b>
               <div style={{ marginTop: 6, opacity: 0.95 }}>{details.artPieceUserDescription || "-"}</div>
             </div>
           </div>

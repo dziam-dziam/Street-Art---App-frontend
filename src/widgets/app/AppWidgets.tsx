@@ -9,6 +9,8 @@ import { Avatar } from "primereact/avatar";
 import { Divider } from "primereact/divider";
 import { Menu } from "primereact/menu";
 
+import { useTranslation } from "react-i18next";
+
 export type DistrictName = "Jeżyce" | "Stare Miasto" | "Grunwald" | "Wilda" | "Łazarz";
 
 export type ArtPoint = {
@@ -72,12 +74,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ boundary, points, loading,
 
         {!loading &&
           points.map((p) => (
-            <CircleMarker
-              key={p.id}
-              center={[p.lat, p.lng]}
-              radius={7}
-              eventHandlers={{ click: () => onPickPoint(p) }}
-            >
+            <CircleMarker key={p.id} center={[p.lat, p.lng]} radius={7} eventHandlers={{ click: () => onPickPoint(p) }}>
               <Popup>
                 <b>{p.title}</b>
                 <br />
@@ -99,11 +96,13 @@ type FloatingActionsProps = {
 };
 
 export const FloatingActions: React.FC<FloatingActionsProps> = ({ isAdmin, onGoAdmin, onAddNew }) => {
+  const { t } = useTranslation();
+
   return (
     <div className={styles.floatingActions}>
       {isAdmin && (
         <Button
-          label="Admin Page"
+          label={t("buttons.adminPage")}
           icon="pi pi-shield"
           severity="warning"
           onClick={onGoAdmin}
@@ -112,7 +111,7 @@ export const FloatingActions: React.FC<FloatingActionsProps> = ({ isAdmin, onGoA
       )}
 
       <Button
-        label="Add New"
+        label={t("buttons.addNew")}
         icon="pi pi-plus"
         iconPos="right"
         onClick={onAddNew}
