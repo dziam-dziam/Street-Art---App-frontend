@@ -227,6 +227,15 @@
     "Spanish": "Hiszpański",
     "French": "Francuski"
   },
+  "nationalities": {
+    "Polish": "Polska",
+    "English": "Anglia",
+    "German": "Niemcy",
+    "Spanish": "Hiszpania",
+    "French": "Francja",
+    "Ukrainian": "Ukraina", 
+    "Other": "Inna"
+  },
   "artTypes": {
     "GRAFFITI_TAG": "Tag",
     "GRAFFITI_PIECE": "Piece",

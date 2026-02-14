@@ -12,7 +12,7 @@ import { Toast } from "primereact/toast";
 import styles from "../../styles/pages.module.css";
 
 import { AddArtPiecePhotoPanel } from "../../widgets/artpiece/AddArtPieceWidgets";
-import { DISTRICT_OPTIONS, ART_TYPE_OPTIONS, ART_STYLE_OPTIONS, LANGUAGE_OPTIONS } from "../constants/Options";
+import { DISTRICT_OPTIONS, getArtStyleOptions, getArtTypeOptions, getLanguageOptions } from "../constants/Options";
 import type { AddArtPieceDto } from "../dto/artpiece/AddArtPieceDto";
 
 import { useTranslation } from "react-i18next";
@@ -30,6 +30,9 @@ export const AddArtPiecePage: React.FC = () => {
   const toast = useRef<Toast>(null);
 
   const { t, i18n } = useTranslation();
+    const languageOptions = useMemo(() => getLanguageOptions(t), [t, i18n.language]);
+    const artTypeOptions = useMemo(() => getArtTypeOptions(t), [t, i18n.language]);
+    const artStyleOptions = useMemo(() => getArtStyleOptions(t), [t, i18n.language]);
   const activeLang = (i18n.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en";
   const setLang = (lng: "pl" | "en") => void i18n.changeLanguage(lng);
 
@@ -394,7 +397,7 @@ export const AddArtPiecePage: React.FC = () => {
             <div className={styles.fieldStack}>
               <MultiSelect
                 value={addArtPieceForm.artPieceTypes}
-                options={ART_TYPE_OPTIONS as any}
+                options={artTypeOptions as any}
                 onChange={(e) => setForm((p) => ({ ...p, artPieceTypes: e.value }))}
                 onBlur={() => markTouched("artPieceTypes")}
                 placeholder={t("placeholders.selectTypes")}
@@ -408,7 +411,7 @@ export const AddArtPiecePage: React.FC = () => {
             <div className={styles.fieldStack}>
               <MultiSelect
                 value={addArtPieceForm.artPieceStyles}
-                options={ART_STYLE_OPTIONS as any}
+                options={artStyleOptions as any}
                 onChange={(e) => setForm((p) => ({ ...p, artPieceStyles: e.value }))}
                 onBlur={() => markTouched("artPieceStyles")}
                 placeholder={t("placeholders.selectStyles")}
@@ -452,7 +455,7 @@ export const AddArtPiecePage: React.FC = () => {
               <div className={styles.fieldStack}>
                 <MultiSelect
                   value={addArtPieceForm.artPieceTextLanguages}
-                  options={LANGUAGE_OPTIONS as any}
+                  options={languageOptions as any}
                   onChange={(e) => setForm((p) => ({ ...p, artPieceTextLanguages: e.value }))}
                   onBlur={() => markTouched("artPieceTextLanguages")}
                   placeholder={t("placeholders.selectLanguages")}

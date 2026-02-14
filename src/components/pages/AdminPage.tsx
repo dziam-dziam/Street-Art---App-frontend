@@ -16,7 +16,11 @@ import { ToggleButton } from "primereact/togglebutton";
 
 import { useTranslation } from "react-i18next";
 
-import { ART_TYPE_OPTIONS, ART_STYLE_OPTIONS, LANGUAGE_OPTIONS } from "../constants/Options";
+import {
+  getLanguageOptions,
+  getArtTypeOptions,
+  getArtStyleOptions
+} from "../constants/Options";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/validators";
 import type { UserEntity, ArtPieceEntity } from "../dto/admin/AdminDtos";
 
@@ -39,6 +43,11 @@ const MAX_DESC = 200;
 
 export const AdminPage: React.FC = () => {
   const { t, i18n } = useTranslation();
+
+  const languageOptions = useMemo(() => getLanguageOptions(t), [t, i18n.language]);
+  const artTypeOptions = useMemo(() => getArtTypeOptions(t), [t, i18n.language]);
+  const artStyleOptions = useMemo(() => getArtStyleOptions(t), [t, i18n.language]);
+
   const ADMIN_MAIL = "damianzmudzinski3@gmail.com";
 
   const activeLang = (i18n.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en";
@@ -801,7 +810,7 @@ export const AdminPage: React.FC = () => {
                   value={appUserLanguagesSpoken}
                   onChange={(e) => setAppUserLanguagesSpoken(e.value)}
                   onBlur={() => markUserTouched("appUserLanguagesSpoken")}
-                  options={LANGUAGE_OPTIONS as any}
+                  options={languageOptions as any}
                   placeholder={t("placeholders.selectLanguages")}
                   className={`${styles.fullWidth} ${showUserErr("appUserLanguagesSpoken", userErrors) ? "p-invalid" : ""}`}
                   display="chip"
@@ -917,7 +926,7 @@ export const AdminPage: React.FC = () => {
                     value={artPieceTextLanguages}
                     onChange={(e) => setApLangs(e.value)}
                     onBlur={() => markApTouched("artPieceTextLanguages")}
-                    options={LANGUAGE_OPTIONS as any}
+                    options={languageOptions as any}
                     placeholder={t("placeholders.selectLanguages")}
                     className={`${styles.fullWidth} ${showApErr("artPieceTextLanguages", apErrors) ? "p-invalid" : ""}`}
                     display="chip"
@@ -932,7 +941,7 @@ export const AdminPage: React.FC = () => {
                   value={artPieceTypes}
                   onChange={(e) => setApTypes(e.value)}
                   onBlur={() => markApTouched("artPieceTypes")}
-                  options={ART_TYPE_OPTIONS as any}
+                  options={artTypeOptions as any}
                   placeholder={t("placeholders.selectTypes")}
                   className={`${styles.fullWidth} ${showApErr("artPieceTypes", apErrors) ? "p-invalid" : ""}`}
                   display="chip"
@@ -946,7 +955,7 @@ export const AdminPage: React.FC = () => {
                   value={artPieceStyles}
                   onChange={(e) => setApStyles(e.value)}
                   onBlur={() => markApTouched("artPieceStyles")}
-                  options={ART_STYLE_OPTIONS as any}
+                  options={artStyleOptions as any}
                   placeholder={t("placeholders.selectStyles")}
                   className={`${styles.fullWidth} ${showApErr("artPieceStyles", apErrors) ? "p-invalid" : ""}`}
                   display="chip"

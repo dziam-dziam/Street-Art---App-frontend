@@ -1,43 +1,62 @@
-export const LANGUAGE_OPTIONS = [
-  { label: "Polish", value: "Polish" },
-  { label: "English", value: "English" },
-  { label: "German", value: "German" },
-  { label: "Spanish", value: "Spanish" },
-  { label: "French", value: "French" },
+// src/components/constants/Options.ts
+// READY TO PASTE ✅
+// Fix: nie używamy TFunction z typami i18next/react-i18next, tylko własny typ funkcji t()
+// dzięki temu t(key, options) nie wali TS2554.
+
+type TT = (key: string, options?: any) => string;
+
+// ---------------- LANGUAGES ----------------
+export const LANGUAGE_VALUES = ["Polish", "English", "German", "Spanish", "French"] as const;
+export type LanguageOption = (typeof LANGUAGE_VALUES)[number];
+
+export const getLanguageOptions = (t: TT) =>
+  LANGUAGE_VALUES.map((v) => ({
+    value: v,
+    label: t(`options.languages.${v}`, { defaultValue: v }),
+  }));
+
+// ---------------- ART TYPES ----------------
+export const ART_TYPE_VALUES = [
+  "GRAFFITI_TAG",
+  "GRAFFITI_PIECE",
+  "STENCIL",
+  "WHEAT_PASTE_POSTER",
+  "STICKER",
+  "MURAL",
+  "INSTALLATION_3D",
 ] as const;
 
-export type LanguageOption = (typeof LANGUAGE_OPTIONS)[number]["value"];
-export const LANGUAGE_VALUES: LanguageOption[] = LANGUAGE_OPTIONS.map((o) => o.value);
+export type ArtTypeOption = (typeof ART_TYPE_VALUES)[number];
 
-export const ART_TYPE_OPTIONS = [
-  { label: "Graffiti tag", value: "GRAFFITI_TAG" },
-  { label: "Graffiti piece", value: "GRAFFITI_PIECE" },
-  { label: "Stencil", value: "STENCIL" },
-  { label: "Wheat paste poster", value: "WHEAT_PASTE_POSTER" },
-  { label: "Sticker", value: "STICKER" },
-  { label: "Mural", value: "MURAL" },
-  { label: "3D installation", value: "INSTALLATION_3D" },
+export const getArtTypeOptions = (t: TT) =>
+  ART_TYPE_VALUES.map((v) => ({
+    value: v,
+    label: t(`options.artTypes.${v}`, { defaultValue: v }),
+  }));
+
+// ---------------- ART STYLES ----------------
+export const ART_STYLE_VALUES = [
+  "POLITICAL",
+  "RELIGIOUS",
+  "SOCIAL_COMMENTARY",
+  "HUMOR",
+  "LOVE_ROMANCE",
+  "HOMESICKNESS",
+  "PHILOSOPHICAL",
+  "ACTIVISM",
+  "ANTI_CONSUMERISM",
+  "COMMERCIAL",
 ] as const;
 
-export type ArtTypeOption = (typeof ART_TYPE_OPTIONS)[number]["value"];
-export const ART_TYPE_VALUES: ArtTypeOption[] = ART_TYPE_OPTIONS.map((o) => o.value);
+export type ArtStyleOption = (typeof ART_STYLE_VALUES)[number];
 
-export const ART_STYLE_OPTIONS = [
-  { label: "Political", value: "POLITICAL" },
-  { label: "Religious", value: "RELIGIOUS" },
-  { label: "Social commentary", value: "SOCIAL_COMMENTARY" },
-  { label: "Humor", value: "HUMOR" },
-  { label: "Love / romance", value: "LOVE_ROMANCE" },
-  { label: "Homesickness", value: "HOMESICKNESS" },
-  { label: "Philosophical", value: "PHILOSOPHICAL" },
-  { label: "Activism", value: "ACTIVISM" },
-  { label: "Anti-consumerism", value: "ANTI_CONSUMERISM" },
-  { label: "Commercial", value: "COMMERCIAL" },
-] as const;
+export const getArtStyleOptions = (t: TT) =>
+  ART_STYLE_VALUES.map((v) => ({
+    value: v,
+    label: t(`options.artStyles.${v}`, { defaultValue: v }),
+  }));
 
-export type ArtStyleOption = (typeof ART_STYLE_OPTIONS)[number]["value"];
-export const ART_STYLE_VALUES: ArtStyleOption[] = ART_STYLE_OPTIONS.map((o) => o.value);
-
+// ---------------- DISTRICTS ----------------
 export const DISTRICT_OPTIONS = [
   { label: "Jeżyce", value: "Jeżyce" },
   { label: "Grunwald", value: "Grunwald" },
@@ -50,19 +69,24 @@ export const DISTRICT_OPTIONS = [
 export type DistrictName = (typeof DISTRICT_OPTIONS)[number]["value"];
 export const DISTRICT_VALUES: DistrictName[] = DISTRICT_OPTIONS.map((o) => o.value);
 
-export const NATIONALITY_OPTIONS = [
-  { label: "Polish", value: "Polish" },
-  { label: "German", value: "German" },
-  { label: "Spanish", value: "Spanish" },
-  { label: "French", value: "French" },
-  { label: "English", value: "English" },
-  { label: "Ukrainian", value: "Ukrainian" },
-  { label: "Other", value: "Other" },
-] as const;
+export const getDistrictOptions = (_t: TT) =>
+  DISTRICT_VALUES.map((v) => ({
+    value: v,
+    label: v, // dzielnice zostają "na sztywno" (nazwy własne)
+  }));
 
-export type NationalityOption = (typeof NATIONALITY_OPTIONS)[number]["value"];
-export const NATIONALITY_VALUES: NationalityOption[] = NATIONALITY_OPTIONS.map((o) => o.value);
+// ---------------- NATIONALITIES ----------------
+export const NATIONALITY_VALUES = ["Polish", "German", "Spanish", "French", "English", "Ukrainian", "Other"] as const;
 
+export type NationalityOption = (typeof NATIONALITY_VALUES)[number];
+
+export const getNationalityOptions = (t: TT) =>
+  NATIONALITY_VALUES.map((v) => ({
+    value: v,
+    label: t(`options.nationalities.${v}`, { defaultValue: v }),
+  }));
+
+// ---------------- HOURS ----------------
 // Godziny: TS nie utrzyma literalnego union 0..23 z Array.from, ale to i tak OK
 export const HOUR_OPTIONS = [
   ...Array.from({ length: 24 }, (_, h) => ({
@@ -73,6 +97,7 @@ export const HOUR_OPTIONS = [
 
 export type HourOption = (typeof HOUR_OPTIONS)[number]["value"]; // number
 
+// ---------------- TRANSPORT ----------------
 export const TRANSPORT_OPTIONS = [
   { label: "Walk", value: "WALK" },
   { label: "Bike", value: "BIKE" },
@@ -84,3 +109,9 @@ export const TRANSPORT_OPTIONS = [
 
 export type MeansOfTransport = (typeof TRANSPORT_OPTIONS)[number]["value"];
 export const TRANSPORT_VALUES: MeansOfTransport[] = TRANSPORT_OPTIONS.map((o) => o.value);
+
+export const getTransportOptions = (t: TT) =>
+  TRANSPORT_VALUES.map((v) => ({
+    value: v,
+    label: t(`options.transport.${v}`, { defaultValue: v }),
+  }));

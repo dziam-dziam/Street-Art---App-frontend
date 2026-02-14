@@ -9,7 +9,7 @@ import { MultiSelect } from "primereact/multiselect";
 import { Divider } from "primereact/divider";
 import { Card } from "primereact/card";
 
-import { LANGUAGE_OPTIONS } from "../constants/Options";
+import { getLanguageOptions } from "../constants/Options";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/validators";
 
 import { useTranslation } from "react-i18next";
@@ -35,6 +35,9 @@ export const ProfilePage: React.FC = () => {
   const toast = useRef<Toast>(null);
 
   const { t, i18n } = useTranslation();
+
+    const languageOptions = useMemo(() => getLanguageOptions(t), [t, i18n.language]);
+
   const activeLang = (i18n.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en";
   const setLang = (lng: "pl" | "en") => void i18n.changeLanguage(lng);
 
@@ -251,7 +254,7 @@ export const ProfilePage: React.FC = () => {
               value={languages}
               onChange={(e) => setLanguages(e.value)}
               onBlur={() => setTLang(true)}
-              options={LANGUAGE_OPTIONS as any}
+              options={languageOptions as any}
               placeholder={t("placeholders.selectLanguages")}
               className={`${styles.fullWidth} ${tLang && errors.languages ? "p-invalid" : ""}`}
               display="chip"

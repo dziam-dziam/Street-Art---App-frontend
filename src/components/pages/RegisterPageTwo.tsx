@@ -18,14 +18,23 @@ import { AuthShell } from "../../widgets/auth/AutoShell";
 import { AuthImagePanel } from "../../widgets/auth/ImagePanel";
 import { LanguageSwitch } from "../../widgets/LanguageSwitch";
 
-import { DISTRICT_OPTIONS, HOUR_OPTIONS, TRANSPORT_OPTIONS } from "../constants/Options";
+import { getDistrictOptions, getTransportOptions, HOUR_OPTIONS } from "../constants/Options";
 
 type CommuteErrors = Partial<Record<keyof AddCommuteDto, string>>;
 
 export const RegisterPageTwo: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const districtOptions = useMemo(() => getDistrictOptions(t), [t, i18n.language]);
+  const transportOptions = useMemo(() => getTransportOptions(t), [t, i18n.language]);
+  const transportMap = useMemo(() => {
+  const m = new Map<string, string>();
+  transportOptions.forEach((o: any) => m.set(o.value, o.label));
+  return m;
+}, [transportOptions]);
+
 
   const MAX_COMMUTES = 7;
   const [limitError, setLimitError] = useState<string | null>(null);
@@ -170,7 +179,9 @@ export const RegisterPageTwo: React.FC = () => {
   const showError = (key: keyof AddCommuteDto) => touchedAdd && Boolean(commuteErrors[key]);
 
   const commuteCarouselItem = (c: AddCommuteDto & { _idx: number }) => {
-    const transport = (c.commuteMeansOfTransport ?? []).join(", ");
+    const transport = (c.commuteMeansOfTransport ?? [])
+      .map((v) => transportMap.get(v) ?? v)
+      .join(", ");
     const start = String(c.commuteStartHour ?? "").padStart(2, "0") + ":00";
     const stop = String(c.commuteStopHour ?? "").padStart(2, "0") + ":00";
 
@@ -225,7 +236,7 @@ export const RegisterPageTwo: React.FC = () => {
                 <label className={styles.fieldLabel}>{t("register2.commuteDistrict")}</label>
                 <Dropdown
                   value={commuteForm.commuteThroughDistrictName}
-                  options={DISTRICT_OPTIONS as any}
+                  options={districtOptions as any}
                   onChange={(e) => setCommuteForm((p) => ({ ...p, commuteThroughDistrictName: e.value ?? "" }))}
                   placeholder={t("register2.selectDistrictPlaceholder")}
                   className={`${styles.fullWidth} ${showError("commuteThroughDistrictName") ? "p-invalid" : ""}`}
@@ -255,7 +266,7 @@ export const RegisterPageTwo: React.FC = () => {
                   <label className={styles.fieldLabel}>{t("register2.transport")}</label>
                   <MultiSelect
                     value={commuteForm.commuteMeansOfTransport}
-                    options={TRANSPORT_OPTIONS as any}
+                    options={transportOptions as any}
                     onChange={(e) => setCommuteForm((p) => ({ ...p, commuteMeansOfTransport: e.value }))}
                     display="chip"
                     placeholder={t("register2.selectTransportPlaceholder")}

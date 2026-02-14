@@ -15,7 +15,7 @@ import { AuthShell } from "../../widgets/auth/AutoShell";
 import { AuthImagePanel } from "../../widgets/auth/ImagePanel";
 import { LanguageSwitch } from "../../widgets/LanguageSwitch";
 
-import { LANGUAGE_OPTIONS, DISTRICT_OPTIONS, NATIONALITY_OPTIONS } from "../constants/Options";
+import { getLanguageOptions, getNationalityOptions, DISTRICT_OPTIONS } from "../constants/Options";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/validators";
 
 type FormErrors = Partial<Record<keyof RegisterDto, string>>;
@@ -23,7 +23,9 @@ type Touched = Partial<Record<keyof RegisterDto, boolean>>;
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const languageOptions = useMemo(() => getLanguageOptions(t), [t, i18n.language]);
+  const nationalityOptions = useMemo(() => getNationalityOptions(t), [t, i18n.language]);
 
   const [form, setForm] = useState<RegisterDto>({
     appUserName: "",
@@ -173,7 +175,7 @@ export const RegisterPage: React.FC = () => {
             <div className={styles.fieldBlock}>
               <Dropdown
                 value={form.appUserNationality}
-                options={NATIONALITY_OPTIONS as any}
+                options={nationalityOptions as any}
                 onChange={(e) => setForm((p) => ({ ...p, appUserNationality: e.value ?? "" }))}
                 onBlur={() => markTouched("appUserNationality")}
                 placeholder={t("validation.nationalityRequired") /* najlepiej dać klucz auth.nationality */}
@@ -202,7 +204,7 @@ export const RegisterPage: React.FC = () => {
           <div className={styles.fieldBlock}>
             <MultiSelect
               value={form.appUserLanguagesSpoken}
-              options={LANGUAGE_OPTIONS as any}
+              options={languageOptions as any}
               onChange={(e) => setForm((p) => ({ ...p, appUserLanguagesSpoken: e.value }))}
               onBlur={() => markTouched("appUserLanguagesSpoken")}
               display="chip"

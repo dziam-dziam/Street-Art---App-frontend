@@ -225,6 +225,15 @@
     "English": "English",
     "German": "German",
     "Spanish": "Spanish",
+    "French": "French",
+    "Ukrainian": "Ukrainian",
+    "Other": "Other"
+  },
+  "nationalities": {
+    "Polish": "Polish",
+    "English": "English",
+    "German": "German",
+    "Spanish": "Spanish",
     "French": "French"
   },
   "artTypes": {
