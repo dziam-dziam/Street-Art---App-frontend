@@ -1,12 +1,17 @@
 {
-  "common": { "language": "Język", 
-  "pl": "PL", "en": "EN", 
-  "error": "Błąd",
-    "loading": "Ładowanie...", 
-  "unknownError": "Nieznany błąd", 
-  "yes": "Tak", 
-  "no": "Nie"
- },
+  "common": {
+    "language": "Język",
+    "pl": "PL",
+    "en": "EN",
+    "error": "Błąd",
+    "loading": "Ładowanie...",
+    "unknownError": "Nieznany błąd",
+    "yes": "Tak",
+    "no": "Nie",
+    "items": "elementy",
+    "noData": "Brak danych",
+    "addTodo": "Dodaj (TODO)"
+  },
   "auth": {
     "welcomeTitle": "Witaj w StreetApp!",
     "welcomeSubtitle": "Chodźmy odkrywać",
@@ -36,7 +41,10 @@
     "nationalityRequired": "Narodowość jest wymagana.",
     "districtRequired": "Dzielnica jest wymagana.",
     "selectAtLeastOne": "Wybierz co najmniej jeden język.",
-    "networkError": "Błąd sieci"
+    "networkError": "Błąd sieci",
+    "addressRequired": "Adres jest wymagany.",
+    "positionMax": "Pozycja nie może mieć więcej niż {{max}} znaków.",
+    "descMax": "Opis nie może mieć więcej niż {{max}} znaków."
   },
   "register2": {
     "title": "Rejestracja - Dojazdy",
@@ -96,60 +104,68 @@
     "logoutError": "Błąd wylogowania"
   },
   "buttons": {
+    "back": "Wróć",
     "adminPage": "Panel admina",
     "addNew": "Dodaj nowe",
-      "cancel": "Anuluj",
-      "save": "Zapisz",
-      "leave": "Wyjdź z panelu admina"
+    "cancel": "Anuluj",
+    "save": "Zapisz",
+    "leave": "Wyjdź z panelu admina"
   },
-  "admin":{
+  "admin": {
     "pageTitle": "Panel admina"
   },
-   "entities": {
-      "users": "Użytkownicy",
-      "artPieces": "Dzieła sztuki"
-    },
-    "menu": {
-      "title": "Opcje",
-      "edit": "Edytuj",
-      "delete": "Usuń"
-    },
-    "dialog": {
-      "editHeader": "Edytuj: {{type}}"
-    },
-    "toasts": {
-      "deletedSummary": "Usunięto ✅",
-      "deletedUserDetail": "Użytkownik został usunięty",
-      "deletedArtPieceDetail": "ArtPiece został usunięty",
-      "savedSummary": "Zapisano ✅",
-      "savedUserDetail": "Zaktualizowano użytkownika",
-      "savedArtPieceDetail": "Zaktualizowano ArtPiece",
-      "fixErrorsSummary": "Popraw błędy",
-      "fixErrorsDetail": "Popraw podświetlone pola.",
-      "invalidAddressSummary": "Niepoprawny adres",
-      "invalidAddressDetail": "Podaj poprawny adres w Poznaniu."
-    },
-    "fields": {
-      "email": "Email",
-      "name": "Imię",
-      "languagesSpoken": "Języki",
-      "password": "Hasło",
-      "address": "Adres",
-      "description": "Opis",
-      "position": "Pozycja",
-      "containsText": "Zawiera tekst",
-      "textLanguages": "Języki tekstu",
-      "types": "Typy",
-      "styles": "Style"
-    },
-    "placeholders": {
-      "selectLanguages": "Wybierz języki",
-      "selectDistrict": "Wybierz dzielnicę",
-      "selectTypes": "Wybierz typy",
-      "selectStyles": "Wybierz style"
-    },
-    "toggle": {
-      "yes": "Tak",
-      "no": "Nie"
-    }
+  "entities": {
+    "users": "Użytkownicy",
+    "artPieces": "Dzieła sztuki"
+  },
+  "menu": {
+    "title": "Opcje",
+    "edit": "Edytuj",
+    "delete": "Usuń"
+  },
+  "dialog": {
+    "editHeader": "Edytuj: {{type}}"
+  },
+  "toasts": {
+    "deletedSummary": "Usunięto ✅",
+    "deletedUserDetail": "Użytkownik został usunięty",
+    "deletedArtPieceDetail": "ArtPiece został usunięty",
+    "savedSummary": "Zapisano ✅",
+    "savedUserDetail": "Zaktualizowano użytkownika",
+    "savedArtPieceDetail": "Zaktualizowano ArtPiece",
+    "fixErrorsSummary": "Popraw błędy",
+    "fixErrorsDetail": "Popraw podświetlone pola.",
+    "invalidAddressSummary": "Niepoprawny adres",
+    "invalidAddressDetail": "Podaj poprawny adres w Poznaniu."
+  },
+  "fields": {
+    "email": "Email",
+    "name": "Imię",
+    "languagesSpoken": "Języki",
+    "password": "Hasło",
+    "address": "Adres",
+    "description": "Opis",
+    "position": "Pozycja",
+    "containsText": "Zawiera tekst",
+    "textLanguages": "Języki tekstu",
+    "types": "Typy",
+    "styles": "Style"
+  },
+  "placeholders": {
+    "selectLanguages": "Wybierz języki",
+    "selectDistrict": "Wybierz dzielnicę",
+    "selectTypes": "Wybierz typy",
+    "selectStyles": "Wybierz style"
+  },
+  "toggle": {
+    "yes": "Tak",
+    "no": "Nie"
+  },
+  "profile": {
+    "fetchFailed": "Nie udało się pobrać profilu",
+    "updated": "Profil zaktualizowany",
+    "saveError": "Błąd zapisu",
+    "newPasswordOptional": "Nowe hasło (opcjonalnie)",
+    "passwordHint": "Zostaw puste jeśli nie chcesz zmieniać hasła."
+  }
 }

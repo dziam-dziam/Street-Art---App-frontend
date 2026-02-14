@@ -702,14 +702,16 @@ export const AdminPage: React.FC = () => {
         <Button
           label={t("common.pl")}
           size="small"
-          outlined={activeLang !== "pl"}
+          outlined={activeLang !== "pl" }
           onClick={() => setLang("pl")}
+            style={activeLang !== "pl" ? { color: "#000", borderColor: "rgba(0,0,0,0.35)" } : undefined}
         />
         <Button
           label={t("common.en")}
           size="small"
           outlined={activeLang !== "en"}
           onClick={() => setLang("en")}
+            style={activeLang !== "en" ? { color: "#000", borderColor: "rgba(0,0,0,0.35)" } : undefined}
         />
       </div>
       <Toast ref={toast} position="top-right" />

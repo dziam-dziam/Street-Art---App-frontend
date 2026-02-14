@@ -104,6 +104,7 @@
     "logoutError": "Logout error"
   },
   "buttons": {
+    "back": "Back",
     "adminPage": "Admin Page",
     "addNew": "Add New",
     "cancel": "Cancel",
@@ -159,5 +160,12 @@
   "toggle": {
     "yes": "Yes",
     "no": "No"
+  },
+  "profile": {
+    "fetchFailed": "Failed to load profile",
+    "updated": "Profile updated",
+    "saveError": "Save error",
+    "newPasswordOptional": "New password (optional)",
+    "passwordHint": "Leave empty if you don't want to change your password."
   }
 }

@@ -12,6 +12,8 @@ import { Card } from "primereact/card";
 import { LANGUAGE_OPTIONS } from "../constants/Options";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/validators";
 
+import { useTranslation } from "react-i18next";
+
 const BASE = "http://localhost:8080";
 
 type MeResponse = {
@@ -31,6 +33,10 @@ type UpdateBody = {
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const toast = useRef<Toast>(null);
+
+  const { t, i18n } = useTranslation();
+  const activeLang = (i18n.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en";
+  const setLang = (lng: "pl" | "en") => void i18n.changeLanguage(lng);
 
   const [loading, setLoading] = useState(false);
   const [initialEmail, setInitialEmail] = useState("");
@@ -72,8 +78,8 @@ export const ProfilePage: React.FC = () => {
       } catch (e: any) {
         toast.current?.show({
           severity: "error",
-          summary: "Błąd",
-          detail: e?.message ?? "Nie udało się pobrać profilu",
+          summary: t("common.error"),
+          detail: e?.message ?? t("profile.fetchFailed"),
           life: 3000,
         });
       } finally {
@@ -84,29 +90,29 @@ export const ProfilePage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
 
     const n = name.trim();
-    if (!n) e.name = "Name is required.";
-    else if (n.length < 5) e.name = "Name must be at least 5 characters.";
-    else if (n.length > 30) e.name = "Name cannot be longer than 30 characters.";
+    if (!n) e.name = t("validation.nameRequired");
+    else if (n.length < 5) e.name = t("validation.nameMin");
+    else if (n.length > 30) e.name = t("validation.nameMax");
 
     const em = email.trim();
-    if (!em) e.email = "Email is required.";
-    else if (!EMAIL_REGEX.test(em)) e.email = "Email format is invalid.";
+    if (!em) e.email = t("validation.emailRequired");
+    else if (!EMAIL_REGEX.test(em)) e.email = t("validation.emailInvalid");
 
-    if (!languages || languages.length === 0) e.languages = "Select at least one language.";
+    if (!languages || languages.length === 0) e.languages = t("validation.selectAtLeastOne");
 
     const p = password;
     if (p.trim().length > 0 && !PASSWORD_REGEX.test(p)) {
-      e.password = "Min 10 characters + 1 uppercase letter + 1 digit + 1 special character.";
+      e.password = t("validation.passwordRules");
     }
 
     return e;
-  }, [name, email, languages, password]);
+  }, [name, email, languages, password, t]);
 
   const canSave = Object.keys(errors).length === 0 && !loading;
 
@@ -119,8 +125,8 @@ export const ProfilePage: React.FC = () => {
     if (!canSave) {
       toast.current?.show({
         severity: "warn",
-        summary: "Popraw błędy",
-        detail: "Uzupełnij pola poprawnie.",
+        summary: t("toasts.fixErrorsSummary"),
+        detail: t("toasts.fixErrorsDetail"),
         life: 2200,
       });
       return;
@@ -151,8 +157,8 @@ export const ProfilePage: React.FC = () => {
 
       toast.current?.show({
         severity: "success",
-        summary: "Zapisano ✅",
-        detail: "Profil zaktualizowany",
+        summary: t("toasts.savedSummary"),
+        detail: t("profile.updated"),
         life: 1800,
       });
 
@@ -171,8 +177,8 @@ export const ProfilePage: React.FC = () => {
     } catch (e: any) {
       toast.current?.show({
         severity: "error",
-        summary: "Błąd zapisu",
-        detail: e?.message ?? "Update error",
+        summary: t("profile.saveError"),
+        detail: e?.message ?? t("common.unknownError"),
         life: 3500,
       });
     } finally {
@@ -182,19 +188,43 @@ export const ProfilePage: React.FC = () => {
 
   return (
     <div className={styles.pageCenter}>
+      <div style={{ position: "absolute", top: 18, right: 18, display: "flex", gap: 8, zIndex: 5 }}>
+        <Button
+  label={t("common.pl")}
+  size="small"
+  outlined={activeLang !== "pl"}
+  onClick={() => setLang("pl")}
+  style={activeLang !== "pl" ? { color: "#000", borderColor: "rgba(0,0,0,0.35)" } : undefined}
+/>
+
+<Button
+  label={t("common.en")}
+  size="small"
+  outlined={activeLang !== "en"}
+  onClick={() => setLang("en")}
+  style={activeLang !== "en" ? { color: "#000", borderColor: "rgba(0,0,0,0.35)" } : undefined}
+/>
+
+      </div>
+
       <Toast ref={toast} position="top-right" />
 
-      <Card title="Mój profil" className={styles.cardNarrow}>
+      <Card title={t("appView.myProfile")} className={styles.cardNarrow}>
         <div className={styles.row}>
-          <Button label="Wróć" icon="pi pi-arrow-left" severity="secondary" onClick={() => navigate("/app")} />
-          <Button label="Zapisz" icon="pi pi-check" onClick={save} disabled={!canSave} />
+          <Button
+            label={t("buttons.back")}
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            onClick={() => navigate("/app")}
+          />
+          <Button label={t("buttons.save")} icon="pi pi-check" onClick={save} disabled={!canSave} />
         </div>
 
         <Divider className={styles.dividerSoft} />
 
         <div className={styles.dialogGrid14}>
           <div className={styles.fieldBlock}>
-            <small className={styles.fieldLabelSmall}>Email</small>
+            <small className={styles.fieldLabelSmall}>{t("fields.email")}</small>
             <InputText
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -205,7 +235,7 @@ export const ProfilePage: React.FC = () => {
           </div>
 
           <div className={styles.fieldBlock}>
-            <small className={styles.fieldLabelSmall}>Name</small>
+            <small className={styles.fieldLabelSmall}>{t("fields.name")}</small>
             <InputText
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -216,13 +246,13 @@ export const ProfilePage: React.FC = () => {
           </div>
 
           <div className={styles.fieldBlock}>
-            <small className={styles.fieldLabelSmall}>Languages spoken</small>
+            <small className={styles.fieldLabelSmall}>{t("fields.languagesSpoken")}</small>
             <MultiSelect
               value={languages}
               onChange={(e) => setLanguages(e.value)}
               onBlur={() => setTLang(true)}
               options={LANGUAGE_OPTIONS as any}
-              placeholder="Select languages"
+              placeholder={t("placeholders.selectLanguages")}
               className={`${styles.fullWidth} ${tLang && errors.languages ? "p-invalid" : ""}`}
               display="chip"
             />
@@ -230,7 +260,7 @@ export const ProfilePage: React.FC = () => {
           </div>
 
           <div className={styles.fieldBlock}>
-            <small className={styles.fieldLabelSmall}>New password (optional)</small>
+            <small className={styles.fieldLabelSmall}>{t("profile.newPasswordOptional")}</small>
             <InputText
               type="password"
               value={password}
@@ -239,11 +269,15 @@ export const ProfilePage: React.FC = () => {
               className={`${styles.fullWidth} ${tPass && errors.password ? "p-invalid" : ""}`}
             />
             {tPass && errors.password ? <small className="p-error">{errors.password}</small> : null}
-            <small style={{ opacity: 0.85 }}>Zostaw puste jeśli nie chcesz zmieniać hasła.</small>
+            <small style={{ opacity: 0.85 }}>{t("profile.passwordHint")}</small>
           </div>
         </div>
 
-        {loading ? <div className={styles.mt8} style={{ opacity: 0.85 }}>Loading...</div> : null}
+        {loading ? (
+          <div className={styles.mt8} style={{ opacity: 0.85 }}>
+            {t("common.loading")}
+          </div>
+        ) : null}
       </Card>
     </div>
   );

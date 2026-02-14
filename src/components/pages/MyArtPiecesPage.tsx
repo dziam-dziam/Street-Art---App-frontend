@@ -14,6 +14,7 @@ import { ToggleButton } from "primereact/togglebutton";
 import { Divider } from "primereact/divider";
 
 import { ART_TYPE_OPTIONS, ART_STYLE_OPTIONS, LANGUAGE_OPTIONS } from "../constants/Options";
+import { useTranslation } from "react-i18next";
 
 const BASE_URL = "http://localhost:8080";
 
@@ -64,6 +65,10 @@ type ApTouched = Partial<Record<keyof ApErrors, boolean>>;
 export const MyArtPiecesPage: React.FC = () => {
   const navigate = useNavigate();
   const toast = useRef<Toast>(null);
+
+    const { t, i18n } = useTranslation();
+    const activeLang = (i18n.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en";
+    const setLang = (lng: "pl" | "en") => void i18n.changeLanguage(lng);
 
   // ----------------- LIST -----------------
   const [items, setItems] = useState<ArtPieceMapPointDto[]>([]);

@@ -825,3 +825,11 @@
 .commuteCarouselShell :global(.p-carousel-next:hover) {
   background: rgba(255, 255, 255, 0.22);
 }
+.langBtnInactive :global(.p-button-label) {
+  color: #000 !important;
+}
+
+.langBtnInactive:global(.p-button.p-button-outlined) {
+  border-color: rgba(0, 0, 0, 0.35) !important;
+  color: #000 !important;
+}
