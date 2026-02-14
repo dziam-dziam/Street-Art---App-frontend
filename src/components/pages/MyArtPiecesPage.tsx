@@ -141,9 +141,11 @@ export const MyArtPiecesPage: React.FC = () => {
   const canSave = Object.keys(apErrors).length === 0;
 
   // ---- Address validator (Nominatim) ----
+  const [addressDirty, setAddressDirty] = useState(false);
   const [addressStatus, setAddressStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle");
   const [addressHint, setAddressHint] = useState("");
-  const shouldShowAddressHint = !apErrors.artPieceAddress && artPieceAddress.trim().length > 0;
+  const shouldShowAddressHint = addressDirty && !apErrors.artPieceAddress && artPieceAddress.trim().length > 0;
+  const [originalAddress, setOriginalAddress] = useState("");
 
   // ----------------- FETCH LIST -----------------
   const loadMy = useCallback(async () => {
@@ -256,25 +258,33 @@ export const MyArtPiecesPage: React.FC = () => {
     }
   }, [artPieceAddress, t]);
 
-  const openEdit = useCallback(() => {
-    setAddressStatus("idle");
-    setAddressHint("");
+const openEdit = useCallback(() => {
+  setAddressStatus("idle");
+  setAddressHint("");
 
-    if (!details) return;
+  if (!details) return;
 
-    setApName(details.artPieceName ?? "");
-    setApAddress(details.artPieceAddress ?? "");
-    setApUserDescription(details.artPieceUserDescription ?? "");
-    setApPosition(details.artPiecePosition ?? "");
-    setApContainsText(!!details.artPieceContainsText);
+  setApName(details.artPieceName ?? "");
 
-    setApTypes((details.artPieceTypes ?? []).map(String));
-    setApStyles((details.artPieceStyles ?? []).map(String));
-    setApLangs((details.artPieceTextLanguages ?? []).map(String));
+  const loadedAddress = details.artPieceAddress ?? "";
+  setApAddress(loadedAddress);
 
-    setApTouched({});
-    setEditOpen(true);
-  }, [details]);
+  // NEW
+  setOriginalAddress(loadedAddress.trim());
+  setAddressDirty(false);
+
+  setApUserDescription(details.artPieceUserDescription ?? "");
+  setApPosition(details.artPiecePosition ?? "");
+  setApContainsText(!!details.artPieceContainsText);
+
+  setApTypes((details.artPieceTypes ?? []).map(String));
+  setApStyles((details.artPieceStyles ?? []).map(String));
+  setApLangs((details.artPieceTextLanguages ?? []).map(String));
+
+  setApTouched({});
+  setEditOpen(true);
+}, [details]);
+
 
   const saveEdit = useCallback(async () => {
     const id = selectedId ?? details?.id;
@@ -300,16 +310,24 @@ export const MyArtPiecesPage: React.FC = () => {
       return;
     }
 
-    const okAddress = await validateAddressWithNominatim();
-    if (!okAddress) {
-      toast.current?.show({
-        severity: "warn",
-        summary: t("toasts.invalidAddressSummary"),
-        detail: t("toasts.invalidAddressDetail"),
-        life: 2500,
-      });
-      return;
-    }
+    // NEW: waliduj Nominatim tylko jeśli user zmienił adres
+if (addressDirty) {
+  const okAddress = await validateAddressWithNominatim();
+  if (!okAddress) {
+    toast.current?.show({
+      severity: "warn",
+      summary: t("toasts.invalidAddressSummary"),
+      detail: t("toasts.invalidAddressDetail"),
+      life: 2500,
+    });
+    return;
+  }
+} else {
+  // jeśli nie zmienił, uznaj za OK
+  setAddressStatus("valid");
+  setAddressHint("");
+}
+
 
     try {
       const body = {
@@ -574,22 +592,40 @@ export const MyArtPiecesPage: React.FC = () => {
             <div className={styles.fieldBlock}>
               <small className={styles.fieldLabelSmall}>{t("fields.address")}</small>
               <InputText
-                value={artPieceAddress}
-                onChange={(e) => {
-                  setApAddress(e.target.value);
-                  setAddressStatus("idle");
-                  setAddressHint("");
-                }}
-                onBlur={() => {
-                  markApTouched("artPieceAddress");
-                  void validateAddressWithNominatim();
-                }}
-                className={`${styles.fullWidth} ${
-                  showApErr("artPieceAddress", apErrors) || (shouldShowAddressHint && addressStatus === "invalid")
-                    ? "p-invalid"
-                    : ""
-                }`}
-              />
+  value={artPieceAddress}
+  onChange={(e) => {
+    const next = e.target.value;
+    setApAddress(next);
+
+    // NEW: dirty tylko jeśli różni się od oryginału (po trim)
+    const dirtyNow = next.trim() !== originalAddress;
+    setAddressDirty(dirtyNow);
+
+    // resetuj status tylko jeśli user zmienił adres
+    if (dirtyNow) {
+      setAddressStatus("idle");
+      setAddressHint("");
+    }
+  }}
+  onBlur={() => {
+    markApTouched("artPieceAddress");
+
+    // NEW: jeśli nie zmienił adresu, nie sprawdzaj Nominatim
+    if (!addressDirty) {
+      setAddressStatus("valid"); // traktuj jako OK
+      setAddressHint("");
+      return;
+    }
+
+    void validateAddressWithNominatim();
+  }}
+  className={`${styles.fullWidth} ${
+    showApErr("artPieceAddress", apErrors) || (shouldShowAddressHint && addressDirty && addressStatus === "invalid")
+      ? "p-invalid"
+      : ""
+  }`}
+/>
+
 
               {showApErr("artPieceAddress", apErrors) ? <small className="p-error">{apErrors.artPieceAddress}</small> : null}
 
@@ -690,13 +726,19 @@ export const MyArtPiecesPage: React.FC = () => {
 
           <div className={styles.dialogActions}>
             <Button label={t("buttons.cancel")} severity="secondary" onClick={() => setEditOpen(false)} />
-            <Button label={t("buttons.save")} icon="pi pi-check" onClick={saveEdit} disabled={!canSave || addressStatus !== "valid"} />
+<Button
+  label={t("buttons.save")}
+  icon="pi pi-check"
+  onClick={saveEdit}
+  disabled={!canSave || (addressDirty && addressStatus !== "valid")}
+/>
 
             {!canSave ? (
-              <small className="p-error">{t("myArtpieces.fixErrorsToEnableSave")}</small>
-            ) : addressStatus !== "valid" ? (
-              <small className="p-error">{t("myArtpieces.provideValidAddress")}</small>
-            ) : null}
+  <small className="p-error">{t("myArtpieces.fixErrorsToEnableSave")}</small>
+) : addressDirty && addressStatus !== "valid" ? (
+  <small className="p-error">{t("myArtpieces.provideValidAddress")}</small>
+) : null}
+
           </div>
         </Dialog>
       </Card>

@@ -39,6 +39,7 @@ const MAX_DESC = 200;
 
 export const AdminPage: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const ADMIN_MAIL = "damianzmudzinski3@gmail.com";
 
   const activeLang = (i18n.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en";
   const setLang = (lng: "pl" | "en") => void i18n.changeLanguage(lng);
@@ -57,6 +58,9 @@ export const AdminPage: React.FC = () => {
 
   const [selectedItem, setSelectedItem] = useState<RowItem | null>(null);
   const [selectedType, setSelectedType] = useState<AdminEntityType | null>(null);
+  const isProtectedSelected =
+  selectedType === "Users" &&
+  selectedItem?.name?.trim().toLowerCase() === ADMIN_MAIL.toLowerCase();
 
   const opRef = useRef<OverlayPanel>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -495,17 +499,28 @@ export const AdminPage: React.FC = () => {
 
   // ----------------- MENU -----------------
   const menuModel = useMemo(
-    () => [
-      {
-        label: t("menu.title"),
-        items: [
-          { label: t("menu.edit"), icon: "pi pi-pencil", command: openEditDialog },
-          { label: t("menu.delete"), icon: "pi pi-trash", command: onDelete },
-        ],
-      },
-    ],
-    [openEditDialog, onDelete, t]
-  );
+  () => [
+    {
+      label: t("menu.title"),
+      items: [
+        {
+          label: t("menu.edit"),
+          icon: "pi pi-pencil",
+          command: openEditDialog,
+          disabled: isProtectedSelected,
+        },
+        {
+          label: t("menu.delete"),
+          icon: "pi pi-trash",
+          command: onDelete,
+          disabled: isProtectedSelected,
+        },
+      ],
+    },
+  ],
+  [openEditDialog, onDelete, t, isProtectedSelected]
+);
+
 
   const onRowClick = (type: AdminEntityType, e: any) => {
     const item = e.data as RowItem;
