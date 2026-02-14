@@ -4,6 +4,8 @@ import { FileUpload } from "primereact/fileupload";
 import { Divider } from "primereact/divider";
 import styles from "../../styles/pages.module.css";
 
+import { useTranslation } from "react-i18next";
+
 type PhotoPanelProps = {
   onBack: () => void;
   previewUrls: string[];
@@ -19,23 +21,24 @@ export const AddArtPiecePhotoPanel: React.FC<PhotoPanelProps> = ({
   onRemoveAt,
   onClearAll,
 }) => {
+  const { t } = useTranslation();
   const fuRef = useRef<FileUpload>(null);
 
-  // ✅ pokaż ostatnio dodane
+  // ✅ show last added
   const mainUrl = useMemo(() => {
     return previewUrls.length ? previewUrls[previewUrls.length - 1] : null;
   }, [previewUrls]);
 
   return (
     <div className={styles.panel}>
-      <div className={styles.panelTitle}>Add Photo</div>
+      <div className={styles.panelTitle}>{t("addArtpiecePhotos.title")}</div>
 
-      {/* ✅ dropZone “zamyka” obrazek, żeby nie nachodził na UI */}
+      {/* ✅ dropZone “locks” image so it doesn't overlap UI */}
       <div className={styles.dropZone} style={{ position: "relative", overflow: "hidden" }}>
         {mainUrl ? (
           <img
             src={mainUrl}
-            alt="preview"
+            alt={t("addArtpiecePhotos.previewAlt")}
             style={{
               position: "absolute",
               inset: 0,
@@ -48,13 +51,13 @@ export const AddArtPiecePhotoPanel: React.FC<PhotoPanelProps> = ({
           />
         ) : (
           <div style={{ textAlign: "center", opacity: 0.9 }}>
-            <div style={{ fontWeight: 700 }}>Drop photo here</div>
-            <small>lub wybierz plik</small>
+            <div style={{ fontWeight: 700 }}>{t("addArtpiecePhotos.dropTitle")}</div>
+            <small>{t("addArtpiecePhotos.dropSubtitle")}</small>
           </div>
         )}
       </div>
 
-      {/* miniatury + usuwanie */}
+      {/* thumbs + delete */}
       {previewUrls.length > 0 && (
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
           {previewUrls.map((u, idx) => {
@@ -67,14 +70,12 @@ export const AddArtPiecePhotoPanel: React.FC<PhotoPanelProps> = ({
                   height: 72,
                   borderRadius: 10,
                   overflow: "hidden",
-                  border: isMain
-                    ? "2px solid rgba(126,224,129,0.95)"
-                    : "1px solid rgba(255,255,255,0.22)",
+                  border: isMain ? "2px solid rgba(126,224,129,0.95)" : "1px solid rgba(255,255,255,0.22)",
                   position: "relative",
                 }}
-                title={isMain ? "Last added (shown)" : ""}
+                title={isMain ? t("addArtpiecePhotos.lastAddedTitle") : ""}
               >
-                <img src={u} alt={`thumb-${idx}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <img src={u} alt={`${t("addArtpiecePhotos.thumbAlt")}-${idx}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 <Button
                   type="button"
                   icon="pi pi-trash"
@@ -88,6 +89,7 @@ export const AddArtPiecePhotoPanel: React.FC<PhotoPanelProps> = ({
                     top: -6,
                     background: "rgba(0,0,0,0.35)",
                   }}
+                  aria-label={t("addArtpiecePhotos.remove")}
                 />
               </div>
             );
@@ -95,7 +97,7 @@ export const AddArtPiecePhotoPanel: React.FC<PhotoPanelProps> = ({
         </div>
       )}
 
-      {/* ✅ controls zawsze POD dropZone */}
+      {/* controls */}
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 2 }}>
         <FileUpload
           ref={fuRef}
@@ -103,7 +105,7 @@ export const AddArtPiecePhotoPanel: React.FC<PhotoPanelProps> = ({
           name="file"
           accept="image/*"
           maxFileSize={10_000_000}
-          chooseLabel={previewUrls.length ? "Add more photos" : "Choose photo"}
+          chooseLabel={previewUrls.length ? t("addArtpiecePhotos.addMore") : t("addArtpiecePhotos.choose")}
           auto={false}
           customUpload
           multiple
@@ -112,14 +114,14 @@ export const AddArtPiecePhotoPanel: React.FC<PhotoPanelProps> = ({
             const files = (e.files as File[]) ?? [];
             if (files.length) onFilesSelected(files);
 
-            // reset input – bez onClear (żeby nie robić pętli)
+            // reset input (without onClear)
             fuRef.current?.clear();
           }}
         />
 
         <Button
           type="button"
-          label="Clear"
+          label={t("addArtpiecePhotos.clear")}
           icon="pi pi-times"
           severity="secondary"
           onClick={() => {
@@ -132,7 +134,7 @@ export const AddArtPiecePhotoPanel: React.FC<PhotoPanelProps> = ({
 
       <Divider style={{ opacity: 0.4 }} />
 
-      <Button label="Back" icon="pi pi-arrow-left" severity="secondary" onClick={onBack} />
+      <Button label={t("buttons.back")} icon="pi pi-arrow-left" severity="secondary" onClick={onBack} />
     </div>
   );
 };

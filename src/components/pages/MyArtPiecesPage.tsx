@@ -66,9 +66,9 @@ export const MyArtPiecesPage: React.FC = () => {
   const navigate = useNavigate();
   const toast = useRef<Toast>(null);
 
-    const { t, i18n } = useTranslation();
-    const activeLang = (i18n.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en";
-    const setLang = (lng: "pl" | "en") => void i18n.changeLanguage(lng);
+  const { t, i18n } = useTranslation();
+  const activeLang = (i18n.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en";
+  const setLang = (lng: "pl" | "en") => void i18n.changeLanguage(lng);
 
   // ----------------- LIST -----------------
   const [items, setItems] = useState<ArtPieceMapPointDto[]>([]);
@@ -82,7 +82,6 @@ export const MyArtPiecesPage: React.FC = () => {
   const [detailsError, setDetailsError] = useState<string | null>(null);
 
   // ----------------- EDIT DIALOG -----------------
-  
   const [editOpen, setEditOpen] = useState(false);
 
   const [artPieceName, setApName] = useState("");
@@ -106,23 +105,23 @@ export const MyArtPiecesPage: React.FC = () => {
     const e: ApErrors = {};
 
     const name = artPieceName.trim();
-    if (!name) e.artPieceName = "Name is required.";
-    else if (name.length > MAX_NAME) e.artPieceName = `Max ${MAX_NAME} chars.`;
+    if (!name) e.artPieceName = t("validation.nameRequired");
+    else if (name.length > MAX_NAME) e.artPieceName = t("validation.maxChars", { max: MAX_NAME });
 
     const addr = artPieceAddress.trim();
-    if (!addr) e.artPieceAddress = "Address is required.";
+    if (!addr) e.artPieceAddress = t("validation.addressRequired");
 
     const pos = artPiecePosition.trim();
-    if (pos.length > MAX_POS) e.artPiecePosition = `Max ${MAX_POS} chars.`;
+    if (pos.length > MAX_POS) e.artPiecePosition = t("validation.positionMax", { max: MAX_POS });
 
     const desc = artPieceUserDescription.trim();
-    if (desc.length > MAX_DESC) e.artPieceUserDescription = `Max ${MAX_DESC} chars.`;
+    if (desc.length > MAX_DESC) e.artPieceUserDescription = t("validation.descMax", { max: MAX_DESC });
 
-    if (!artPieceTypes.length) e.artPieceTypes = "Select at least one type.";
-    if (!artPieceStyles.length) e.artPieceStyles = "Select at least one style.";
+    if (!artPieceTypes.length) e.artPieceTypes = t("validation.selectAtLeastOne");
+    if (!artPieceStyles.length) e.artPieceStyles = t("validation.selectAtLeastOne");
 
     if (artPieceContainsText && !artPieceTextLanguages.length) {
-      e.artPieceTextLanguages = "Select at least one text language.";
+      e.artPieceTextLanguages = t("validation.selectAtLeastOne");
     }
 
     return e;
@@ -135,15 +134,15 @@ export const MyArtPiecesPage: React.FC = () => {
     artPieceStyles,
     artPieceContainsText,
     artPieceTextLanguages,
+    t,
   ]);
 
   const apErrors = useMemo(() => validateAp(), [validateAp]);
   const canSave = Object.keys(apErrors).length === 0;
 
-    // ---- Address validator (Nominatim) ----
+  // ---- Address validator (Nominatim) ----
   const [addressStatus, setAddressStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle");
   const [addressHint, setAddressHint] = useState("");
-
   const shouldShowAddressHint = !apErrors.artPieceAddress && artPieceAddress.trim().length > 0;
 
   // ----------------- FETCH LIST -----------------
@@ -164,11 +163,11 @@ export const MyArtPiecesPage: React.FC = () => {
       const data = raw.trim() ? (JSON.parse(raw) as ArtPieceMapPointDto[]) : [];
       setItems(data ?? []);
     } catch (e: any) {
-      setError(e?.message ?? "Fetch error");
+      setError(e?.message ?? t("common.unknownError"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // ----------------- FETCH DETAILS -----------------
   const loadDetails = useCallback(async (id: number) => {
@@ -188,11 +187,11 @@ export const MyArtPiecesPage: React.FC = () => {
 
       setDetails(raw.trim() ? (JSON.parse(raw) as ArtPieceDetailsDto) : null);
     } catch (e: any) {
-      setDetailsError(e?.message ?? "Details error");
+      setDetailsError(e?.message ?? t("common.unknownError"));
     } finally {
       setLoadingDetails(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void loadMy();
@@ -200,10 +199,9 @@ export const MyArtPiecesPage: React.FC = () => {
 
   const selectedTitle = useMemo(() => {
     const it = items.find((x) => x.id === selectedId);
-    return it?.title ?? "Details";
-  }, [items, selectedId]);
+    return it?.title ?? t("appView.details");
+  }, [items, selectedId, t]);
 
-  // ----------------- OPEN EDIT -----------------
   const validateAddressWithNominatim = useCallback(async () => {
     const addr = artPieceAddress.trim();
 
@@ -214,7 +212,7 @@ export const MyArtPiecesPage: React.FC = () => {
     }
 
     setAddressStatus("checking");
-    setAddressHint("Checking address...");
+    setAddressHint(t("myArtpieces.addressChecking"));
 
     try {
       const q = `${addr}, Poznań, Poland`;
@@ -229,14 +227,14 @@ export const MyArtPiecesPage: React.FC = () => {
 
       if (!res.ok) {
         setAddressStatus("invalid");
-        setAddressHint("Could not verify address right now. Try again.");
+        setAddressHint(t("myArtpieces.addressVerifyFail"));
         return false;
       }
 
       const data = (await res.json()) as any[];
       if (!Array.isArray(data) || data.length === 0) {
         setAddressStatus("invalid");
-        setAddressHint("Address not found. Add street number / be more specific.");
+        setAddressHint(t("myArtpieces.addressNotFound"));
         return false;
       }
 
@@ -244,20 +242,19 @@ export const MyArtPiecesPage: React.FC = () => {
       const inPoznan = display.toLowerCase().includes("poznań") || display.toLowerCase().includes("poznan");
       if (!inPoznan) {
         setAddressStatus("invalid");
-        setAddressHint("Found an address, but it doesn't look like Poznań.");
+        setAddressHint(t("myArtpieces.addressNotPoznan"));
         return false;
       }
 
       setAddressStatus("valid");
-      setAddressHint("Address looks valid ✅");
+      setAddressHint(t("myArtpieces.addressValid"));
       return true;
     } catch {
       setAddressStatus("invalid");
-      setAddressHint("Could not verify address. Check connection and try again.");
+      setAddressHint(t("myArtpieces.addressVerifyFail"));
       return false;
     }
-  }, [artPieceAddress]);
-
+  }, [artPieceAddress, t]);
 
   const openEdit = useCallback(() => {
     setAddressStatus("idle");
@@ -279,7 +276,6 @@ export const MyArtPiecesPage: React.FC = () => {
     setEditOpen(true);
   }, [details]);
 
-  // ----------------- SAVE EDIT -----------------
   const saveEdit = useCallback(async () => {
     const id = selectedId ?? details?.id;
     if (!id) return;
@@ -297,23 +293,23 @@ export const MyArtPiecesPage: React.FC = () => {
     if (!canSave) {
       toast.current?.show({
         severity: "warn",
-        summary: "Fix errors",
-        detail: "Please correct highlighted fields.",
+        summary: t("toasts.fixErrorsSummary"),
+        detail: t("toasts.fixErrorsDetail"),
         life: 2200,
       });
       return;
     }
-        const okAddress = await validateAddressWithNominatim();
+
+    const okAddress = await validateAddressWithNominatim();
     if (!okAddress) {
       toast.current?.show({
         severity: "warn",
-        summary: "Invalid address",
-        detail: "Please provide a valid address in Poznań.",
+        summary: t("toasts.invalidAddressSummary"),
+        detail: t("toasts.invalidAddressDetail"),
         life: 2500,
       });
       return;
     }
-
 
     try {
       const body = {
@@ -340,20 +336,19 @@ export const MyArtPiecesPage: React.FC = () => {
 
       toast.current?.show({
         severity: "success",
-        summary: "Zapisano ✅",
-        detail: "Zaktualizowano ArtPiece",
+        summary: t("toasts.savedSummary"),
+        detail: t("toasts.savedArtPieceDetail"),
         life: 2000,
       });
 
       setEditOpen(false);
-
       await loadMy();
       await loadDetails(id);
     } catch (e: any) {
       toast.current?.show({
         severity: "error",
-        summary: "Błąd zapisu",
-        detail: e?.message ?? "Update error",
+        summary: t("myArtpieces.saveError"),
+        detail: e?.message ?? t("common.unknownError"),
         life: 3500,
       });
     }
@@ -371,6 +366,8 @@ export const MyArtPiecesPage: React.FC = () => {
     artPieceTextLanguages,
     loadMy,
     loadDetails,
+    validateAddressWithNominatim,
+    t,
   ]);
 
   const closeDetailsDialog = useCallback(() => {
@@ -384,18 +381,40 @@ export const MyArtPiecesPage: React.FC = () => {
     <div className={styles.pageCenter}>
       <Toast ref={toast} position="top-right" />
 
-      <Card title="Moje dzieła" className={styles.cardShell}>
-        {error ? <div className={styles.adminError}>Error: {error}</div> : null}
+      {/* language switch (jak w ProfilePage) */}
+      <div style={{ position: "absolute", top: 18, right: 18, display: "flex", gap: 8, zIndex: 5 }}>
+        <Button
+          label={t("common.pl")}
+          size="small"
+          outlined={activeLang !== "pl"}
+          onClick={() => setLang("pl")}
+          className={activeLang !== "pl" ? styles.langBtnInactive : ""}
+        />
+        <Button
+          label={t("common.en")}
+          size="small"
+          outlined={activeLang !== "en"}
+          onClick={() => setLang("en")}
+          className={activeLang !== "en" ? styles.langBtnInactive : ""}
+        />
+      </div>
+
+      <Card title={t("myArtpieces.title")} className={styles.cardShell}>
+        {error ? (
+          <div className={styles.adminError}>
+            {t("common.error")}: {error}
+          </div>
+        ) : null}
 
         <div className={styles.row}>
-          <Button label="Wróć" icon="pi pi-arrow-left" severity="secondary" onClick={() => navigate("/app")} />
-          <Button label="Odśwież" icon="pi pi-refresh" onClick={() => void loadMy()} loading={loading} />
+          <Button label={t("buttons.back")} icon="pi pi-arrow-left" severity="secondary" onClick={() => navigate("/app")} />
+          <Button label={t("myArtpieces.refresh")} icon="pi pi-refresh" onClick={() => void loadMy()} loading={loading} />
         </div>
 
         <Divider className={styles.dividerSoft} />
 
-        {loading ? <div style={{ opacity: 0.85 }}>Loading...</div> : null}
-        {!loading && items.length === 0 ? <div style={{ opacity: 0.9 }}>(Brak dodanych artpieces)</div> : null}
+        {loading ? <div style={{ opacity: 0.85 }}>{t("common.loading")}</div> : null}
+        {!loading && items.length === 0 ? <div style={{ opacity: 0.9 }}>{t("myArtpieces.empty")}</div> : null}
 
         <div className={styles.listGrid1}>
           {items.map((x) => (
@@ -404,11 +423,13 @@ export const MyArtPiecesPage: React.FC = () => {
                 <div className={styles.itemMeta}>
                   <div className={styles.itemTitle}>{x.title}</div>
                   <div className={styles.itemSubtitle}>{x.address}</div>
-                  <div className={styles.itemSubtitle}>District: {x.district}</div>
+                  <div className={styles.itemSubtitle}>
+                    {t("appView.district")}: {x.district}
+                  </div>
                 </div>
 
                 <Button
-                  label="Otwórz"
+                  label={t("myArtpieces.open")}
                   icon="pi pi-external-link"
                   className={styles.btnRounded12Bold}
                   onClick={() => {
@@ -430,11 +451,11 @@ export const MyArtPiecesPage: React.FC = () => {
         >
           {details && !loadingDetails && !detailsError ? (
             <div className={styles.dialogActions}>
-              <Button label="Edytuj" icon="pi pi-pencil" onClick={openEdit} />
+              <Button label={t("myArtpieces.edit")} icon="pi pi-pencil" onClick={openEdit} />
             </div>
           ) : null}
 
-          {loadingDetails ? <div style={{ opacity: 0.85 }}>Loading...</div> : null}
+          {loadingDetails ? <div style={{ opacity: 0.85 }}>{t("common.loading")}</div> : null}
           {detailsError ? <div className={styles.adminError}>{detailsError}</div> : null}
 
           {details && (
@@ -451,46 +472,42 @@ export const MyArtPiecesPage: React.FC = () => {
                     const src = p.downloadUrl?.startsWith("http") ? p.downloadUrl : `${BASE_URL}${p.downloadUrl ?? ""}`;
                     return (
                       <div className={styles.photoFrame}>
-                        <img
-                          src={src}
-                          alt={p.fileName ?? "photo"}
-                          style={{ width: "100%", height: "100%", objectFit: "contain" }}
-                        />
+                        <img src={src} alt={p.fileName ?? "photo"} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                       </div>
                     );
                   }}
                 />
               ) : (
-                <div style={{ opacity: 0.85 }}>(no photos)</div>
+                <div style={{ opacity: 0.85 }}>{t("appView.noPhotos")}</div>
               )}
 
               <div className={styles.detailsGrid}>
                 <div>
-                  <b>Name:</b> {details.artPieceName}
+                  <b>{t("fields.name")}:</b> {details.artPieceName}
                 </div>
                 <div>
-                  <b>Address:</b> {details.artPieceAddress}
+                  <b>{t("fields.address")}:</b> {details.artPieceAddress}
                 </div>
                 <div>
-                  <b>District:</b> {details.districtName ?? "-"}
+                  <b>{t("appView.district")}:</b> {details.districtName ?? "-"}
                 </div>
                 <div>
-                  <b>City:</b> {details.cityName ?? "Poznań"}
+                  <b>{t("appView.city")}:</b> {details.cityName ?? "Poznań"}
                 </div>
                 <div>
-                  <b>Position:</b> {details.artPiecePosition || "-"}
+                  <b>{t("fields.position")}:</b> {details.artPiecePosition || "-"}
                 </div>
                 <div>
-                  <b>Contains text:</b> {details.artPieceContainsText ? "Yes" : "No"}
+                  <b>{t("fields.containsText")}:</b> {details.artPieceContainsText ? t("toggle.yes") : t("toggle.no")}
                 </div>
               </div>
 
               <div>
-                <b>Types:</b>{" "}
+                <b>{t("fields.types")}:</b>{" "}
                 {details.artPieceTypes?.length ? (
                   <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
-                    {details.artPieceTypes.map((t) => (
-                      <Chip key={t} label={t} />
+                    {details.artPieceTypes.map((tt) => (
+                      <Chip key={tt} label={tt} />
                     ))}
                   </span>
                 ) : (
@@ -499,7 +516,7 @@ export const MyArtPiecesPage: React.FC = () => {
               </div>
 
               <div>
-                <b>Styles:</b>{" "}
+                <b>{t("fields.styles")}:</b>{" "}
                 {details.artPieceStyles?.length ? (
                   <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
                     {details.artPieceStyles.map((s) => (
@@ -512,7 +529,7 @@ export const MyArtPiecesPage: React.FC = () => {
               </div>
 
               <div>
-                <b>Text languages:</b>{" "}
+                <b>{t("fields.textLanguages")}:</b>{" "}
                 {details.artPieceContainsText && details.artPieceTextLanguages?.length ? (
                   <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
                     {details.artPieceTextLanguages.map((l) => (
@@ -525,7 +542,7 @@ export const MyArtPiecesPage: React.FC = () => {
               </div>
 
               <div>
-                <b>Description:</b>
+                <b>{t("fields.description")}:</b>
                 <div style={{ marginTop: 6, opacity: 0.95 }}>{details.artPieceUserDescription || "-"}</div>
               </div>
             </div>
@@ -534,14 +551,14 @@ export const MyArtPiecesPage: React.FC = () => {
 
         {/* EDIT */}
         <Dialog
-          header={`Edytuj: ${details?.artPieceName ?? ""}`}
+          header={t("myArtpieces.editHeader", { name: details?.artPieceName ?? "" })}
           visible={editOpen}
           className={styles.dialogWide}
           onHide={() => setEditOpen(false)}
         >
           <div className={styles.dialogGrid14}>
             <div className={styles.fieldBlock}>
-              <small className={styles.fieldLabelSmall}>Name</small>
+              <small className={styles.fieldLabelSmall}>{t("fields.name")}</small>
               <InputText
                 value={artPieceName}
                 onChange={(e) => setApName(e.target.value)}
@@ -554,8 +571,8 @@ export const MyArtPiecesPage: React.FC = () => {
               </small>
             </div>
 
-                        <div className={styles.fieldBlock}>
-              <small className={styles.fieldLabelSmall}>Address</small>
+            <div className={styles.fieldBlock}>
+              <small className={styles.fieldLabelSmall}>{t("fields.address")}</small>
               <InputText
                 value={artPieceAddress}
                 onChange={(e) => {
@@ -568,31 +585,21 @@ export const MyArtPiecesPage: React.FC = () => {
                   void validateAddressWithNominatim();
                 }}
                 className={`${styles.fullWidth} ${
-                  showApErr("artPieceAddress", apErrors) ||
-                  (shouldShowAddressHint && addressStatus === "invalid")
+                  showApErr("artPieceAddress", apErrors) || (shouldShowAddressHint && addressStatus === "invalid")
                     ? "p-invalid"
                     : ""
                 }`}
               />
 
-              {showApErr("artPieceAddress", apErrors) ? (
-                <small className="p-error">{apErrors.artPieceAddress}</small>
-              ) : null}
+              {showApErr("artPieceAddress", apErrors) ? <small className="p-error">{apErrors.artPieceAddress}</small> : null}
 
-              {shouldShowAddressHint && addressStatus === "checking" ? (
-                <small style={{ opacity: 0.9 }}>{addressHint}</small>
-              ) : null}
-              {shouldShowAddressHint && addressStatus === "valid" ? (
-                <small style={{ opacity: 0.95 }}>{addressHint}</small>
-              ) : null}
-              {shouldShowAddressHint && addressStatus === "invalid" ? (
-                <small className="p-error">{addressHint}</small>
-              ) : null}
+              {shouldShowAddressHint && addressStatus === "checking" ? <small style={{ opacity: 0.9 }}>{addressHint}</small> : null}
+              {shouldShowAddressHint && addressStatus === "valid" ? <small style={{ opacity: 0.95 }}>{addressHint}</small> : null}
+              {shouldShowAddressHint && addressStatus === "invalid" ? <small className="p-error">{addressHint}</small> : null}
             </div>
 
-
             <div className={styles.fieldBlock}>
-              <small className={styles.fieldLabelSmall}>Description</small>
+              <small className={styles.fieldLabelSmall}>{t("fields.description")}</small>
               <InputText
                 value={artPieceUserDescription}
                 onChange={(e) => setApUserDescription(e.target.value)}
@@ -608,23 +615,21 @@ export const MyArtPiecesPage: React.FC = () => {
             </div>
 
             <div className={styles.fieldBlock}>
-              <small className={styles.fieldLabelSmall}>Position</small>
+              <small className={styles.fieldLabelSmall}>{t("fields.position")}</small>
               <InputText
                 value={artPiecePosition}
                 onChange={(e) => setApPosition(e.target.value)}
                 onBlur={() => markApTouched("artPiecePosition")}
                 className={`${styles.fullWidth} ${showApErr("artPiecePosition", apErrors) ? "p-invalid" : ""}`}
               />
-              {showApErr("artPiecePosition", apErrors) ? (
-                <small className="p-error">{apErrors.artPiecePosition}</small>
-              ) : null}
+              {showApErr("artPiecePosition", apErrors) ? <small className="p-error">{apErrors.artPiecePosition}</small> : null}
               <small style={{ opacity: 0.85 }}>
                 {artPiecePosition.trim().length}/{MAX_POS}
               </small>
             </div>
 
             <div className={styles.fieldToggleStack}>
-              <small className={styles.fieldLabelSmall}>Contains text</small>
+              <small className={styles.fieldLabelSmall}>{t("fields.containsText")}</small>
               <ToggleButton
                 checked={artPieceContainsText}
                 onChange={(e) => {
@@ -632,38 +637,36 @@ export const MyArtPiecesPage: React.FC = () => {
                   if (!e.value) setApLangs([]);
                   markApTouched("artPieceTextLanguages");
                 }}
-                onLabel="Yes"
-                offLabel="No"
+                onLabel={t("toggle.yes")}
+                offLabel={t("toggle.no")}
                 className={styles.fullWidth}
               />
             </div>
 
             {artPieceContainsText && (
               <div className={styles.fieldBlock}>
-                <small className={styles.fieldLabelSmall}>Text languages</small>
+                <small className={styles.fieldLabelSmall}>{t("fields.textLanguages")}</small>
                 <MultiSelect
                   value={artPieceTextLanguages}
                   onChange={(e) => setApLangs(e.value)}
                   onBlur={() => markApTouched("artPieceTextLanguages")}
                   options={LANGUAGE_OPTIONS as any}
-                  placeholder="Select languages"
+                  placeholder={t("placeholders.selectLanguages")}
                   className={`${styles.fullWidth} ${showApErr("artPieceTextLanguages", apErrors) ? "p-invalid" : ""}`}
                   display="chip"
                 />
-                {showApErr("artPieceTextLanguages", apErrors) ? (
-                  <small className="p-error">{apErrors.artPieceTextLanguages}</small>
-                ) : null}
+                {showApErr("artPieceTextLanguages", apErrors) ? <small className="p-error">{apErrors.artPieceTextLanguages}</small> : null}
               </div>
             )}
 
             <div className={styles.fieldBlock}>
-              <small className={styles.fieldLabelSmall}>Types</small>
+              <small className={styles.fieldLabelSmall}>{t("fields.types")}</small>
               <MultiSelect
                 value={artPieceTypes}
                 onChange={(e) => setApTypes(e.value)}
                 onBlur={() => markApTouched("artPieceTypes")}
                 options={ART_TYPE_OPTIONS as any}
-                placeholder="Select types"
+                placeholder={t("placeholders.selectTypes")}
                 className={`${styles.fullWidth} ${showApErr("artPieceTypes", apErrors) ? "p-invalid" : ""}`}
                 display="chip"
               />
@@ -671,36 +674,29 @@ export const MyArtPiecesPage: React.FC = () => {
             </div>
 
             <div className={styles.fieldBlock}>
-              <small className={styles.fieldLabelSmall}>Styles</small>
+              <small className={styles.fieldLabelSmall}>{t("fields.styles")}</small>
               <MultiSelect
                 value={artPieceStyles}
                 onChange={(e) => setApStyles(e.value)}
                 onBlur={() => markApTouched("artPieceStyles")}
                 options={ART_STYLE_OPTIONS as any}
-                placeholder="Select styles"
+                placeholder={t("placeholders.selectStyles")}
                 className={`${styles.fullWidth} ${showApErr("artPieceStyles", apErrors) ? "p-invalid" : ""}`}
                 display="chip"
               />
-              {showApErr("artPieceStyles", apErrors) ? (
-                <small className="p-error">{apErrors.artPieceStyles}</small>
-              ) : null}
+              {showApErr("artPieceStyles", apErrors) ? <small className="p-error">{apErrors.artPieceStyles}</small> : null}
             </div>
           </div>
 
           <div className={styles.dialogActions}>
-            <Button label="Cancel" severity="secondary" onClick={() => setEditOpen(false)} />
-            <Button
-  label="Save"
-  icon="pi pi-check"
-  onClick={saveEdit}
-  disabled={!canSave || addressStatus !== "valid"}
-/>
-{!canSave ? (
-  <small className="p-error">Fix errors above to enable Save.</small>
-) : addressStatus !== "valid" ? (
-  <small className="p-error">Please provide a valid address (verified).</small>
-) : null}
+            <Button label={t("buttons.cancel")} severity="secondary" onClick={() => setEditOpen(false)} />
+            <Button label={t("buttons.save")} icon="pi pi-check" onClick={saveEdit} disabled={!canSave || addressStatus !== "valid"} />
 
+            {!canSave ? (
+              <small className="p-error">{t("myArtpieces.fixErrorsToEnableSave")}</small>
+            ) : addressStatus !== "valid" ? (
+              <small className="p-error">{t("myArtpieces.provideValidAddress")}</small>
+            ) : null}
           </div>
         </Dialog>
       </Card>

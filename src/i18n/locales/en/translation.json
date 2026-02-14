@@ -30,6 +30,7 @@
     "submitting": "Submitting..."
   },
   "validation": {
+        "maxChars": "Max {{max}} chars.",
     "nameRequired": "Name is required.",
     "nameMin": "Name must be at least 5 characters.",
     "nameMax": "Name cannot be longer than 30 characters.",
@@ -167,5 +168,55 @@
     "saveError": "Save error",
     "newPasswordOptional": "New password (optional)",
     "passwordHint": "Leave empty if you don't want to change your password."
+  },
+  "myArtpieces": {
+    "title": "My Art Pieces",
+    "refresh": "Refresh",
+    "open": "Open",
+    "edit": "Edit",
+    "empty": "(No art pieces added yet)",
+    "editHeader": "Edit: {{name}}",
+    "saveError": "Save error",
+    "fixErrorsToEnableSave": "Fix errors above to enable Save.",
+    "provideValidAddress": "Please provide a valid address (verified).",
+    "addressChecking": "Checking address...",
+    "addressVerifyFail": "Could not verify address right now. Try again.",
+    "addressNotFound": "Address not found. Add street number / be more specific.",
+    "addressNotPoznan": "Found an address, but it doesn't look like Poznań.",
+    "addressValid": "Address looks valid ✅"
+  },
+  "addArtpiece": {
+    "title": "Add Artpiece",
+    "placeholders": {
+      "name": "Art piece name",
+      "address": "Address (e.g. Święty Marcin 28)",
+      "position": "Position (e.g. wall, tunnel, under bridge)",
+      "description": "User description"
+    },
+    "fixErrorsToEnableSave": "Fix errors above to enable Save.",
+    "provideValidAddress": "Please provide a valid address (verified).",
+    "addressChecking": "Checking address...",
+    "addressVerifyFail": "Could not verify address right now. Try again.",
+    "addressNotFound": "Address not found. Add street number / be more specific.",
+    "addressNotPoznan": "Found an address, but it doesn't look like Poznań.",
+    "addressValid": "Address looks valid ✅",
+    "successSummary": "Success ✅",
+    "successWithPhotos": "ArtPiece + photos uploaded",
+    "successNoPhotos": "ArtPiece has been added",
+    "errorSummary": "Error ❌",
+    "errorGeneric": "Failed to add ArtPiece",
+    "noIdReturned": "Backend did not return ArtPiece id (ArtPieceDto should include id)."
+  },
+  "addArtpiecePhotos": {
+    "title": "Add Photo",
+    "previewAlt": "preview",
+    "thumbAlt": "thumb",
+    "dropTitle": "Drop photo here",
+    "dropSubtitle": "or choose a file",
+    "addMore": "Add more photos",
+    "choose": "Choose photo",
+    "clear": "Clear",
+    "remove": "Remove photo",
+    "lastAddedTitle": "Last added (shown)"
   }
 }

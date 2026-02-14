@@ -30,6 +30,7 @@
     "submitting": "Wysyłanie..."
   },
   "validation": {
+        "maxChars": "Maks. {{max}} znaków.",
     "nameRequired": "Imię jest wymagane.",
     "nameMin": "Imię musi mieć co najmniej 5 znaków.",
     "nameMax": "Imię nie może mieć więcej niż 30 znaków.",
@@ -167,5 +168,56 @@
     "saveError": "Błąd zapisu",
     "newPasswordOptional": "Nowe hasło (opcjonalnie)",
     "passwordHint": "Zostaw puste jeśli nie chcesz zmieniać hasła."
+  },
+  "myArtpieces": {
+    "title": "Moje dzieła",
+    "refresh": "Odśwież",
+    "open": "Otwórz",
+    "edit": "Edytuj",
+    "empty": "(Brak dodanych artpieces)",
+    "editHeader": "Edytuj: {{name}}",
+    "saveError": "Błąd zapisu",
+    "fixErrorsToEnableSave": "Popraw błędy powyżej, aby odblokować Zapisz.",
+    "provideValidAddress": "Podaj poprawny adres (zweryfikowany).",
+    "addressChecking": "Sprawdzam adres...",
+    "addressVerifyFail": "Nie mogę teraz zweryfikować adresu. Spróbuj ponownie.",
+    "addressNotFound": "Nie znaleziono adresu. Dodaj numer / bądź bardziej precyzyjny.",
+    "addressNotPoznan": "Znaleziono adres, ale nie wygląda na Poznań.",
+    "addressValid": "Adres wygląda poprawnie ✅"
+  },
+  "addArtpiece": {
+    "title": "Dodaj ArtPiece",
+    "placeholders": {
+      "name": "Nazwa",
+      "address": "Adres (np. Święty Marcin 28)",
+      "position": "Pozycja (np. ściana, tunel, pod mostem)",
+      "description": "Opis użytkownika"
+    },
+    "fixErrorsToEnableSave": "Popraw błędy powyżej, aby odblokować Zapisz.",
+    "provideValidAddress": "Podaj poprawny adres (zweryfikowany).",
+    "addressChecking": "Sprawdzam adres...",
+    "addressVerifyFail": "Nie mogę teraz zweryfikować adresu. Spróbuj ponownie.",
+    "addressNotFound": "Nie znaleziono adresu. Dodaj numer / bądź bardziej precyzyjny.",
+    "addressNotPoznan": "Znaleziono adres, ale nie wygląda na Poznań.",
+    "addressValid": "Adres wygląda poprawnie ✅",
+    "successSummary": "Sukces ✅",
+    "successWithPhotos": "Dodano ArtPiece + zdjęcia",
+    "successNoPhotos": "Dodano ArtPiece",
+    "errorSummary": "Błąd ❌",
+    "errorGeneric": "Nie udało się dodać ArtPiece",
+    "noIdReturned": "Backend nie zwrócił id ArtPiece (ArtPieceDto powinno zawierać id)."
+  },
+  "addArtpiecePhotos": {
+    "title": "Dodaj zdjęcie",
+    "previewAlt": "podgląd",
+    "thumbAlt": "miniatura",
+    "dropTitle": "Upuść zdjęcie tutaj",
+    "dropSubtitle": "lub wybierz plik",
+    "addMore": "Dodaj więcej zdjęć",
+    "choose": "Wybierz zdjęcie",
+    "clear": "Wyczyść",
+    "remove": "Usuń zdjęcie",
+    "lastAddedTitle": "Ostatnio dodane (pokazane)"
   }
+
 }

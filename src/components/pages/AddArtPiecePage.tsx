@@ -15,6 +15,8 @@ import { AddArtPiecePhotoPanel } from "../../widgets/artpiece/AddArtPieceWidgets
 import { DISTRICT_OPTIONS, ART_TYPE_OPTIONS, ART_STYLE_OPTIONS, LANGUAGE_OPTIONS } from "../constants/Options";
 import type { AddArtPieceDto } from "../dto/artpiece/AddArtPieceDto";
 
+import { useTranslation } from "react-i18next";
+
 type Errors = Partial<Record<keyof AddArtPieceDto, string>>;
 
 const MAX_NAME = 50;
@@ -26,6 +28,10 @@ type CreatedArtPieceDto = { id: number };
 export const AddArtPiecePage: React.FC = () => {
   const navigate = useNavigate();
   const toast = useRef<Toast>(null);
+
+  const { t, i18n } = useTranslation();
+  const activeLang = (i18n.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en";
+  const setLang = (lng: "pl" | "en") => void i18n.changeLanguage(lng);
 
   const [addArtPieceForm, setForm] = useState<AddArtPieceDto>({
     artPieceAddress: "",
@@ -87,26 +93,26 @@ export const AddArtPiecePage: React.FC = () => {
     const e: Errors = {};
 
     const name = v.artPieceName.trim();
-    if (!name) e.artPieceName = "Name is required.";
-    else if (name.length > MAX_NAME) e.artPieceName = `Name cannot exceed ${MAX_NAME} characters.`;
+    if (!name) e.artPieceName = t("validation.nameRequired");
+    else if (name.length > MAX_NAME) e.artPieceName = t("validation.maxChars", { max: MAX_NAME });
 
     const addr = v.artPieceAddress.trim();
-    if (!addr) e.artPieceAddress = "Address is required.";
+    if (!addr) e.artPieceAddress = t("validation.addressRequired");
 
     const pos = v.artPiecePosition.trim();
-    if (pos.length > MAX_POS) e.artPiecePosition = `Position cannot exceed ${MAX_POS} characters.`;
+    if (pos.length > MAX_POS) e.artPiecePosition = t("validation.positionMax", { max: MAX_POS });
 
     const district = v.artPieceDistrict?.trim() ?? "";
-    if (!district) e.artPieceDistrict = "District is required.";
+    if (!district) e.artPieceDistrict = t("validation.districtRequired");
 
-    if (!v.artPieceTypes || v.artPieceTypes.length === 0) e.artPieceTypes = "Select at least one type.";
-    if (!v.artPieceStyles || v.artPieceStyles.length === 0) e.artPieceStyles = "Select at least one style.";
+    if (!v.artPieceTypes || v.artPieceTypes.length === 0) e.artPieceTypes = t("validation.selectAtLeastOne");
+    if (!v.artPieceStyles || v.artPieceStyles.length === 0) e.artPieceStyles = t("validation.selectAtLeastOne");
 
     const desc = v.artPieceUserDescription.trim();
-    if (desc.length > MAX_DESC) e.artPieceUserDescription = `Description cannot exceed ${MAX_DESC} characters.`;
+    if (desc.length > MAX_DESC) e.artPieceUserDescription = t("validation.descMax", { max: MAX_DESC });
 
     if (v.artPieceContainsText && (!v.artPieceTextLanguages || v.artPieceTextLanguages.length === 0)) {
-      e.artPieceTextLanguages = "Select at least one text language.";
+      e.artPieceTextLanguages = t("validation.selectAtLeastOne");
     }
 
     return e;
@@ -115,7 +121,6 @@ export const AddArtPiecePage: React.FC = () => {
   const errors = useMemo(() => validate(addArtPieceForm), [addArtPieceForm]);
   const canSubmitBase = Object.keys(errors).length === 0;
 
-  // gdy pole puste -> nie pokazuj hintów z nominatim
   const shouldShowAddressHint = !errors.artPieceAddress && addArtPieceForm.artPieceAddress.trim().length > 0;
 
   const validateAddressWithNominatim = async () => {
@@ -128,7 +133,7 @@ export const AddArtPiecePage: React.FC = () => {
     }
 
     setAddressStatus("checking");
-    setAddressHint("Checking address...");
+    setAddressHint(t("addArtpiece.addressChecking"));
 
     try {
       const q = `${addr}, ${addArtPieceForm.artPieceCity || "Poznań"}, Poland`;
@@ -142,14 +147,14 @@ export const AddArtPiecePage: React.FC = () => {
       const res = await fetch(url.toString(), { headers: { Accept: "application/json" } });
       if (!res.ok) {
         setAddressStatus("invalid");
-        setAddressHint("Could not verify address right now. Try again.");
+        setAddressHint(t("addArtpiece.addressVerifyFail"));
         return false;
       }
 
       const data = (await res.json()) as any[];
       if (!Array.isArray(data) || data.length === 0) {
         setAddressStatus("invalid");
-        setAddressHint("Address not found. Add street number / be more specific.");
+        setAddressHint(t("addArtpiece.addressNotFound"));
         return false;
       }
 
@@ -157,16 +162,16 @@ export const AddArtPiecePage: React.FC = () => {
       const inPoznan = display.toLowerCase().includes("poznań") || display.toLowerCase().includes("poznan");
       if (!inPoznan) {
         setAddressStatus("invalid");
-        setAddressHint("Found an address, but it doesn't look like Poznań. уточnij address.");
+        setAddressHint(t("addArtpiece.addressNotPoznan"));
         return false;
       }
 
       setAddressStatus("valid");
-      setAddressHint("Address looks valid ✅");
+      setAddressHint(t("addArtpiece.addressValid"));
       return true;
     } catch {
       setAddressStatus("invalid");
-      setAddressHint("Could not verify address. Check connection and try again.");
+      setAddressHint(t("addArtpiece.addressVerifyFail"));
       return false;
     }
   };
@@ -190,8 +195,8 @@ export const AddArtPiecePage: React.FC = () => {
     if (!canSubmitBase) {
       toast.current?.show({
         severity: "warn",
-        summary: "Fix errors",
-        detail: "Please correct the highlighted fields.",
+        summary: t("toasts.fixErrorsSummary"),
+        detail: t("toasts.fixErrorsDetail"),
         life: 2200,
       });
       return;
@@ -201,15 +206,12 @@ export const AddArtPiecePage: React.FC = () => {
     if (!okAddress) {
       toast.current?.show({
         severity: "warn",
-        summary: "Invalid address",
-        detail: "Please provide a valid address in Poznań.",
+        summary: t("toasts.invalidAddressSummary"),
+        detail: t("toasts.invalidAddressDetail"),
         life: 2500,
       });
       return;
     }
-
-    console.log("ADD ART PIECE BODY (JSON):\n", JSON.stringify(addArtPieceForm, null, 2));
-    console.log("PHOTOS:", photoFiles);
 
     const createUrl = "http://localhost:8080/addNew/addArtPiece";
 
@@ -231,7 +233,7 @@ export const AddArtPiecePage: React.FC = () => {
       const artPieceId = created?.id;
 
       if (!artPieceId) {
-        throw new Error("Backend did not return ArtPiece id (ArtPieceDto should include id).");
+        throw new Error(t("addArtpiece.noIdReturned"));
       }
 
       // 2) upload photos (if any)
@@ -257,8 +259,8 @@ export const AddArtPiecePage: React.FC = () => {
 
       toast.current?.show({
         severity: "success",
-        summary: "Sukces ✅",
-        detail: photoFiles.length > 0 ? "ArtPiece + photos uploaded" : "ArtPiece has been added",
+        summary: t("addArtpiece.successSummary"),
+        detail: photoFiles.length > 0 ? t("addArtpiece.successWithPhotos") : t("addArtpiece.successNoPhotos"),
         life: 2200,
       });
 
@@ -268,8 +270,8 @@ export const AddArtPiecePage: React.FC = () => {
 
       toast.current?.show({
         severity: "error",
-        summary: "Błąd ❌",
-        detail: error?.message ?? "Nie udało się dodać ArtPiece",
+        summary: t("addArtpiece.errorSummary"),
+        detail: error?.message ?? t("addArtpiece.errorGeneric"),
         life: 3200,
       });
     }
@@ -279,7 +281,25 @@ export const AddArtPiecePage: React.FC = () => {
     <div className={styles.pageCenter}>
       <Toast ref={toast} position="center" />
 
-      <Card title="Add Art Piece" className={styles.cardShell}>
+      {/* language switch */}
+      <div style={{ position: "absolute", top: 18, right: 18, display: "flex", gap: 8, zIndex: 5 }}>
+        <Button
+          label={t("common.pl")}
+          size="small"
+          outlined={activeLang !== "pl"}
+          onClick={() => setLang("pl")}
+          className={activeLang !== "pl" ? styles.langBtnInactive : ""}
+        />
+        <Button
+          label={t("common.en")}
+          size="small"
+          outlined={activeLang !== "en"}
+          onClick={() => setLang("en")}
+          className={activeLang !== "en" ? styles.langBtnInactive : ""}
+        />
+      </div>
+
+      <Card title={t("addArtpiece.title")} className={styles.cardShell}>
         <div className={styles.twoColGrid}>
           <AddArtPiecePhotoPanel
             onBack={() => navigate(-1)}
@@ -296,7 +316,7 @@ export const AddArtPiecePage: React.FC = () => {
                 value={addArtPieceForm.artPieceName}
                 onChange={(e) => setForm((p) => ({ ...p, artPieceName: e.target.value }))}
                 onBlur={() => markTouched("artPieceName")}
-                placeholder="Art piece name"
+                placeholder={t("addArtpiece.placeholders.name")}
                 className={`${styles.fullWidth} ${styles.radius10} ${showErr("artPieceName", errors) ? "p-invalid" : ""}`}
               />
               {showErr("artPieceName", errors) ? <small className="p-error">{errors.artPieceName}</small> : null}
@@ -318,7 +338,7 @@ export const AddArtPiecePage: React.FC = () => {
                   markTouched("artPieceAddress");
                   void validateAddressWithNominatim();
                 }}
-                placeholder="Address (e.g. Święty Marcin 28)"
+                placeholder={t("addArtpiece.placeholders.address")}
                 className={`${styles.fullWidth} ${styles.radius10} ${
                   showErr("artPieceAddress", errors) || (shouldShowAddressHint && addressStatus === "invalid") ? "p-invalid" : ""
                 }`}
@@ -337,7 +357,7 @@ export const AddArtPiecePage: React.FC = () => {
                 value={addArtPieceForm.artPiecePosition}
                 onChange={(e) => setForm((p) => ({ ...p, artPiecePosition: e.target.value }))}
                 onBlur={() => markTouched("artPiecePosition")}
-                placeholder="Position (e.g. wall, tunnel, under bridge)"
+                placeholder={t("addArtpiece.placeholders.position")}
                 className={`${styles.fullWidth} ${styles.radius10} ${showErr("artPiecePosition", errors) ? "p-invalid" : ""}`}
               />
               {showErr("artPiecePosition", errors) ? <small className="p-error">{errors.artPiecePosition}</small> : null}
@@ -354,7 +374,7 @@ export const AddArtPiecePage: React.FC = () => {
                   options={DISTRICT_OPTIONS as any}
                   onChange={(e) => setForm((p) => ({ ...p, artPieceDistrict: e.value ?? "" }))}
                   onBlur={() => markTouched("artPieceDistrict")}
-                  placeholder="District"
+                  placeholder={t("placeholders.selectDistrict")}
                   className={`${styles.fullWidth} ${showErr("artPieceDistrict", errors) ? "p-invalid" : ""}`}
                   filter
                   showClear
@@ -362,7 +382,12 @@ export const AddArtPiecePage: React.FC = () => {
                 {showErr("artPieceDistrict", errors) ? <small className="p-error">{errors.artPieceDistrict}</small> : null}
               </div>
 
-              <InputText value={addArtPieceForm.artPieceCity} disabled placeholder="City" className={`${styles.fullWidth} ${styles.radius10}`} />
+              <InputText
+                value={addArtPieceForm.artPieceCity}
+                disabled
+                placeholder={t("fields.city")}
+                className={`${styles.fullWidth} ${styles.radius10}`}
+              />
             </div>
 
             {/* Types */}
@@ -372,7 +397,7 @@ export const AddArtPiecePage: React.FC = () => {
                 options={ART_TYPE_OPTIONS as any}
                 onChange={(e) => setForm((p) => ({ ...p, artPieceTypes: e.value }))}
                 onBlur={() => markTouched("artPieceTypes")}
-                placeholder="Art piece types"
+                placeholder={t("placeholders.selectTypes")}
                 display="chip"
                 className={`${styles.fullWidth} ${showErr("artPieceTypes", errors) ? "p-invalid" : ""}`}
               />
@@ -386,16 +411,16 @@ export const AddArtPiecePage: React.FC = () => {
                 options={ART_STYLE_OPTIONS as any}
                 onChange={(e) => setForm((p) => ({ ...p, artPieceStyles: e.value }))}
                 onBlur={() => markTouched("artPieceStyles")}
-                placeholder="Art piece styles"
+                placeholder={t("placeholders.selectStyles")}
                 display="chip"
                 className={`${styles.fullWidth} ${showErr("artPieceStyles", errors) ? "p-invalid" : ""}`}
               />
               {showErr("artPieceStyles", errors) ? <small className="p-error">{errors.artPieceStyles}</small> : null}
             </div>
 
-            {/* Contains text? */}
+            {/* Contains text */}
             <div className={styles.fieldStack}>
-              <label className={styles.fieldLabel}>Contains text?</label>
+              <label className={styles.fieldLabel}>{t("fields.containsText")}</label>
 
               <div style={{ display: "inline-flex", alignSelf: "flex-start" }}>
                 <ToggleButton
@@ -409,16 +434,13 @@ export const AddArtPiecePage: React.FC = () => {
                     }));
                     markTouched("artPieceTextLanguages");
                   }}
-                  onLabel="Tak"
-                  offLabel="Nie"
+                  onLabel={t("toggle.yes")}
+                  offLabel={t("toggle.no")}
                   onIcon="pi pi-check"
                   offIcon="pi pi-times"
                   pt={{
                     root: {
-                      style: {
-                        padding: "6px 10px",
-                        minWidth: "auto",
-                      },
+                      style: { padding: "6px 10px", minWidth: "auto" },
                     },
                   }}
                 />
@@ -433,7 +455,7 @@ export const AddArtPiecePage: React.FC = () => {
                   options={LANGUAGE_OPTIONS as any}
                   onChange={(e) => setForm((p) => ({ ...p, artPieceTextLanguages: e.value }))}
                   onBlur={() => markTouched("artPieceTextLanguages")}
-                  placeholder="Text languages"
+                  placeholder={t("placeholders.selectLanguages")}
                   display="chip"
                   className={`${styles.fullWidth} ${showErr("artPieceTextLanguages", errors) ? "p-invalid" : ""}`}
                 />
@@ -448,7 +470,7 @@ export const AddArtPiecePage: React.FC = () => {
                 onChange={(e) => setForm((p) => ({ ...p, artPieceUserDescription: e.target.value }))}
                 onBlur={() => markTouched("artPieceUserDescription")}
                 rows={4}
-                placeholder="User description"
+                placeholder={t("addArtpiece.placeholders.description")}
                 className={`${styles.fullWidth} ${showErr("artPieceUserDescription", errors) ? "p-invalid" : ""}`}
               />
               {showErr("artPieceUserDescription", errors) ? <small className="p-error">{errors.artPieceUserDescription}</small> : null}
@@ -458,14 +480,14 @@ export const AddArtPiecePage: React.FC = () => {
             </div>
 
             <div className={styles.actionsRight}>
-              <Button type="button" label="Cancel" severity="secondary" onClick={() => navigate(-1)} />
-              <Button type="submit" label="Save" icon="pi pi-check" disabled={!canSubmit} />
+              <Button type="button" label={t("buttons.cancel")} severity="secondary" onClick={() => navigate(-1)} />
+              <Button type="submit" label={t("buttons.save")} icon="pi pi-check" disabled={!canSubmit} />
             </div>
 
             {!canSubmitBase ? (
-              <small className="p-error">Fix errors above to enable Save.</small>
+              <small className="p-error">{t("addArtpiece.fixErrorsToEnableSave")}</small>
             ) : addressStatus !== "valid" ? (
-              <small className="p-error">Please provide a valid address (verified).</small>
+              <small className="p-error">{t("addArtpiece.provideValidAddress")}</small>
             ) : null}
           </form>
         </div>
