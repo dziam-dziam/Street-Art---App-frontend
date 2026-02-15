@@ -6,7 +6,9 @@
 type TT = (key: string, options?: any) => string;
 
 // ---------------- LANGUAGES ----------------
-export const LANGUAGE_VALUES = ["Polish", "English", "German", "Spanish", "French"] as const;
+export const LANGUAGE_VALUES = ["Polish", "English", "German", "Spanish", "French",
+   "Russian", "Italian", "Korean", "Chinese", "Japanese", "Hindi","Swedish","Turkish","Georgian",
+  "Lithuanian","Belarusian","Other"] as const;
 export type LanguageOption = (typeof LANGUAGE_VALUES)[number];
 
 export const getLanguageOptions = (t: TT) =>
@@ -64,6 +66,28 @@ export const DISTRICT_OPTIONS = [
   { label: "Nowe Miasto", value: "Nowe Miasto" },
   { label: "Wilda", value: "Wilda" },
   { label: "Łazarz", value: "Łazarz" },
+  { label: "Ławica", value: "Ławica" },
+  { label: "Rataje", value: "Rataje" },
+  { label: "Winogrady", value: "Winogrady" },
+  { label: "Ostrów Tumski", value: "Ostrów Tumski" },
+  { label: "Sołacz", value: "Sołacz" },
+  { label: "Podolany", value: "Podolany" },
+  { label: "Umultowo", value: "Umultowo" },
+  { label: "Ogrody", value: "Ogrody" },
+  { label: "Antoninek", value: "Antoninek" },
+  { label: "Chartowo", value: "Chartowo" },
+  { label: "Żegrze", value: "Żegrze" },
+  { label: "Wola", value: "Wola" },
+  { label: "Piątkowo", value: "Piątkowo" },
+  { label: "Łacina", value: "Łacina" },
+  { label: "Miłostowo", value: "Miłostowo" },
+  { label: "Świerczewo", value: "Świerczewo" },
+  { label: "Malta", value: "Malta" },
+  { label: "Junikowo", value: "Junikowo" },
+  { label: "Naramowice", value: "Naramowice" },
+  { label: "Dębiec", value: "Dębiec" },
+  { label: "Górczyn", value: "Górczyn" },
+  { label: "Strzeszyn", value: "Strzeszyn" },
 ] as const;
 
 export type DistrictName = (typeof DISTRICT_OPTIONS)[number]["value"];
@@ -76,7 +100,8 @@ export const getDistrictOptions = (_t: TT) =>
   }));
 
 // ---------------- NATIONALITIES ----------------
-export const NATIONALITY_VALUES = ["Polish", "German", "Spanish", "French", "English", "Ukrainian", "Other"] as const;
+export const NATIONALITY_VALUES = ["Polish", "German", "Spanish", "French", "English", "Ukrainian", "Russian", 
+  "Italian", "Korean","Chinese","Japanese", "Indian","Georgian","Lithuanian","Belarusian","Other"] as const;
 
 export type NationalityOption = (typeof NATIONALITY_VALUES)[number];
 

@@ -227,14 +227,30 @@
     "Spanish": "Spanish",
     "French": "French",
     "Ukrainian": "Ukrainian",
+    "Russian": "Russian",
+    "Italian": "Italian",
+    "Korean": "Korean",
+    "Chinese": "Chinese",
+    "Japanese": "Japanese",
+    "Hindi": "Hindi",
+    "Swedish": "Swedish",
+    "Turkish": "Turkish",
+    "Georgian": "Georgian",
+    "Lithuanian":"Lithuanian",
+    "Belarusian":"Belarusian",
     "Other": "Other"
   },
   "nationalities": {
     "Polish": "Polish",
-    "English": "English",
     "German": "German",
     "Spanish": "Spanish",
-    "French": "French"
+    "French": "French",
+    "English": "English",
+    "Ukrainian": "Ukrainian",
+    "Russian": "Russian", 
+  "Italian": "Italian", 
+  "Korean":"Korean","Chinese":"Chinese","Japanese": "Japanese", 
+  "Indian":"Indian","Georgian":"Georgian","Lithuanian":"Lithuanian","Belarusian":"Belarusian","Other":"Other"
   },
   "artTypes": {
     "GRAFFITI_TAG": "Graffiti tag",

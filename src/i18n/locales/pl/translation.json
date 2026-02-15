@@ -225,16 +225,17 @@
     "English": "Angielski",
     "German": "Niemiecki",
     "Spanish": "Hiszpański",
-    "French": "Francuski"
+    "French": "Francuski",
+    "Russian" :"Rosyjski", "Italian": "Włoski", "Korean": "Koreański",
+     "Chinese": "Chiński", "Japanese": "Japoński", "Hindi":"Hinduski","Swedish":"Szwedzki",
+     "Turkish":"Turecki","Georgian":"Gruziński",
+  "Lithuanian":"Litewski","Belarusian":"Białoruski","Other": "Inny"
   },
   "nationalities": {
-    "Polish": "Polska",
-    "English": "Anglia",
-    "German": "Niemcy",
-    "Spanish": "Hiszpania",
-    "French": "Francja",
-    "Ukrainian": "Ukraina", 
-    "Other": "Inna"
+    "Polish":"Polska", "German":"Niemcy", "Spanish":"Hiszpania", 
+    "French":"Francja", "English":"Anglia", "Ukrainian":"Ukraina", "Russian":"Rosja", 
+  "Italian":"Włochy", "Korean":"Korea", "Chinese":"Chiny", 
+  "Japanese":"Japonia", "Indian":"Indie","Georgian":"Gruzja","Lithuanian":"Litwa","Belarusian":"Białoruś","Other": "Inna"
   },
   "artTypes": {
     "GRAFFITI_TAG": "Tag",
