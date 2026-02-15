@@ -208,8 +208,10 @@ export const RegisterPage: React.FC = () => {
               onChange={(e) => setForm((p) => ({ ...p, appUserLanguagesSpoken: e.value }))}
               onBlur={() => markTouched("appUserLanguagesSpoken")}
               display="chip"
-              placeholder={t("validation.selectAtLeastOne") /* najlepiej dać klucz auth.languagesSpoken */}
+              placeholder={t("validation.selectAtLeastOne")}
               className={`${styles.fullWidth} ${showError("appUserLanguagesSpoken") ? "p-invalid" : ""}`}
+              showSelectAll={false} 
+              panelHeaderTemplate={() => null}
             />
             {showError("appUserLanguagesSpoken") ? <small className="p-error">{errors.appUserLanguagesSpoken}</small> : null}
           </div>

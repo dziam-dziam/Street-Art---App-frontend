@@ -258,6 +258,8 @@ export const ProfilePage: React.FC = () => {
               placeholder={t("placeholders.selectLanguages")}
               className={`${styles.fullWidth} ${tLang && errors.languages ? "p-invalid" : ""}`}
               display="chip"
+              showSelectAll={false} 
+                panelHeaderTemplate={() => null}
             />
             {tLang && errors.languages ? <small className="p-error">{errors.languages}</small> : null}
           </div>

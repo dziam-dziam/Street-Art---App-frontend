@@ -403,6 +403,8 @@ export const AddArtPiecePage: React.FC = () => {
                 placeholder={t("placeholders.selectTypes")}
                 display="chip"
                 className={`${styles.fullWidth} ${showErr("artPieceTypes", errors) ? "p-invalid" : ""}`}
+                                                  showSelectAll={false} 
+              panelHeaderTemplate={() => null}
               />
               {showErr("artPieceTypes", errors) ? <small className="p-error">{errors.artPieceTypes}</small> : null}
             </div>
@@ -417,6 +419,8 @@ export const AddArtPiecePage: React.FC = () => {
                 placeholder={t("placeholders.selectStyles")}
                 display="chip"
                 className={`${styles.fullWidth} ${showErr("artPieceStyles", errors) ? "p-invalid" : ""}`}
+                showSelectAll={false} 
+                panelHeaderTemplate={() => null}
               />
               {showErr("artPieceStyles", errors) ? <small className="p-error">{errors.artPieceStyles}</small> : null}
             </div>
@@ -461,8 +465,11 @@ export const AddArtPiecePage: React.FC = () => {
                   placeholder={t("placeholders.selectLanguages")}
                   display="chip"
                   className={`${styles.fullWidth} ${showErr("artPieceTextLanguages", errors) ? "p-invalid" : ""}`}
+                                                    showSelectAll={false} 
+              panelHeaderTemplate={() => null}
                 />
                 {showErr("artPieceTextLanguages", errors) ? <small className="p-error">{errors.artPieceTextLanguages}</small> : null}
+              
               </div>
             )}
 

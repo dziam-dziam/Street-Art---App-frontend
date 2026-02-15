@@ -207,6 +207,21 @@ export const MyArtPiecesPage: React.FC = () => {
     return it?.title ?? t("appView.details");
   }, [items, selectedId, t]);
 
+  const typeLabel = useCallback(
+  (v: string) => t(`options.artTypes.${v}`, { defaultValue: v }),
+  [t]
+);
+
+const styleLabel = useCallback(
+  (v: string) => t(`options.artStyles.${v}`, { defaultValue: v }),
+  [t]
+);
+
+const langLabel = useCallback(
+  (v: string) => t(`options.languages.${v}`, { defaultValue: v }),
+  [t]
+);
+
   const validateAddressWithNominatim = useCallback(async () => {
     const addr = artPieceAddress.trim();
 
@@ -528,7 +543,7 @@ if (addressDirty) {
                 {details.artPieceTypes?.length ? (
                   <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
                     {details.artPieceTypes.map((tt) => (
-                      <Chip key={tt} label={tt} />
+                      <Chip key={tt} label={typeLabel(tt)} />
                     ))}
                   </span>
                 ) : (
@@ -541,7 +556,7 @@ if (addressDirty) {
                 {details.artPieceStyles?.length ? (
                   <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
                     {details.artPieceStyles.map((s) => (
-                      <Chip key={s} label={s} />
+                      <Chip key={s} label={styleLabel(s)} />
                     ))}
                   </span>
                 ) : (
@@ -693,6 +708,8 @@ if (addressDirty) {
                   placeholder={t("placeholders.selectLanguages")}
                   className={`${styles.fullWidth} ${showApErr("artPieceTextLanguages", apErrors) ? "p-invalid" : ""}`}
                   display="chip"
+                  showSelectAll={false} 
+                panelHeaderTemplate={() => null}
                 />
                 {showApErr("artPieceTextLanguages", apErrors) ? <small className="p-error">{apErrors.artPieceTextLanguages}</small> : null}
               </div>

@@ -814,6 +814,8 @@ export const AdminPage: React.FC = () => {
                   placeholder={t("placeholders.selectLanguages")}
                   className={`${styles.fullWidth} ${showUserErr("appUserLanguagesSpoken", userErrors) ? "p-invalid" : ""}`}
                   display="chip"
+                  showSelectAll={false} 
+                panelHeaderTemplate={() => null}
                 />
                 {showUserErr("appUserLanguagesSpoken", userErrors) ? (
                   <small className="p-error">{userErrors.appUserLanguagesSpoken}</small>
@@ -930,6 +932,8 @@ export const AdminPage: React.FC = () => {
                     placeholder={t("placeholders.selectLanguages")}
                     className={`${styles.fullWidth} ${showApErr("artPieceTextLanguages", apErrors) ? "p-invalid" : ""}`}
                     display="chip"
+                    showSelectAll={false} 
+                panelHeaderTemplate={() => null}
                   />
                   {showApErr("artPieceTextLanguages", apErrors) ? <small className="p-error">{apErrors.artPieceTextLanguages}</small> : null}
                 </div>

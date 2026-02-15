@@ -271,6 +271,8 @@ export const RegisterPageTwo: React.FC = () => {
                     display="chip"
                     placeholder={t("register2.selectTransportPlaceholder")}
                     className={`${styles.fullWidth} ${showError("commuteMeansOfTransport") ? "p-invalid" : ""}`}
+                                  showSelectAll={false} 
+              panelHeaderTemplate={() => null}
                   />
                   {showError("commuteMeansOfTransport") ? (
                     <small className="p-error">{commuteErrors.commuteMeansOfTransport}</small>
