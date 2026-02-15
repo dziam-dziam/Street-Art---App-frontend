@@ -82,6 +82,20 @@ function pickPoznanBoundary(fc: any) {
 
 export const AppView: React.FC = () => {
   const { t } = useTranslation();
+    const typeLabel = useCallback(
+    (code: string) => t(`options.artTypes.${code}`, { defaultValue: code }),
+    [t]
+  );
+
+  const styleLabel = useCallback(
+    (code: string) => t(`options.artStyles.${code}`, { defaultValue: code }),
+    [t]
+  );
+
+  const languageLabel = useCallback(
+    (code: string) => t(`options.languages.${code}`, { defaultValue: code }),
+    [t]
+  );
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [userName, setUserName] = useState<string>("Użytkownik");
@@ -448,7 +462,7 @@ export const AppView: React.FC = () => {
               {details.artPieceTypes?.length ? (
                 <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
                   {details.artPieceTypes.map((x) => (
-                    <Chip key={x} label={x} />
+                    <Chip key={x} label={typeLabel(x)} />
                   ))}
                 </span>
               ) : (
@@ -462,7 +476,7 @@ export const AppView: React.FC = () => {
               {details.artPieceStyles?.length ? (
                 <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
                   {details.artPieceStyles.map((x) => (
-                    <Chip key={x} label={x} />
+                    <Chip key={x} label={styleLabel(x)} />
                   ))}
                 </span>
               ) : (
@@ -476,7 +490,7 @@ export const AppView: React.FC = () => {
               {details.artPieceContainsText && details.artPieceTextLanguages?.length ? (
                 <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
                   {details.artPieceTextLanguages.map((x) => (
-                    <Chip key={x} label={x} />
+                    <Chip key={x} label={languageLabel(x)} />
                   ))}
                 </span>
               ) : (

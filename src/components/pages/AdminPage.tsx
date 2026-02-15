@@ -92,6 +92,9 @@ export const AdminPage: React.FC = () => {
   const [artPieceStyles, setApStyles] = useState<string[]>([]);
   const [artPieceTextLanguages, setApLangs] = useState<string[]>([]);
   const [containsTextTouched, setContainsTextTouched] = useState(false);
+  const [addressTouched, setAddressTouched] = useState(false);
+  const initialAddressRef = useRef<string>("");
+
   const [addressStatus, setAddressStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle");
   const [addressHint, setAddressHint] = useState("");
 
@@ -480,6 +483,13 @@ export const AdminPage: React.FC = () => {
     if (activeType === "ArtPieces") {
       try {
         const d = await fetchArtPieceDetails(selectedItem.id);
+        setApAddress(d.artPieceAddress ?? "");
+        initialAddressRef.current = (d.artPieceAddress ?? "").trim();
+        setAddressTouched(false);
+
+        // jeśli nie ruszamy adresu, traktuj jako "ok"
+        setAddressStatus("valid");
+        setAddressHint("✅");
 
         setApName(d.artPieceName ?? "");
         setApAddress(d.artPieceAddress ?? "");
@@ -571,18 +581,18 @@ export const AdminPage: React.FC = () => {
         artPieceStyles: true,
         artPieceTextLanguages: true,
       });
-
-      const okAddr = await validateAddressWithNominatim();
-      if (!okAddr) {
-        toast.current?.show({
-          severity: "warn",
-          summary: t("toasts.invalidAddressSummary"),
-          detail: t("toasts.invalidAddressDetail"),
-          life: 2500,
-        });
-        return;
-      }
-
+        if (addressTouched) {
+          const okAddr = await validateAddressWithNominatim();
+          if (!okAddr) {
+            toast.current?.show({
+              severity: "warn",
+              summary: t("toasts.invalidAddressSummary"),
+              detail: t("toasts.invalidAddressDetail"),
+              life: 2500,
+            });
+            return;
+          }
+        }
       if (!canSaveArtPieces) {
         toast.current?.show({
           severity: "warn",
@@ -857,13 +867,24 @@ export const AdminPage: React.FC = () => {
                 <InputText
                   value={artPieceAddress}
                   onChange={(e) => {
-                    setApAddress(e.target.value);
-                    setAddressStatus("idle");
-                    setAddressHint("");
-                  }}
+                      const next = e.target.value;
+                      setApAddress(next);
+
+                      const changed = next.trim() !== initialAddressRef.current;
+                      setAddressTouched(changed);
+
+                      // resetuj status tylko jeśli adres faktycznie zmieniony
+                      if (changed) {
+                        setAddressStatus("idle");
+                        setAddressHint("");
+                      } else {
+                        setAddressStatus("valid");
+                        setAddressHint("✅");
+                      }
+                    }}
                   onBlur={() => {
                     markApTouched("artPieceAddress");
-                    void validateAddressWithNominatim();
+                    if (addressTouched) void validateAddressWithNominatim();
                   }}
                   className={`${styles.fullWidth} ${
                     showApErr("artPieceAddress", apErrors) || (shouldShowAddressHint && addressStatus === "invalid") ? "p-invalid" : ""
@@ -979,7 +1000,7 @@ export const AdminPage: React.FC = () => {
                 activeType === "Users"
                   ? !canSaveUsers
                   : activeType === "ArtPieces"
-                  ? !canSaveArtPieces || addressStatus !== "valid"
+                  ? !canSaveArtPieces || (addressTouched && addressStatus !== "valid")
                   : false
               }
             />
