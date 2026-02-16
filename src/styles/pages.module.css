@@ -833,3 +833,21 @@
   border-color: rgba(0, 0, 0, 0.35) !important;
   color: #000 !important;
 }
+/* ===== Admin: Photo carousel inside Dialog ===== */
+.dialogNarrow :global(.p-carousel) {
+  width: 100%;
+  min-height: 320px; /* kluczowe: żeby carousel miał wysokość */
+}
+
+.dialogNarrow :global(.p-carousel-content),
+.dialogNarrow :global(.p-carousel-container),
+.dialogNarrow :global(.p-carousel-items-content) {
+  overflow: hidden; /* nie pozwól, żeby item “uciekał” poza okno */
+}
+
+.dialogNarrow :global(.p-carousel-item) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px; /* stabilizuje itemy */
+}

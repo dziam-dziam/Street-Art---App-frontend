@@ -67,9 +67,10 @@ export const MyArtPiecesPage: React.FC = () => {
   const toast = useRef<Toast>(null);
 
   const { t, i18n } = useTranslation();
-    const languageOptions = useMemo(() => getLanguageOptions(t), [t, i18n.language]);
-    const artTypeOptions = useMemo(() => getArtTypeOptions(t), [t, i18n.language]);
-    const artStyleOptions = useMemo(() => getArtStyleOptions(t), [t, i18n.language]);
+  const languageOptions = useMemo(() => getLanguageOptions(t), [t, i18n.language]);
+  const artTypeOptions = useMemo(() => getArtTypeOptions(t), [t, i18n.language]);
+  const artStyleOptions = useMemo(() => getArtStyleOptions(t), [t, i18n.language]);
+
   const activeLang = (i18n.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en";
   const setLang = (lng: "pl" | "en") => void i18n.changeLanguage(lng);
 
@@ -96,6 +97,96 @@ export const MyArtPiecesPage: React.FC = () => {
   const [artPieceStyles, setApStyles] = useState<string[]>([]);
   const [artPieceTextLanguages, setApLangs] = useState<string[]>([]);
 
+  // ----------------- PHOTOS (existing + new queue) -----------------
+  const [apPhotos, setApPhotos] = useState<PhotoResponseDto[]>([]);
+  const [newPhotoFiles, setNewPhotoFiles] = useState<File[]>([]);
+  const [newPhotoPreviewUrls, setNewPhotoPreviewUrls] = useState<string[]>([]);
+
+  const clearNewPhotos = useCallback(() => {
+    newPhotoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+    setNewPhotoFiles([]);
+    setNewPhotoPreviewUrls([]);
+  }, [newPhotoPreviewUrls]);
+
+  const addNewPhotos = useCallback(
+    (files: File[]) => {
+      const next = [...newPhotoFiles, ...files];
+
+      // revoke old urls
+      newPhotoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+      const urls = next.map((f) => URL.createObjectURL(f));
+
+      setNewPhotoFiles(next);
+      setNewPhotoPreviewUrls(urls);
+    },
+    [newPhotoFiles, newPhotoPreviewUrls]
+  );
+
+  const removeNewPhotoAt = useCallback(
+    (idx: number) => {
+      const nextFiles = newPhotoFiles.filter((_, i) => i !== idx);
+
+      newPhotoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+      const urls = nextFiles.map((f) => URL.createObjectURL(f));
+
+      setNewPhotoFiles(nextFiles);
+      setNewPhotoPreviewUrls(urls);
+    },
+    [newPhotoFiles, newPhotoPreviewUrls]
+  );
+
+  const uploadQueuedPhotos = useCallback(
+    async (artPieceId: number) => {
+      if (!newPhotoFiles.length) return;
+
+      await Promise.all(
+        newPhotoFiles.map(async (file) => {
+          const fd = new FormData();
+          fd.append("image", file);
+
+          const upRes = await fetch(`${BASE_URL}/api/photos/upload/${artPieceId}/photos`, {
+            method: "POST",
+            credentials: "include",
+            body: fd,
+          });
+
+          if (!upRes.ok) {
+            const body = await upRes.text().catch(() => "");
+            throw new Error(`Photo upload failed: ${upRes.status}. ${body.slice(0, 200)}`);
+          }
+        })
+      );
+    },
+    [newPhotoFiles]
+  );
+
+  const deleteExistingPhoto = useCallback(
+    async (photoId: number) => {
+      const res = await fetch(`${BASE_URL}/api/photos/delete/${photoId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const raw = await res.text().catch(() => "");
+      if (!res.ok) throw new Error(`DELETE photo failed: HTTP ${res.status}. ${raw.slice(0, 200)}`);
+
+      // local update
+      setApPhotos((prev) => prev.filter((p) => p.id !== photoId));
+
+      // jeśli mamy details, zaktualizuj też tam (żeby karuzela w details dialog była spójna po zamknięciu edycji)
+      setDetails((prev) => (prev ? { ...prev, photos: (prev.photos ?? []).filter((p) => p.id !== photoId) } : prev));
+    },
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      newPhotoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ----------------- VALIDATION -----------------
   const [apTouched, setApTouched] = useState<ApTouched>({});
   const markApTouched = (k: keyof ApErrors) => setApTouched((p) => ({ ...p, [k]: true }));
   const showApErr = (k: keyof ApErrors, errors: ApErrors) => Boolean(apTouched[k] && errors[k]);
@@ -175,28 +266,31 @@ export const MyArtPiecesPage: React.FC = () => {
   }, [t]);
 
   // ----------------- FETCH DETAILS -----------------
-  const loadDetails = useCallback(async (id: number) => {
-    setLoadingDetails(true);
-    setDetails(null);
-    setDetailsError(null);
+  const loadDetails = useCallback(
+    async (id: number) => {
+      setLoadingDetails(true);
+      setDetails(null);
+      setDetailsError(null);
 
-    try {
-      const res = await fetch(`${BASE_URL}/map/artPieces/${id}`, {
-        method: "GET",
-        credentials: "include",
-        headers: { Accept: "application/json" },
-      });
+      try {
+        const res = await fetch(`${BASE_URL}/map/artPieces/${id}`, {
+          method: "GET",
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        });
 
-      const raw = await res.text().catch(() => "");
-      if (!res.ok) throw new Error(`GET /map/artPieces/${id} failed: ${res.status}. ${raw.slice(0, 200)}`);
+        const raw = await res.text().catch(() => "");
+        if (!res.ok) throw new Error(`GET /map/artPieces/${id} failed: ${res.status}. ${raw.slice(0, 200)}`);
 
-      setDetails(raw.trim() ? (JSON.parse(raw) as ArtPieceDetailsDto) : null);
-    } catch (e: any) {
-      setDetailsError(e?.message ?? t("common.unknownError"));
-    } finally {
-      setLoadingDetails(false);
-    }
-  }, [t]);
+        setDetails(raw.trim() ? (JSON.parse(raw) as ArtPieceDetailsDto) : null);
+      } catch (e: any) {
+        setDetailsError(e?.message ?? t("common.unknownError"));
+      } finally {
+        setLoadingDetails(false);
+      }
+    },
+    [t]
+  );
 
   useEffect(() => {
     void loadMy();
@@ -207,20 +301,9 @@ export const MyArtPiecesPage: React.FC = () => {
     return it?.title ?? t("appView.details");
   }, [items, selectedId, t]);
 
-  const typeLabel = useCallback(
-  (v: string) => t(`options.artTypes.${v}`, { defaultValue: v }),
-  [t]
-);
-
-const styleLabel = useCallback(
-  (v: string) => t(`options.artStyles.${v}`, { defaultValue: v }),
-  [t]
-);
-
-const langLabel = useCallback(
-  (v: string) => t(`options.languages.${v}`, { defaultValue: v }),
-  [t]
-);
+  const typeLabel = useCallback((v: string) => t(`options.artTypes.${v}`, { defaultValue: v }), [t]);
+  const styleLabel = useCallback((v: string) => t(`options.artStyles.${v}`, { defaultValue: v }), [t]);
+  const langLabel = useCallback((v: string) => t(`options.languages.${v}`, { defaultValue: v }), [t]);
 
   const validateAddressWithNominatim = useCallback(async () => {
     const addr = artPieceAddress.trim();
@@ -276,33 +359,35 @@ const langLabel = useCallback(
     }
   }, [artPieceAddress, t]);
 
-const openEdit = useCallback(() => {
-  setAddressStatus("idle");
-  setAddressHint("");
+  const openEdit = useCallback(() => {
+    setAddressStatus("idle");
+    setAddressHint("");
 
-  if (!details) return;
+    if (!details) return;
 
-  setApName(details.artPieceName ?? "");
+    setApName(details.artPieceName ?? "");
 
-  const loadedAddress = details.artPieceAddress ?? "";
-  setApAddress(loadedAddress);
+    const loadedAddress = details.artPieceAddress ?? "";
+    setApAddress(loadedAddress);
 
-  // NEW
-  setOriginalAddress(loadedAddress.trim());
-  setAddressDirty(false);
+    setOriginalAddress(loadedAddress.trim());
+    setAddressDirty(false);
 
-  setApUserDescription(details.artPieceUserDescription ?? "");
-  setApPosition(details.artPiecePosition ?? "");
-  setApContainsText(!!details.artPieceContainsText);
+    setApUserDescription(details.artPieceUserDescription ?? "");
+    setApPosition(details.artPiecePosition ?? "");
+    setApContainsText(!!details.artPieceContainsText);
 
-  setApTypes((details.artPieceTypes ?? []).map(String));
-  setApStyles((details.artPieceStyles ?? []).map(String));
-  setApLangs((details.artPieceTextLanguages ?? []).map(String));
+    setApTypes((details.artPieceTypes ?? []).map(String));
+    setApStyles((details.artPieceStyles ?? []).map(String));
+    setApLangs((details.artPieceTextLanguages ?? []).map(String));
 
-  setApTouched({});
-  setEditOpen(true);
-}, [details]);
+    // ✅ photos do edycji
+    setApPhotos(details.photos ?? []);
+    clearNewPhotos();
 
+    setApTouched({});
+    setEditOpen(true);
+  }, [details, clearNewPhotos]);
 
   const saveEdit = useCallback(async () => {
     const id = selectedId ?? details?.id;
@@ -328,24 +413,22 @@ const openEdit = useCallback(() => {
       return;
     }
 
-    // NEW: waliduj Nominatim tylko jeśli user zmienił adres
-if (addressDirty) {
-  const okAddress = await validateAddressWithNominatim();
-  if (!okAddress) {
-    toast.current?.show({
-      severity: "warn",
-      summary: t("toasts.invalidAddressSummary"),
-      detail: t("toasts.invalidAddressDetail"),
-      life: 2500,
-    });
-    return;
-  }
-} else {
-  // jeśli nie zmienił, uznaj za OK
-  setAddressStatus("valid");
-  setAddressHint("");
-}
-
+    // waliduj Nominatim tylko jeśli user zmienił adres
+    if (addressDirty) {
+      const okAddress = await validateAddressWithNominatim();
+      if (!okAddress) {
+        toast.current?.show({
+          severity: "warn",
+          summary: t("toasts.invalidAddressSummary"),
+          detail: t("toasts.invalidAddressDetail"),
+          life: 2500,
+        });
+        return;
+      }
+    } else {
+      setAddressStatus("valid");
+      setAddressHint("");
+    }
 
     try {
       const body = {
@@ -369,6 +452,10 @@ if (addressDirty) {
 
       const raw = await res.text().catch(() => "");
       if (!res.ok) throw new Error(`PUT /my/artPieces/${id} failed: ${res.status}. ${raw.slice(0, 200)}`);
+
+      // ✅ upload zdjęć z kolejki (dopiero po PUT)
+      await uploadQueuedPhotos(id);
+      clearNewPhotos();
 
       toast.current?.show({
         severity: "success",
@@ -403,6 +490,9 @@ if (addressDirty) {
     loadMy,
     loadDetails,
     validateAddressWithNominatim,
+    addressDirty,
+    uploadQueuedPhotos,
+    clearNewPhotos,
     t,
   ]);
 
@@ -411,6 +501,14 @@ if (addressDirty) {
     setDetails(null);
     setDetailsError(null);
     setEditOpen(false);
+  }, []);
+
+  // helper do src (jak w details)
+  const photoSrc = useCallback((p: PhotoResponseDto) => {
+    if (p.downloadUrl) return p.downloadUrl.startsWith("http") ? p.downloadUrl : `${BASE_URL}${p.downloadUrl}`;
+    // fallback: jeśli backend ma tylko id
+    if (p.id != null) return `${BASE_URL}/api/photos/download/${p.id}`;
+    return "";
   }, []);
 
   return (
@@ -505,10 +603,14 @@ if (addressDirty) {
                   showIndicators={details.photos.length > 1}
                   showNavigators={details.photos.length > 1}
                   itemTemplate={(p) => {
-                    const src = p.downloadUrl?.startsWith("http") ? p.downloadUrl : `${BASE_URL}${p.downloadUrl ?? ""}`;
+                    const src = photoSrc(p);
                     return (
                       <div className={styles.photoFrame}>
-                        <img src={src} alt={p.fileName ?? "photo"} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                        <img
+                          src={src}
+                          alt={p.fileName ?? "photo"}
+                          style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                        />
                       </div>
                     );
                   }}
@@ -569,7 +671,7 @@ if (addressDirty) {
                 {details.artPieceContainsText && details.artPieceTextLanguages?.length ? (
                   <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap", marginLeft: 8 }}>
                     {details.artPieceTextLanguages.map((l) => (
-                      <Chip key={l} label={l} />
+                      <Chip key={l} label={langLabel(l)} />
                     ))}
                   </span>
                 ) : (
@@ -593,6 +695,136 @@ if (addressDirty) {
           onHide={() => setEditOpen(false)}
         >
           <div className={styles.dialogGrid14}>
+            {/* ✅ PHOTOS EDIT BLOCK */}
+            <div className={styles.fieldBlock}>
+              <small className={styles.fieldLabelSmall}>{t("fields.photos", { defaultValue: "Photos" })}</small>
+
+              {apPhotos.length ? (
+                <Carousel
+                  value={apPhotos}
+                  numVisible={1}
+                  numScroll={1}
+                  circular
+                  showIndicators={apPhotos.length > 1}
+                  showNavigators={apPhotos.length > 1}
+                  itemTemplate={(p) => {
+                    const src = photoSrc(p);
+                    const pid = p.id;
+
+                    return (
+                      <div style={{ display: "grid", gap: 10 }}>
+                        <div className={styles.photoFrame}>
+                          <img
+                            src={src}
+                            alt={p.fileName ?? "photo"}
+                            style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+                          />
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "center" }}>
+                          <Button
+                            label={t("buttons.delete")}
+                            icon="pi pi-trash"
+                            severity="danger"
+                            size="small"
+                            disabled={pid == null}
+                            onClick={async () => {
+                              if (pid == null) return;
+                              try {
+                                await deleteExistingPhoto(pid);
+                                toast.current?.show({
+                                  severity: "success",
+                                  summary: t("toasts.deletedSummary"),
+                                  detail: t("toasts.deletedPhotoDetail", { defaultValue: "Photo deleted." }),
+                                  life: 1800,
+                                });
+                              } catch (e: any) {
+                                toast.current?.show({
+                                  severity: "error",
+                                  summary: t("common.error"),
+                                  detail: e?.message ?? t("common.unknownError"),
+                                  life: 3000,
+                                });
+                              }
+                            }}
+                            pt={{ root: { style: { padding: "6px 10px" } } }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
+              ) : (
+                <div style={{ opacity: 0.85 }}>{t("appView.noPhotos")}</div>
+              )}
+
+              <Divider className={styles.dividerSoft} />
+
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => {
+                    if (!e.target.files) return;
+                    addNewPhotos(Array.from(e.target.files));
+                    e.currentTarget.value = "";
+                  }}
+                />
+
+                <small style={{ opacity: 0.85 }}>
+                  {t("common.selected", { defaultValue: "Selected" })}: {newPhotoFiles.length}
+                </small>
+
+                <Button
+                  label={t("buttons.clearAll", { defaultValue: "Clear" })}
+                  severity="secondary"
+                  size="small"
+                  disabled={!newPhotoFiles.length}
+                  onClick={clearNewPhotos}
+                  pt={{ root: { style: { padding: "6px 10px" } } }}
+                />
+              </div>
+
+              {newPhotoPreviewUrls.length ? (
+                <div style={{ marginTop: 10 }}>
+                  <Carousel
+                    value={newPhotoPreviewUrls.map((u, idx) => ({ u, idx }))}
+                    numVisible={1}
+                    numScroll={1}
+                    circular
+                    showIndicators={newPhotoPreviewUrls.length > 1}
+                    showNavigators={newPhotoPreviewUrls.length > 1}
+                    itemTemplate={(x: { u: string; idx: number }) => {
+                      return (
+                        <div style={{ display: "grid", gap: 10 }}>
+                          <div className={styles.photoFrame}>
+                            <img
+                              src={x.u}
+                              alt="new"
+                              style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+                            />
+                          </div>
+
+                          <div style={{ display: "flex", justifyContent: "center" }}>
+                            <Button
+                              label={t("buttons.remove", { defaultValue: "Remove" })}
+                              icon="pi pi-times"
+                              severity="secondary"
+                              size="small"
+                              onClick={() => removeNewPhotoAt(x.idx)}
+                              pt={{ root: { style: { padding: "6px 10px" } } }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+                </div>
+              ) : null}
+            </div>
+
+            {/* NAME */}
             <div className={styles.fieldBlock}>
               <small className={styles.fieldLabelSmall}>{t("fields.name")}</small>
               <InputText
@@ -607,43 +839,41 @@ if (addressDirty) {
               </small>
             </div>
 
+            {/* ADDRESS */}
             <div className={styles.fieldBlock}>
               <small className={styles.fieldLabelSmall}>{t("fields.address")}</small>
               <InputText
-  value={artPieceAddress}
-  onChange={(e) => {
-    const next = e.target.value;
-    setApAddress(next);
+                value={artPieceAddress}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setApAddress(next);
 
-    // NEW: dirty tylko jeśli różni się od oryginału (po trim)
-    const dirtyNow = next.trim() !== originalAddress;
-    setAddressDirty(dirtyNow);
+                  const dirtyNow = next.trim() !== originalAddress;
+                  setAddressDirty(dirtyNow);
 
-    // resetuj status tylko jeśli user zmienił adres
-    if (dirtyNow) {
-      setAddressStatus("idle");
-      setAddressHint("");
-    }
-  }}
-  onBlur={() => {
-    markApTouched("artPieceAddress");
+                  if (dirtyNow) {
+                    setAddressStatus("idle");
+                    setAddressHint("");
+                  }
+                }}
+                onBlur={() => {
+                  markApTouched("artPieceAddress");
 
-    // NEW: jeśli nie zmienił adresu, nie sprawdzaj Nominatim
-    if (!addressDirty) {
-      setAddressStatus("valid"); // traktuj jako OK
-      setAddressHint("");
-      return;
-    }
+                  if (!addressDirty) {
+                    setAddressStatus("valid");
+                    setAddressHint("");
+                    return;
+                  }
 
-    void validateAddressWithNominatim();
-  }}
-  className={`${styles.fullWidth} ${
-    showApErr("artPieceAddress", apErrors) || (shouldShowAddressHint && addressDirty && addressStatus === "invalid")
-      ? "p-invalid"
-      : ""
-  }`}
-/>
-
+                  void validateAddressWithNominatim();
+                }}
+                className={`${styles.fullWidth} ${
+                  showApErr("artPieceAddress", apErrors) ||
+                  (shouldShowAddressHint && addressDirty && addressStatus === "invalid")
+                    ? "p-invalid"
+                    : ""
+                }`}
+              />
 
               {showApErr("artPieceAddress", apErrors) ? <small className="p-error">{apErrors.artPieceAddress}</small> : null}
 
@@ -652,6 +882,7 @@ if (addressDirty) {
               {shouldShowAddressHint && addressStatus === "invalid" ? <small className="p-error">{addressHint}</small> : null}
             </div>
 
+            {/* DESCRIPTION */}
             <div className={styles.fieldBlock}>
               <small className={styles.fieldLabelSmall}>{t("fields.description")}</small>
               <InputText
@@ -668,6 +899,7 @@ if (addressDirty) {
               </small>
             </div>
 
+            {/* POSITION */}
             <div className={styles.fieldBlock}>
               <small className={styles.fieldLabelSmall}>{t("fields.position")}</small>
               <InputText
@@ -682,6 +914,7 @@ if (addressDirty) {
               </small>
             </div>
 
+            {/* CONTAINS TEXT */}
             <div className={styles.fieldToggleStack}>
               <small className={styles.fieldLabelSmall}>{t("fields.containsText")}</small>
               <ToggleButton
@@ -708,13 +941,14 @@ if (addressDirty) {
                   placeholder={t("placeholders.selectLanguages")}
                   className={`${styles.fullWidth} ${showApErr("artPieceTextLanguages", apErrors) ? "p-invalid" : ""}`}
                   display="chip"
-                  showSelectAll={false} 
-                panelHeaderTemplate={() => null}
+                  showSelectAll={false}
+                  panelHeaderTemplate={() => null}
                 />
                 {showApErr("artPieceTextLanguages", apErrors) ? <small className="p-error">{apErrors.artPieceTextLanguages}</small> : null}
               </div>
             )}
 
+            {/* TYPES */}
             <div className={styles.fieldBlock}>
               <small className={styles.fieldLabelSmall}>{t("fields.types")}</small>
               <MultiSelect
@@ -729,6 +963,7 @@ if (addressDirty) {
               {showApErr("artPieceTypes", apErrors) ? <small className="p-error">{apErrors.artPieceTypes}</small> : null}
             </div>
 
+            {/* STYLES */}
             <div className={styles.fieldBlock}>
               <small className={styles.fieldLabelSmall}>{t("fields.styles")}</small>
               <MultiSelect
@@ -746,19 +981,18 @@ if (addressDirty) {
 
           <div className={styles.dialogActions}>
             <Button label={t("buttons.cancel")} severity="secondary" onClick={() => setEditOpen(false)} />
-<Button
-  label={t("buttons.save")}
-  icon="pi pi-check"
-  onClick={saveEdit}
-  disabled={!canSave || (addressDirty && addressStatus !== "valid")}
-/>
+            <Button
+              label={t("buttons.save")}
+              icon="pi pi-check"
+              onClick={saveEdit}
+              disabled={!canSave || (addressDirty && addressStatus !== "valid")}
+            />
 
             {!canSave ? (
-  <small className="p-error">{t("myArtpieces.fixErrorsToEnableSave")}</small>
-) : addressDirty && addressStatus !== "valid" ? (
-  <small className="p-error">{t("myArtpieces.provideValidAddress")}</small>
-) : null}
-
+              <small className="p-error">{t("myArtpieces.fixErrorsToEnableSave")}</small>
+            ) : addressDirty && addressStatus !== "valid" ? (
+              <small className="p-error">{t("myArtpieces.provideValidAddress")}</small>
+            ) : null}
           </div>
         </Dialog>
       </Card>

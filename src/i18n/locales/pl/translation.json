@@ -110,7 +110,8 @@
     "addNew": "Dodaj nowe",
     "cancel": "Anuluj",
     "save": "Zapisz",
-    "leave": "Wyjdź z panelu admina"
+    "leave": "Wyjdź z panelu admina",
+    "delete": "Usuń"
   },
   "admin": {
     "pageTitle": "Panel admina"

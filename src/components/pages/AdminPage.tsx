@@ -8,19 +8,15 @@ import { Menu } from "primereact/menu";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { Divider } from "primereact/divider";
-import { useNavigate } from "react-router-dom";
 import { Toast } from "primereact/toast";
 import { MultiSelect } from "primereact/multiselect";
 import { ToggleButton } from "primereact/togglebutton";
-
+import { Carousel } from "primereact/carousel";
+import { useNavigate } from "react-router-dom";
 
 import { useTranslation } from "react-i18next";
 
-import {
-  getLanguageOptions,
-  getArtTypeOptions,
-  getArtStyleOptions
-} from "../constants/Options";
+import { getLanguageOptions, getArtTypeOptions, getArtStyleOptions } from "../constants/Options";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/validators";
 import type { UserEntity, ArtPieceEntity } from "../dto/admin/AdminDtos";
 
@@ -41,6 +37,13 @@ const MAX_NAME = 50;
 const MAX_POS = 50;
 const MAX_DESC = 200;
 
+type PhotoDto = {
+  id: number;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+};
+
 export const AdminPage: React.FC = () => {
   const { t, i18n } = useTranslation();
 
@@ -52,7 +55,6 @@ export const AdminPage: React.FC = () => {
 
   const activeLang = (i18n.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en";
   const setLang = (lng: "pl" | "en") => void i18n.changeLanguage(lng);
-
 
   const navigate = useNavigate();
   const toast = useRef<Toast>(null);
@@ -67,9 +69,9 @@ export const AdminPage: React.FC = () => {
 
   const [selectedItem, setSelectedItem] = useState<RowItem | null>(null);
   const [selectedType, setSelectedType] = useState<AdminEntityType | null>(null);
+
   const isProtectedSelected =
-  selectedType === "Users" &&
-  selectedItem?.name?.trim().toLowerCase() === ADMIN_MAIL.toLowerCase();
+    selectedType === "Users" && selectedItem?.name?.trim().toLowerCase() === ADMIN_MAIL.toLowerCase();
 
   const opRef = useRef<OverlayPanel>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -85,18 +87,100 @@ export const AdminPage: React.FC = () => {
   const [artPieceName, setApName] = useState("");
   const [artPieceAddress, setApAddress] = useState("");
   const [artPieceUserDescription, setApUserDescription] = useState("");
-
   const [artPiecePosition, setApPosition] = useState("");
   const [artPieceContainsText, setApContainsText] = useState(false);
   const [artPieceTypes, setApTypes] = useState<string[]>([]);
   const [artPieceStyles, setApStyles] = useState<string[]>([]);
   const [artPieceTextLanguages, setApLangs] = useState<string[]>([]);
-  const [containsTextTouched, setContainsTextTouched] = useState(false);
+
+  // address touched/initial logic
   const [addressTouched, setAddressTouched] = useState(false);
   const initialAddressRef = useRef<string>("");
 
+  // photos (existing + new queue)
+  const [apPhotos, setApPhotos] = useState<PhotoDto[]>([]);
+  const [newPhotoFiles, setNewPhotoFiles] = useState<File[]>([]);
+  const [newPhotoPreviewUrls, setNewPhotoPreviewUrls] = useState<string[]>([]);
+
+  // address status
   const [addressStatus, setAddressStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle");
   const [addressHint, setAddressHint] = useState("");
+
+  // ----------------- PHOTO HELPERS -----------------
+  const clearNewPhotos = useCallback(() => {
+    newPhotoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+    setNewPhotoFiles([]);
+    setNewPhotoPreviewUrls([]);
+  }, [newPhotoPreviewUrls]);
+
+  const addNewPhotos = useCallback(
+    (files: File[]) => {
+      const next = [...newPhotoFiles, ...files];
+
+      // revoke old urls
+      newPhotoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+      const urls = next.map((f) => URL.createObjectURL(f));
+
+      setNewPhotoFiles(next);
+      setNewPhotoPreviewUrls(urls);
+    },
+    [newPhotoFiles, newPhotoPreviewUrls]
+  );
+
+  const removeNewPhotoAt = useCallback(
+    (idx: number) => {
+      const nextFiles = newPhotoFiles.filter((_, i) => i !== idx);
+
+      newPhotoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+      const urls = nextFiles.map((f) => URL.createObjectURL(f));
+
+      setNewPhotoFiles(nextFiles);
+      setNewPhotoPreviewUrls(urls);
+    },
+    [newPhotoFiles, newPhotoPreviewUrls]
+  );
+
+  const uploadQueuedPhotos = useCallback(async (artPieceId: string) => {
+    if (newPhotoFiles.length === 0) return;
+
+    await Promise.all(
+      newPhotoFiles.map(async (file) => {
+        const fd = new FormData();
+        fd.append("image", file);
+
+        const upRes = await fetch(`${BASE}/api/photos/upload/${artPieceId}/photos`, {
+          method: "POST",
+          body: fd,
+          credentials: "include",
+        });
+
+        if (!upRes.ok) {
+          const body = await upRes.text().catch(() => "");
+          throw new Error(`Photo upload failed: ${upRes.status} ${body}`);
+        }
+      })
+    );
+  }, [newPhotoFiles]);
+
+  const deleteExistingPhoto = useCallback(async (photoId: number) => {
+    const res = await fetch(`${BASE}/api/photos/delete/${photoId}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    const raw = await res.text().catch(() => "");
+    if (!res.ok) throw new Error(`DELETE photo failed: HTTP ${res.status}. ${raw.slice(0, 200)}`);
+
+    setApPhotos((prev) => prev.filter((p) => p.id !== photoId));
+  }, []);
+
+  // cleanup previews on unmount
+  useEffect(() => {
+    return () => {
+      newPhotoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ----------------- VALIDATION (Admin Edit) -----------------
   type UserEditErrors = {
@@ -163,13 +247,17 @@ export const AdminPage: React.FC = () => {
     if (!addr) e.artPieceAddress = t("validation.addressRequired", { defaultValue: "Address is required." });
 
     const pos = artPiecePosition.trim();
-    if (pos.length > MAX_POS) e.artPiecePosition = t("validation.positionMax", { defaultValue: `Position cannot exceed ${MAX_POS} characters.` });
+    if (pos.length > MAX_POS) {
+      e.artPiecePosition = t("validation.positionMax", { defaultValue: `Position cannot exceed ${MAX_POS} characters.` });
+    }
 
     if (!artPieceTypes || artPieceTypes.length === 0) e.artPieceTypes = t("validation.selectAtLeastOne");
     if (!artPieceStyles || artPieceStyles.length === 0) e.artPieceStyles = t("validation.selectAtLeastOne");
 
     const desc = artPieceUserDescription.trim();
-    if (desc.length > MAX_DESC) e.artPieceUserDescription = t("validation.descMax", { defaultValue: `Description cannot exceed ${MAX_DESC} characters.` });
+    if (desc.length > MAX_DESC) {
+      e.artPieceUserDescription = t("validation.descMax", { defaultValue: `Description cannot exceed ${MAX_DESC} characters.` });
+    }
 
     if (artPieceContainsText && (!artPieceTextLanguages || artPieceTextLanguages.length === 0)) {
       e.artPieceTextLanguages = t("validation.selectAtLeastOne");
@@ -178,11 +266,24 @@ export const AdminPage: React.FC = () => {
     return e;
   };
 
-  const userErrors = useMemo(() => validateUserEdit(), [appUserName, appUserEmail, appUserPassword, appUserLanguagesSpoken, t]);
+  const userErrors = useMemo(
+    () => validateUserEdit(),
+    [appUserName, appUserEmail, appUserPassword, appUserLanguagesSpoken, t]
+  );
 
   const apErrors = useMemo(
     () => validateArtPieceEdit(),
-    [artPieceName, artPieceAddress, artPiecePosition, artPieceUserDescription, artPieceTypes, artPieceStyles, artPieceContainsText, artPieceTextLanguages, t]
+    [
+      artPieceName,
+      artPieceAddress,
+      artPiecePosition,
+      artPieceUserDescription,
+      artPieceTypes,
+      artPieceStyles,
+      artPieceContainsText,
+      artPieceTextLanguages,
+      t,
+    ]
   );
 
   const canSaveUsers = Object.keys(userErrors).length === 0;
@@ -219,14 +320,14 @@ export const AdminPage: React.FC = () => {
         return false;
       }
 
-      const data = (await res.json()) as any[];
-      if (!Array.isArray(data) || data.length === 0) {
+      const arr = (await res.json()) as any[];
+      if (!Array.isArray(arr) || arr.length === 0) {
         setAddressStatus("invalid");
         setAddressHint(t("toasts.invalidAddressDetail"));
         return false;
       }
 
-      const display = String(data[0]?.display_name ?? "");
+      const display = String(arr[0]?.display_name ?? "");
       const inPoznan = display.toLowerCase().includes("poznań") || display.toLowerCase().includes("poznan");
       if (!inPoznan) {
         setAddressStatus("invalid");
@@ -399,7 +500,7 @@ export const AdminPage: React.FC = () => {
       });
 
       const raw = await res.text().catch(() => "");
-      if (!res.ok) throw new Error(`PUT failed: HTTP ${res.status}. Body: ${raw.slice(0, 200)}`);
+      if (!res.ok) throw new Error(`PUT failed: HTTP ${res.status}. Body: ${raw.slice(0, 400)}`);
       return raw.trim() ? JSON.parse(raw) : null;
     },
     [putEndpointFor]
@@ -483,24 +584,31 @@ export const AdminPage: React.FC = () => {
     if (activeType === "ArtPieces") {
       try {
         const d = await fetchArtPieceDetails(selectedItem.id);
+
+        // photos
+        setApPhotos(
+          (d.photos ?? []).map((p: any) => ({
+            id: Number(p.id),
+            fileName: String(p.fileName ?? ""),
+            contentType: String(p.contentType ?? ""),
+            sizeBytes: Number(p.sizeBytes ?? 0),
+          }))
+        );
+        clearNewPhotos();
+
+        // address baseline
         setApAddress(d.artPieceAddress ?? "");
         initialAddressRef.current = (d.artPieceAddress ?? "").trim();
         setAddressTouched(false);
-
-        // jeśli nie ruszamy adresu, traktuj jako "ok"
         setAddressStatus("valid");
         setAddressHint("✅");
 
         setApName(d.artPieceName ?? "");
-        setApAddress(d.artPieceAddress ?? "");
-        setAddressStatus("idle");
-        setAddressHint("");
         setApUserDescription(d.artPieceUserDescription ?? "");
         setApPosition(d.artPiecePosition ?? "");
 
         const contains = !!d.artPieceContainsText;
         setApContainsText(contains);
-        setContainsTextTouched(false);
 
         setApTypes(asStringArray(d.artPieceTypes));
         setApStyles(asStringArray(d.artPieceStyles));
@@ -514,32 +622,31 @@ export const AdminPage: React.FC = () => {
         alert(e?.message ?? t("common.unknownError"));
       }
     }
-  }, [activeType, selectedItem, t]);
+  }, [activeType, selectedItem, t, clearNewPhotos]);
 
   // ----------------- MENU -----------------
   const menuModel = useMemo(
-  () => [
-    {
-      label: t("menu.title"),
-      items: [
-        {
-          label: t("menu.edit"),
-          icon: "pi pi-pencil",
-          command: openEditDialog,
-          disabled: isProtectedSelected,
-        },
-        {
-          label: t("menu.delete"),
-          icon: "pi pi-trash",
-          command: onDelete,
-          disabled: isProtectedSelected,
-        },
-      ],
-    },
-  ],
-  [openEditDialog, onDelete, t, isProtectedSelected]
-);
-
+    () => [
+      {
+        label: t("menu.title"),
+        items: [
+          {
+            label: t("menu.edit"),
+            icon: "pi pi-pencil",
+            command: openEditDialog,
+            disabled: isProtectedSelected,
+          },
+          {
+            label: t("menu.delete"),
+            icon: "pi pi-trash",
+            command: onDelete,
+            disabled: isProtectedSelected,
+          },
+        ],
+      },
+    ],
+    [openEditDialog, onDelete, t, isProtectedSelected]
+  );
 
   const onRowClick = (type: AdminEntityType, e: any) => {
     const item = e.data as RowItem;
@@ -581,18 +688,20 @@ export const AdminPage: React.FC = () => {
         artPieceStyles: true,
         artPieceTextLanguages: true,
       });
-        if (addressTouched) {
-          const okAddr = await validateAddressWithNominatim();
-          if (!okAddr) {
-            toast.current?.show({
-              severity: "warn",
-              summary: t("toasts.invalidAddressSummary"),
-              detail: t("toasts.invalidAddressDetail"),
-              life: 2500,
-            });
-            return;
-          }
+
+      if (addressTouched) {
+        const okAddr = await validateAddressWithNominatim();
+        if (!okAddr) {
+          toast.current?.show({
+            severity: "warn",
+            summary: t("toasts.invalidAddressSummary"),
+            detail: t("toasts.invalidAddressDetail"),
+            life: 2500,
+          });
+          return;
         }
+      }
+
       if (!canSaveArtPieces) {
         toast.current?.show({
           severity: "warn",
@@ -653,19 +762,33 @@ export const AdminPage: React.FC = () => {
 
       // ---- ARTPIECES ----
       if (activeType === "ArtPieces") {
+        // IMPORTANT: backend validation wymaga artPieceContainsText -> wysyłamy zawsze
         const body: any = {
           artPieceCity: "Poznań",
+          artPieceContainsText, // ✅ ALWAYS
           ...(artPieceAddress.trim() ? { artPieceAddress: artPieceAddress.trim() } : {}),
           ...(artPieceName.trim() ? { artPieceName: artPieceName.trim() } : {}),
           ...(artPieceUserDescription.trim() ? { artPieceUserDescription: artPieceUserDescription.trim() } : {}),
           ...(artPiecePosition.trim() ? { artPiecePosition: artPiecePosition.trim() } : {}),
           ...(artPieceTypes.length ? { artPieceTypes } : {}),
           ...(artPieceStyles.length ? { artPieceStyles } : {}),
-          ...(artPieceTextLanguages.length ? { artPieceTextLanguages } : {}),
-          ...(containsTextTouched ? { artPieceContainsText } : {}),
+          ...(artPieceContainsText ? { artPieceTextLanguages } : { artPieceTextLanguages: [] }),
         };
 
         await putItem("ArtPieces", selectedItem.id, body);
+        await uploadQueuedPhotos(selectedItem.id);
+
+        // refetch details po upload
+        const d2 = await fetchArtPieceDetails(selectedItem.id);
+        setApPhotos(
+          (d2.photos ?? []).map((p: any) => ({
+            id: Number(p.id),
+            fileName: String(p.fileName ?? ""),
+            contentType: String(p.contentType ?? ""),
+            sizeBytes: Number(p.sizeBytes ?? 0),
+          }))
+        );
+        clearNewPhotos();
 
         setData((prev) => ({
           ...prev,
@@ -722,12 +845,31 @@ export const AdminPage: React.FC = () => {
     artPieceStyles,
     artPieceTextLanguages,
     artPieceContainsText,
-    containsTextTouched,
     canSaveUsers,
     canSaveArtPieces,
     validateAddressWithNominatim,
+    addressTouched,
+    uploadQueuedPhotos,
+    fetchArtPieceDetails,
+    clearNewPhotos,
     t,
   ]);
+
+  // ----------------- Photos: "kopiujemy" wygląd z MyArtPieces/AppView -----------------
+  const photoSlideTemplate = useCallback(
+    (src: string, alt: string) => {
+      return (
+        <div className={styles.photoFrame}>
+          <img
+            src={src}
+            alt={alt}
+            style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+          />
+        </div>
+      );
+    },
+    []
+  );
 
   // ----------------- RENDER -----------------
   return (
@@ -736,22 +878,22 @@ export const AdminPage: React.FC = () => {
         <Button
           label={t("common.pl")}
           size="small"
-          outlined={activeLang !== "pl" }
+          outlined={activeLang !== "pl"}
           onClick={() => setLang("pl")}
-            style={activeLang !== "pl" ? { color: "#000", borderColor: "rgba(0,0,0,0.35)" } : undefined}
+          className={activeLang !== "pl" ? styles.langBtnInactive : ""}
         />
         <Button
           label={t("common.en")}
           size="small"
           outlined={activeLang !== "en"}
           onClick={() => setLang("en")}
-            style={activeLang !== "en" ? { color: "#000", borderColor: "rgba(0,0,0,0.35)" } : undefined}
+          className={activeLang !== "en" ? styles.langBtnInactive : ""}
         />
       </div>
+
       <Toast ref={toast} position="top-right" />
 
       <Card title={t("admin.pageTitle")} className={styles.cardShell}>
-        
         {error ? (
           <div className={styles.adminError}>
             {t("common.error")}: {error}
@@ -767,7 +909,7 @@ export const AdminPage: React.FC = () => {
           {(Object.keys(data) as AdminEntityType[]).map((tKey) => (
             <AdminEntityPanel
               key={tKey}
-              title={tKey} // ✅ MUST stay AdminEntityType, not translated string
+              title={tKey}
               rows={data[tKey]}
               loading={loading}
               onRowClick={(e) => {
@@ -787,7 +929,7 @@ export const AdminPage: React.FC = () => {
             type: activeType === "Users" ? t("entities.users") : t("entities.artPieces"),
           })}
           visible={editOpen}
-          className={styles.dialogNarrow}
+          className={styles.dialogWide}
           onHide={() => setEditOpen(false)}
         >
           {activeType === "Users" && (
@@ -824,8 +966,8 @@ export const AdminPage: React.FC = () => {
                   placeholder={t("placeholders.selectLanguages")}
                   className={`${styles.fullWidth} ${showUserErr("appUserLanguagesSpoken", userErrors) ? "p-invalid" : ""}`}
                   display="chip"
-                  showSelectAll={false} 
-                panelHeaderTemplate={() => null}
+                  showSelectAll={false}
+                  panelHeaderTemplate={() => null}
                 />
                 {showUserErr("appUserLanguagesSpoken", userErrors) ? (
                   <small className="p-error">{userErrors.appUserLanguagesSpoken}</small>
@@ -848,6 +990,105 @@ export const AdminPage: React.FC = () => {
 
           {activeType === "ArtPieces" && (
             <div className={styles.dialogGrid14}>
+              {/* ========= PHOTOS (layout skopiowany z MyArtPieces/AppView) ========= */}
+              <div className={styles.fieldBlock}>
+                <small className={styles.fieldLabelSmall}>{t("fields.photos", { defaultValue: "Photos" })}</small>
+
+                {/* EXISTING PHOTOS (karuzela jak w MyArtPiecesPage) */}
+                {apPhotos.length ? (
+                  <Carousel
+                    value={apPhotos}
+                    numVisible={1}
+                    numScroll={1}
+                    circular
+                    showIndicators={apPhotos.length > 1}
+                    showNavigators={apPhotos.length > 1}
+                    itemTemplate={(p: PhotoDto) => {
+                      const src = `${BASE}/api/photos/download/${p.id}`;
+                      return (
+                        <div style={{ display: "grid", gap: 10 }}>
+                          {photoSlideTemplate(src, p.fileName || "photo")}
+
+                          <div style={{ display: "flex", justifyContent: "center" }}>
+                            <Button
+                              label={t("buttons.delete")}
+                              icon="pi pi-trash"
+                              severity="danger"
+                              size="small"
+                              onClick={() => void deleteExistingPhoto(p.id)}
+                              pt={{ root: { style: { padding: "6px 10px" } } }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+                ) : (
+                  <div style={{ opacity: 0.85 }}>{t("common.none", { defaultValue: "None" })}</div>
+                )}
+
+                <Divider className={styles.dividerSoft} />
+
+                {/* PICK NEW FILES (queue) */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => {
+                      if (!e.target.files) return;
+                      addNewPhotos(Array.from(e.target.files));
+                      e.currentTarget.value = "";
+                    }}
+                  />
+                  <small style={{ opacity: 0.85 }}>
+                    {t("common.selected", { defaultValue: "Selected" })}: {newPhotoFiles.length}
+                  </small>
+
+                  <Button
+                    label={t("buttons.clearAll", { defaultValue: "Clear" })}
+                    severity="secondary"
+                    size="small"
+                    disabled={!newPhotoFiles.length}
+                    onClick={clearNewPhotos}
+                    pt={{ root: { style: { padding: "6px 10px" } } }}
+                  />
+                </div>
+
+                {/* NEW QUEUED PHOTOS (karuzela jak w MyArtPiecesPage) */}
+                {newPhotoPreviewUrls.length ? (
+                  <div style={{ marginTop: 10 }}>
+                    <Carousel
+                      value={newPhotoPreviewUrls.map((u, idx) => ({ u, idx }))}
+                      numVisible={1}
+                      numScroll={1}
+                      circular
+                      showIndicators={newPhotoPreviewUrls.length > 1}
+                      showNavigators={newPhotoPreviewUrls.length > 1}
+                      itemTemplate={(x: { u: string; idx: number }) => {
+                        return (
+                          <div style={{ display: "grid", gap: 10 }}>
+                            {photoSlideTemplate(x.u, "new")}
+
+                            <div style={{ display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
+                              <Button
+                                label={t("buttons.remove", { defaultValue: "Remove" })}
+                                icon="pi pi-times"
+                                severity="secondary"
+                                size="small"
+                                onClick={() => removeNewPhotoAt(x.idx)}
+                                pt={{ root: { style: { padding: "6px 10px" } } }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      }}
+                    />
+                  </div>
+                ) : null}
+              </div>
+
+              {/* NAME */}
               <div className={styles.fieldBlock}>
                 <small className={styles.fieldLabelSmall}>{t("appView.name")}</small>
                 <InputText
@@ -862,26 +1103,26 @@ export const AdminPage: React.FC = () => {
                 </small>
               </div>
 
+              {/* ADDRESS */}
               <div className={styles.fieldBlock}>
                 <small className={styles.fieldLabelSmall}>{t("fields.address")}</small>
                 <InputText
                   value={artPieceAddress}
                   onChange={(e) => {
-                      const next = e.target.value;
-                      setApAddress(next);
+                    const next = e.target.value;
+                    setApAddress(next);
 
-                      const changed = next.trim() !== initialAddressRef.current;
-                      setAddressTouched(changed);
+                    const changed = next.trim() !== initialAddressRef.current;
+                    setAddressTouched(changed);
 
-                      // resetuj status tylko jeśli adres faktycznie zmieniony
-                      if (changed) {
-                        setAddressStatus("idle");
-                        setAddressHint("");
-                      } else {
-                        setAddressStatus("valid");
-                        setAddressHint("✅");
-                      }
-                    }}
+                    if (changed) {
+                      setAddressStatus("idle");
+                      setAddressHint("");
+                    } else {
+                      setAddressStatus("valid");
+                      setAddressHint("✅");
+                    }
+                  }}
                   onBlur={() => {
                     markApTouched("artPieceAddress");
                     if (addressTouched) void validateAddressWithNominatim();
@@ -898,6 +1139,7 @@ export const AdminPage: React.FC = () => {
                 {shouldShowAddressHint && addressStatus === "invalid" ? <small className="p-error">{addressHint}</small> : null}
               </div>
 
+              {/* DESCRIPTION */}
               <div className={styles.fieldBlock}>
                 <small className={styles.fieldLabelSmall}>{t("fields.description")}</small>
                 <InputText
@@ -906,12 +1148,15 @@ export const AdminPage: React.FC = () => {
                   onBlur={() => markApTouched("artPieceUserDescription")}
                   className={`${styles.fullWidth} ${showApErr("artPieceUserDescription", apErrors) ? "p-invalid" : ""}`}
                 />
-                {showApErr("artPieceUserDescription", apErrors) ? <small className="p-error">{apErrors.artPieceUserDescription}</small> : null}
+                {showApErr("artPieceUserDescription", apErrors) ? (
+                  <small className="p-error">{apErrors.artPieceUserDescription}</small>
+                ) : null}
                 <small style={{ opacity: 0.85 }}>
                   {artPieceUserDescription.trim().length}/{MAX_DESC}
                 </small>
               </div>
 
+              {/* POSITION */}
               <div className={styles.fieldBlock}>
                 <small className={styles.fieldLabelSmall}>{t("fields.position")}</small>
                 <InputText
@@ -926,20 +1171,24 @@ export const AdminPage: React.FC = () => {
                 </small>
               </div>
 
+              {/* CONTAINS TEXT (nie full width) */}
               <div className={styles.fieldToggleStack}>
                 <small className={styles.fieldLabelSmall}>{t("fields.containsText")}</small>
-                <ToggleButton
-                  checked={artPieceContainsText}
-                  onChange={(e) => {
-                    setApContainsText(e.value);
-                    setContainsTextTouched(true);
-                    if (!e.value) setApLangs([]);
-                    markApTouched("artPieceTextLanguages");
-                  }}
-                  onLabel={t("common.yes")}
-                  offLabel={t("common.no")}
-                  className={styles.fullWidth}
-                />
+
+                <div style={{ display: "inline-flex", alignSelf: "flex-start" }}>
+                  <ToggleButton
+                    checked={artPieceContainsText}
+                    onChange={(e) => {
+                      const next = Boolean(e.value);
+                      setApContainsText(next);
+                      if (!next) setApLangs([]);
+                      markApTouched("artPieceTextLanguages");
+                    }}
+                    onLabel={t("common.yes")}
+                    offLabel={t("common.no")}
+                    pt={{ root: { style: { padding: "6px 10px", minWidth: "auto" } } }}
+                  />
+                </div>
               </div>
 
               {artPieceContainsText && (
@@ -953,13 +1202,16 @@ export const AdminPage: React.FC = () => {
                     placeholder={t("placeholders.selectLanguages")}
                     className={`${styles.fullWidth} ${showApErr("artPieceTextLanguages", apErrors) ? "p-invalid" : ""}`}
                     display="chip"
-                    showSelectAll={false} 
-                panelHeaderTemplate={() => null}
+                    showSelectAll={false}
+                    panelHeaderTemplate={() => null}
                   />
-                  {showApErr("artPieceTextLanguages", apErrors) ? <small className="p-error">{apErrors.artPieceTextLanguages}</small> : null}
+                  {showApErr("artPieceTextLanguages", apErrors) ? (
+                    <small className="p-error">{apErrors.artPieceTextLanguages}</small>
+                  ) : null}
                 </div>
               )}
 
+              {/* TYPES */}
               <div className={styles.fieldBlock}>
                 <small className={styles.fieldLabelSmall}>{t("fields.types")}</small>
                 <MultiSelect
@@ -970,10 +1222,13 @@ export const AdminPage: React.FC = () => {
                   placeholder={t("placeholders.selectTypes")}
                   className={`${styles.fullWidth} ${showApErr("artPieceTypes", apErrors) ? "p-invalid" : ""}`}
                   display="chip"
+                  showSelectAll={false}
+                  panelHeaderTemplate={() => null}
                 />
                 {showApErr("artPieceTypes", apErrors) ? <small className="p-error">{apErrors.artPieceTypes}</small> : null}
               </div>
 
+              {/* STYLES */}
               <div className={styles.fieldBlock}>
                 <small className={styles.fieldLabelSmall}>{t("fields.styles")}</small>
                 <MultiSelect
@@ -984,6 +1239,8 @@ export const AdminPage: React.FC = () => {
                   placeholder={t("placeholders.selectStyles")}
                   className={`${styles.fullWidth} ${showApErr("artPieceStyles", apErrors) ? "p-invalid" : ""}`}
                   display="chip"
+                  showSelectAll={false}
+                  panelHeaderTemplate={() => null}
                 />
                 {showApErr("artPieceStyles", apErrors) ? <small className="p-error">{apErrors.artPieceStyles}</small> : null}
               </div>

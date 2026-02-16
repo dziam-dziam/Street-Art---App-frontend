@@ -110,7 +110,8 @@
     "addNew": "Add New",
     "cancel": "Cancel",
     "save": "Save",
-    "leave": "Leave Admin Page"
+    "leave": "Leave Admin Page",
+    "delete": "Delete"
   },
   "admin": {
     "pageTitle": "Admin Page"
