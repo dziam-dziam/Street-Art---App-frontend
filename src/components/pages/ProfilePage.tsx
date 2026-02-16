@@ -53,6 +53,8 @@ export const ProfilePage: React.FC = () => {
   const [tEmail, setTEmail] = useState(false);
   const [tLang, setTLang] = useState(false);
   const [tPass, setTPass] = useState(false);
+  const [readOnly, setReadOnly] = useState(false);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -71,6 +73,10 @@ export const ProfilePage: React.FC = () => {
         if (!res.ok) throw new Error(`GET /auth/me failed: ${res.status}. ${raw.slice(0, 200)}`);
 
         const data = (raw.trim() ? (JSON.parse(raw) as MeResponse) : null) as MeResponse;
+        const roles: string[] = Array.isArray((data as any)?.roles) ? (data as any).roles.map(String) : [];
+        const isAdmin = roles.some((r) => r.toUpperCase().includes("ADMIN"));
+        setReadOnly(isAdmin);
+
 
         if (cancelled) return;
 
@@ -120,6 +126,15 @@ export const ProfilePage: React.FC = () => {
   const canSave = Object.keys(errors).length === 0 && !loading;
 
   const save = async () => {
+    if (readOnly) {
+  toast.current?.show({
+    severity: "info",
+    summary: t("common.info", { defaultValue: "Info" }),
+    detail: t("profile.readOnlyAdmin", { defaultValue: "Admin cannot edit their profile." }),
+    life: 2000,
+  });
+  return;
+}
     setTName(true);
     setTEmail(true);
     setTLang(true);
@@ -220,7 +235,9 @@ export const ProfilePage: React.FC = () => {
             severity="secondary"
             onClick={() => navigate("/app")}
           />
-          <Button label={t("buttons.save")} icon="pi pi-check" onClick={save} disabled={!canSave} />
+          {!readOnly ? (
+  <Button label={t("buttons.save")} icon="pi pi-check" onClick={save} disabled={!canSave} />
+) : null}
         </div>
 
         <Divider className={styles.dividerSoft} />
@@ -229,53 +246,76 @@ export const ProfilePage: React.FC = () => {
           <div className={styles.fieldBlock}>
             <small className={styles.fieldLabelSmall}>{t("fields.email")}</small>
             <InputText
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onBlur={() => setTEmail(true)}
-              className={`${styles.fullWidth} ${tEmail && errors.email ? "p-invalid" : ""}`}
-            />
-            {tEmail && errors.email ? <small className="p-error">{errors.email}</small> : null}
+  value={email}
+  disabled={readOnly}
+  onChange={(e) => {
+    if (readOnly) return;
+    setEmail(e.target.value);
+  }}
+  onBlur={() => {
+    if (readOnly) return;
+    setTEmail(true);
+  }}
+  className={`${styles.fullWidth} ${!readOnly && tEmail && errors.email ? "p-invalid" : ""}`}
+/>
+{!readOnly && tEmail && errors.email ? <small className="p-error">{errors.email}</small> : null}
           </div>
 
           <div className={styles.fieldBlock}>
             <small className={styles.fieldLabelSmall}>{t("fields.name")}</small>
             <InputText
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onBlur={() => setTName(true)}
-              className={`${styles.fullWidth} ${tName && errors.name ? "p-invalid" : ""}`}
-            />
-            {tName && errors.name ? <small className="p-error">{errors.name}</small> : null}
+  value={name}
+  disabled={readOnly}
+  onChange={(e) => {
+    if (readOnly) return;
+    setName(e.target.value);
+  }}
+  onBlur={() => {
+    if (readOnly) return;
+    setTName(true);
+  }}
+  className={`${styles.fullWidth} ${!readOnly && tName && errors.name ? "p-invalid" : ""}`}
+/>
+{!readOnly && tName && errors.name ? <small className="p-error">{errors.name}</small> : null}
           </div>
 
           <div className={styles.fieldBlock}>
             <small className={styles.fieldLabelSmall}>{t("fields.languagesSpoken")}</small>
             <MultiSelect
-              value={languages}
-              onChange={(e) => setLanguages(e.value)}
-              onBlur={() => setTLang(true)}
-              options={languageOptions as any}
-              placeholder={t("placeholders.selectLanguages")}
-              className={`${styles.fullWidth} ${tLang && errors.languages ? "p-invalid" : ""}`}
-              display="chip"
-              showSelectAll={false} 
-                panelHeaderTemplate={() => null}
-            />
-            {tLang && errors.languages ? <small className="p-error">{errors.languages}</small> : null}
+  value={languages}
+  disabled={readOnly}
+  onChange={(e) => {
+    if (readOnly) return;
+    setLanguages(e.value);
+  }}
+  onBlur={() => {
+    if (readOnly) return;
+    setTLang(true);
+  }}
+  options={languageOptions as any}
+  placeholder={t("placeholders.selectLanguages")}
+  className={`${styles.fullWidth} ${!readOnly && tLang && errors.languages ? "p-invalid" : ""}`}
+  display="chip"
+  showSelectAll={false}
+  panelHeaderTemplate={() => null}
+/>
+{!readOnly && tLang && errors.languages ? <small className="p-error">{errors.languages}</small> : null}
           </div>
 
-          <div className={styles.fieldBlock}>
-            <small className={styles.fieldLabelSmall}>{t("profile.newPasswordOptional")}</small>
-            <InputText
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onBlur={() => setTPass(true)}
-              className={`${styles.fullWidth} ${tPass && errors.password ? "p-invalid" : ""}`}
-            />
-            {tPass && errors.password ? <small className="p-error">{errors.password}</small> : null}
-            <small style={{ opacity: 0.85 }}>{t("profile.passwordHint")}</small>
-          </div>
+          {!readOnly ? (
+  <div className={styles.fieldBlock}>
+    <small className={styles.fieldLabelSmall}>{t("profile.newPasswordOptional")}</small>
+    <InputText
+      type="password"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      onBlur={() => setTPass(true)}
+      className={`${styles.fullWidth} ${tPass && errors.password ? "p-invalid" : ""}`}
+    />
+    {tPass && errors.password ? <small className="p-error">{errors.password}</small> : null}
+    <small style={{ opacity: 0.85 }}>{t("profile.passwordHint")}</small>
+  </div>
+) : null}
         </div>
 
         {loading ? (
