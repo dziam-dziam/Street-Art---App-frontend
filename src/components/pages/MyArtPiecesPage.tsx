@@ -915,8 +915,8 @@ export const MyArtPiecesPage: React.FC = () => {
             </div>
 
             {/* CONTAINS TEXT */}
-            <div className={styles.fieldToggleStack}>
-              <small className={styles.fieldLabelSmall}>{t("fields.containsText")}</small>
+            <div className={styles.fieldToggleStack} style={{ alignItems: "flex-start" }}>
+  <small className={styles.fieldLabelSmall}>{t("fields.containsText")}</small>
               <ToggleButton
                 checked={artPieceContainsText}
                 onChange={(e) => {
@@ -926,7 +926,8 @@ export const MyArtPiecesPage: React.FC = () => {
                 }}
                 onLabel={t("toggle.yes")}
                 offLabel={t("toggle.no")}
-                className={styles.fullWidth}
+               style={{ width: "fit-content" }}
+               className={styles.toggleFit}
               />
             </div>
 

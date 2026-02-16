@@ -851,3 +851,7 @@
   align-items: center;
   min-height: 300px; /* stabilizuje itemy */
 }
+.toggleFit {
+  justify-self: start;   /* kluczowe przy grid */
+  width: fit-content;
+}
