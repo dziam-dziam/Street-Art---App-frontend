@@ -10,7 +10,7 @@ import { Avatar } from "primereact/avatar";
 import { Divider } from "primereact/divider";
 import { Menu } from "primereact/menu";
 
-import type { DistrictName } from "../../components/constants/Options";
+import type { DistrictName } from "../../components/constants/options";
 import { useTranslation } from "react-i18next";
 
 export type ArtPoint = {

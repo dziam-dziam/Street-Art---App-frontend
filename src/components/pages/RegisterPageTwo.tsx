@@ -18,7 +18,7 @@ import { AuthShell } from "../../widgets/auth/AutoShell";
 import { AuthImagePanel } from "../../widgets/auth/ImagePanel";
 import { LanguageSwitch } from "../../widgets/LanguageSwitch";
 
-import { getDistrictOptions, getTransportOptions, HOUR_OPTIONS } from "../constants/Options";
+import { getDistrictOptions, getTransportOptions, HOUR_OPTIONS } from "../constants/options";
 
 type CommuteErrors = Partial<Record<keyof AddCommuteDto, string>>;
 

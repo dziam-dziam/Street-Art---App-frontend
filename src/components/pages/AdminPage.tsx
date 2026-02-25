@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 
 import { useTranslation } from "react-i18next";
 
-import { getLanguageOptions, getArtTypeOptions, getArtStyleOptions } from "../constants/Options";
+import { getLanguageOptions, getArtTypeOptions, getArtStyleOptions } from "../constants/options";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/validators";
 import type { UserEntity, ArtPieceEntity } from "../dto/admin/AdminDtos";
 

@@ -13,8 +13,8 @@ import { Dropdown } from "primereact/dropdown";
 import { Divider } from "primereact/divider";
 import { useTranslation } from "react-i18next";
 
-import { DISTRICT_OPTIONS } from "../constants/Options";
-import type { DistrictName } from "../constants/Options";
+import { DISTRICT_OPTIONS } from "../constants/options";
+import type { DistrictName } from "../constants/options";
 
 import poz from "../assets/poznan.json";
 import type { ArtPieceMapPointDto } from "../dto/artpiece/ArtPieceMapPointDto";

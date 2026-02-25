@@ -12,7 +12,7 @@ import { Toast } from "primereact/toast";
 import styles from "../../styles/pages.module.css";
 
 import { AddArtPiecePhotoPanel } from "../../widgets/artpiece/AddArtPieceWidgets";
-import { DISTRICT_OPTIONS, getArtStyleOptions, getArtTypeOptions, getLanguageOptions } from "../constants/Options";
+import { DISTRICT_OPTIONS, getArtStyleOptions, getArtTypeOptions, getLanguageOptions } from "../constants/options";
 import type { AddArtPieceDto } from "../dto/artpiece/AddArtPieceDto";
 
 import { useTranslation } from "react-i18next";

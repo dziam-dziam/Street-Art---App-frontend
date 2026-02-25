@@ -13,7 +13,7 @@ import { MultiSelect } from "primereact/multiselect";
 import { ToggleButton } from "primereact/togglebutton";
 import { Divider } from "primereact/divider";
 
-import { getArtStyleOptions, getArtTypeOptions, getLanguageOptions } from "../constants/Options";
+import { getArtStyleOptions, getArtTypeOptions, getLanguageOptions } from "../constants/options";
 import { useTranslation } from "react-i18next";
 
 const BASE_URL = "http://localhost:8080";

@@ -9,7 +9,7 @@ import { MultiSelect } from "primereact/multiselect";
 import { Divider } from "primereact/divider";
 import { Card } from "primereact/card";
 
-import { getLanguageOptions } from "../constants/Options";
+import { getLanguageOptions } from "../constants/options";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/validators";
 
 import { useTranslation } from "react-i18next";

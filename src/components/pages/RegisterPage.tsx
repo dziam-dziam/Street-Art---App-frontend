@@ -15,7 +15,7 @@ import { AuthShell } from "../../widgets/auth/AutoShell";
 import { AuthImagePanel } from "../../widgets/auth/ImagePanel";
 import { LanguageSwitch } from "../../widgets/LanguageSwitch";
 
-import { getLanguageOptions, getNationalityOptions, DISTRICT_OPTIONS } from "../constants/Options";
+import { getLanguageOptions, getNationalityOptions, DISTRICT_OPTIONS } from "../constants/options";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/validators";
 
 type FormErrors = Partial<Record<keyof RegisterDto, string>>;

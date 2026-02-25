@@ -1,5 +1,5 @@
 // src/app/dto/auth/RegisterDto.ts
-import type { DistrictName, LanguageOption, NationalityOption } from "../../constants/Options";
+import type { DistrictName, LanguageOption, NationalityOption } from "../../constants/options";
 
 export type RegisterDto = {
   appUserName: string;

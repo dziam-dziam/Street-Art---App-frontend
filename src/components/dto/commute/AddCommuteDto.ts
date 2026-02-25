@@ -1,4 +1,4 @@
-import type { MeansOfTransport } from "../../constants/Options";
+import type { MeansOfTransport } from "../../constants/options";
 
 export type AddCommuteDto = {
   commuteThroughDistrictName: string;
