@@ -13,6 +13,8 @@ import { MultiSelect } from "primereact/multiselect";
 import { ToggleButton } from "primereact/togglebutton";
 import { Carousel } from "primereact/carousel";
 import { useNavigate } from "react-router-dom";
+import { API_BASE } from "../../config/api";
+
 
 import { useTranslation } from "react-i18next";
 
@@ -23,7 +25,7 @@ import type { UserEntity, ArtPieceEntity } from "../dto/admin/AdminDtos";
 import { AdminTiles, AdminEntityPanel } from "../../widgets/admin/AdminWidgets";
 import type { AdminEntityType, RowItem } from "../../widgets/admin/AdminWidgets";
 
-const BASE = "http://localhost:8080";
+const BASE = API_BASE;
 
 const EMPTY: Record<AdminEntityType, RowItem[]> = {
   Users: [],

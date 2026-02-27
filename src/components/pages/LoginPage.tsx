@@ -4,6 +4,7 @@ import { Password } from "primereact/password";
 import { Button } from "primereact/button";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { API_BASE } from "../../config/api";
 
 import streetArtGreen from "../images/streetArtGreen.jpeg";
 import styles from "../../styles/pages.module.css";
@@ -25,7 +26,7 @@ export const LoginPage: React.FC = () => {
     const body = { appUserEmail, appUserPassword };
     console.log("LOGIN BODY:\n", JSON.stringify(body, null, 2));
 
-    const url = new URL("http://localhost:8080/auth/login");
+    const url = new URL(`${API_BASE}/auth/login`);
     try {
       const res = await fetch(url.toString(), {
         method: "POST",

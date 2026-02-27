@@ -12,6 +12,7 @@ import { Sidebar } from "primereact/sidebar";
 import { Dropdown } from "primereact/dropdown";
 import { Divider } from "primereact/divider";
 import { useTranslation } from "react-i18next";
+import { API_BASE } from "../../config/api";
 
 import { DISTRICT_OPTIONS } from "../constants/options";
 import type { DistrictName } from "../constants/options";
@@ -52,7 +53,7 @@ type ArtPieceDetailsDto = {
   photos: PhotoResponseDto[];
 };
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = API_BASE;
 
 function normalizeDistrict(d: string): DistrictName {
   const x = (d ?? "").trim().toLowerCase();

@@ -7,6 +7,7 @@ import { Dropdown } from "primereact/dropdown";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { RegisterDto } from "../dto/auth/RegisterDto";
+import { API_BASE } from "../../config/api";
 
 import streetArtBlue from "../images/streetArtBlue.jpeg";
 import styles from "../../styles/pages.module.css";
@@ -91,7 +92,7 @@ export const RegisterPage: React.FC = () => {
     try {
       setSubmitting(true);
 
-      const res = await fetch("http://localhost:8080/auth/register", {
+      const res = await fetch(`${API_BASE}/auth/register`, {
         method: "POST",
         body: JSON.stringify(form),
         headers: { "Content-type": "application/json; charset=UTF-8" },

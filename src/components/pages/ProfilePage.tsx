@@ -8,13 +8,14 @@ import { InputText } from "primereact/inputtext";
 import { MultiSelect } from "primereact/multiselect";
 import { Divider } from "primereact/divider";
 import { Card } from "primereact/card";
+import { API_BASE } from "../../config/api";
 
 import { getLanguageOptions } from "../constants/options";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/validators";
 
 import { useTranslation } from "react-i18next";
 
-const BASE = "http://localhost:8080";
+const BASE = API_BASE;
 
 type MeResponse = {
   email: string;

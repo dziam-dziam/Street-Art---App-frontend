@@ -8,6 +8,7 @@ import { Dropdown } from "primereact/dropdown";
 import { ToggleButton } from "primereact/togglebutton";
 import { useNavigate } from "react-router-dom";
 import { Toast } from "primereact/toast";
+import { API_BASE } from "../../config/api";
 
 import styles from "../../styles/pages.module.css";
 
@@ -216,7 +217,7 @@ export const AddArtPiecePage: React.FC = () => {
       return;
     }
 
-    const createUrl = "http://localhost:8080/addNew/addArtPiece";
+    const createUrl = `${API_BASE}/addNew/addArtPiece`;
 
     try {
       // 1) create art piece
@@ -246,7 +247,7 @@ export const AddArtPiecePage: React.FC = () => {
             const fd = new FormData();
             fd.append("image", file);
 
-            const upRes = await fetch(`http://localhost:8080/api/photos/upload/${artPieceId}/photos`, {
+            const upRes = await fetch(`${API_BASE}/api/photos/upload/${artPieceId}/photos`, {
               method: "POST",
               body: fd,
               credentials: "include",

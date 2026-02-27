@@ -12,11 +12,12 @@ import { InputText } from "primereact/inputtext";
 import { MultiSelect } from "primereact/multiselect";
 import { ToggleButton } from "primereact/togglebutton";
 import { Divider } from "primereact/divider";
+import { API_BASE } from "../../config/api";
 
 import { getArtStyleOptions, getArtTypeOptions, getLanguageOptions } from "../constants/options";
 import { useTranslation } from "react-i18next";
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = API_BASE;
 
 type ArtPieceMapPointDto = {
   id: number;

@@ -7,6 +7,7 @@ import { Dropdown } from "primereact/dropdown";
 import { Carousel } from "primereact/carousel";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { API_BASE } from "../../config/api";
 
 import type { RegisterDto } from "../dto/auth/RegisterDto";
 import type { AddCommuteDto } from "../dto/commute/AddCommuteDto";
@@ -151,7 +152,7 @@ export const RegisterPageTwo: React.FC = () => {
 
     const lastCommute = commutes[commutes.length - 1];
 
-    const url = new URL("http://localhost:8080/auth/addCommute");
+    const url = new URL(`${API_BASE}/auth/addCommute`);
     url.searchParams.set("appUserEmail", registerData.appUserEmail);
 
     try {
