@@ -9,9 +9,15 @@ import { AppView } from "./components/pages/AppView";
 import { AddArtPiecePage } from "./components/pages/AddArtPiecePage";
 import { ProfilePage } from "./components/pages/ProfilePage";
 import { MyArtPiecesPage } from "./components/pages/MyArtPiecesPage";
+import { useLoading } from "./context/LoadingContext";
+import LoadingOverlay from "./components/LoadingOverlay";
 
 function App() {
+
+  const { loading } = useLoading();
   return (
+    <>
+      <LoadingOverlay visible={loading} />
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<LoginPage />} />
@@ -40,6 +46,7 @@ function App() {
 
       <Route path="*" element={<h2>404 - Not found</h2>} />
     </Routes>
+    </>
   );
 }
 

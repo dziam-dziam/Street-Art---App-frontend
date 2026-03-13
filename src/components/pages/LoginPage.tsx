@@ -12,19 +12,19 @@ import styles from "../../styles/pages.module.css";
 import { AuthShell } from "../../widgets/auth/AutoShell";
 import { AuthImagePanel } from "../../widgets/auth/ImagePanel";
 import { LanguageSwitch } from "../../widgets/LanguageSwitch";
-import LoadingOverlay from "../../components/LoadingOverlay";
+import { useLoading } from "../../context/LoadingContext";
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [loading, setLoading] = useState(false);
+  const { startLoading, stopLoading } = useLoading();
 
   const [appUserEmail, setEmail] = useState("");
   const [appUserPassword, setPassword] = useState("");
 
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    startLoading();
 
     const body = { appUserEmail, appUserPassword };
     console.log("LOGIN BODY:\n", JSON.stringify(body, null, 2));
@@ -49,12 +49,12 @@ export const LoginPage: React.FC = () => {
     } catch (err) {
       console.error("Fetch error:", err);
     } finally {
-      setLoading(false);
+      stopLoading();
+
     }
   };
 
   return (
-    <> <LoadingOverlay visible={loading} />
     <AuthShell cardClassName={styles.authCardLogin}>
         <LanguageSwitch />
 
@@ -101,6 +101,5 @@ export const LoginPage: React.FC = () => {
         </div>
       </div>
     </AuthShell>
-    </>
   );
 };

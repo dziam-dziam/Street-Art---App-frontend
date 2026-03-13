@@ -10,22 +10,25 @@ import "primereact/resources/themes/lara-light-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import "./i18n";
+import { LoadingProvider } from "./context/LoadingContext";
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
 
 root.render(
   <React.StrictMode>
-    <PrimeReactProvider
-      value={{
-        ripple: true,
-        hideOverlaysOnDocumentScrolling: true, // albo false, jak nie chcesz chowania overlay przy scrollu
-      }}
-    >
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </PrimeReactProvider>
+    <LoadingProvider>
+      <PrimeReactProvider
+        value={{
+          ripple: true,
+          hideOverlaysOnDocumentScrolling: true,
+        }}
+      >
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </PrimeReactProvider>
+    </LoadingProvider>
   </React.StrictMode>
 );
 

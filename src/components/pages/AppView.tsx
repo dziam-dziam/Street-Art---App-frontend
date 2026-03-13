@@ -13,6 +13,7 @@ import { Dropdown } from "primereact/dropdown";
 import { Divider } from "primereact/divider";
 import { useTranslation } from "react-i18next";
 import { API_BASE } from "../../config/api";
+import { useLoading } from "../../context/LoadingContext";
 
 import { DISTRICT_OPTIONS } from "../constants/options";
 import type { DistrictName } from "../constants/options";
@@ -83,6 +84,7 @@ function pickPoznanBoundary(fc: any) {
 
 export const AppView: React.FC = () => {
   const { t } = useTranslation();
+  const { startLoading, stopLoading } = useLoading();
     const typeLabel = useCallback(
     (code: string) => t(`options.artTypes.${code}`, { defaultValue: code }),
     [t]
@@ -113,6 +115,7 @@ export const AppView: React.FC = () => {
   const [filterDistrict, setFilterDistrict] = useState<DistrictName | null>(null);
 
   const loadDetails = useCallback(async (id: string) => {
+    startLoading();
     setLoadingDetails(true);
     setDetailsError(null);
     setDetails(null);
@@ -135,6 +138,7 @@ export const AppView: React.FC = () => {
       setDetailsError(e?.message ?? "Unknown error");
     } finally {
       setLoadingDetails(false);
+      stopLoading();
     }
   }, []);
 
@@ -143,6 +147,7 @@ export const AppView: React.FC = () => {
   const [pointsError, setPointsError] = useState<string | null>(null);
 
   const loadPoints = useCallback(async () => {
+    startLoading();
     setLoadingPoints(true);
     setPointsError(null);
 
@@ -183,6 +188,7 @@ export const AppView: React.FC = () => {
       setPointsError(e?.message ?? t("common.unknownError"));
     } finally {
       setLoadingPoints(false);
+      stopLoading();
     }
   }, [filterDistrict, t]);
 
@@ -238,6 +244,7 @@ export const AppView: React.FC = () => {
   const [selected, setSelected] = useState<ArtPoint | null>(null);
 
   const onLogout = useCallback(async () => {
+    startLoading();
     try {
       const res = await fetch(`${BASE_URL}/auth/logout`, {
         method: "POST",
@@ -255,6 +262,8 @@ export const AppView: React.FC = () => {
     } catch (e) {
       console.error(e);
       alert(t("appView.logoutError"));
+    } finally {
+      stopLoading();
     }
   }, [navigate, t]);
 
