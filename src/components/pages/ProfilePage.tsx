@@ -14,6 +14,7 @@ import { getLanguageOptions } from "../constants/options";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/validators";
 
 import { useTranslation } from "react-i18next";
+import { useLoading } from "../../context/LoadingContext";
 
 const BASE = API_BASE;
 
@@ -32,6 +33,7 @@ type UpdateBody = {
 };
 
 export const ProfilePage: React.FC = () => {
+  const { startLoading, stopLoading } = useLoading();
   const navigate = useNavigate();
   const toast = useRef<Toast>(null);
 
@@ -63,6 +65,7 @@ export const ProfilePage: React.FC = () => {
     (async () => {
       try {
         setLoading(true);
+        startLoading();
 
         const res = await fetch(`${BASE}/auth/me`, {
           method: "GET",
@@ -94,13 +97,14 @@ export const ProfilePage: React.FC = () => {
         });
       } finally {
         setLoading(false);
+        stopLoading();
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [t]);
+  }, [t, startLoading, stopLoading]);
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
@@ -163,6 +167,7 @@ export const ProfilePage: React.FC = () => {
 
     try {
       setLoading(true);
+      startLoading();
 
       const res = await fetch(`${BASE}/updateAppUser/me`, {
         method: "PUT",
@@ -202,6 +207,7 @@ export const ProfilePage: React.FC = () => {
       });
     } finally {
       setLoading(false);
+      stopLoading();
     }
   };
 
@@ -237,7 +243,13 @@ export const ProfilePage: React.FC = () => {
             onClick={() => navigate("/app")}
           />
           {!readOnly ? (
-  <Button label={t("buttons.save")} icon="pi pi-check" onClick={save} disabled={!canSave} />
+            <Button
+  label={t("buttons.save")}
+  icon="pi pi-check"
+  loading={loading}
+  onClick={save}
+  disabled={!canSave}
+/>
 ) : null}
         </div>
 
@@ -319,11 +331,7 @@ export const ProfilePage: React.FC = () => {
 ) : null}
         </div>
 
-        {loading ? (
-          <div className={styles.mt8} style={{ opacity: 0.85 }}>
-            {t("common.loading")}
-          </div>
-        ) : null}
+     
       </Card>
     </div>
   );

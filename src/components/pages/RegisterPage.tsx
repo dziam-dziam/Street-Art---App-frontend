@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { RegisterDto } from "../dto/auth/RegisterDto";
 import { API_BASE } from "../../config/api";
+import { useLoading } from "../../context/LoadingContext";
 
 import streetArtBlue from "../images/streetArtBlue.jpeg";
 import styles from "../../styles/pages.module.css";
@@ -25,6 +26,7 @@ type Touched = Partial<Record<keyof RegisterDto, boolean>>;
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const { startLoading, stopLoading } = useLoading();
   const languageOptions = useMemo(() => getLanguageOptions(t), [t, i18n.language]);
   const nationalityOptions = useMemo(() => getNationalityOptions(t), [t, i18n.language]);
 
@@ -91,6 +93,7 @@ export const RegisterPage: React.FC = () => {
 
     try {
       setSubmitting(true);
+      startLoading();
 
       const res = await fetch(`${API_BASE}/auth/register`, {
         method: "POST",
@@ -114,6 +117,7 @@ export const RegisterPage: React.FC = () => {
       alert("Network error");
     } finally {
       setSubmitting(false);
+      stopLoading();
     }
   };
 

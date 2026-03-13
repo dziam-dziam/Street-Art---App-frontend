@@ -8,6 +8,7 @@ import { Carousel } from "primereact/carousel";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { API_BASE } from "../../config/api";
+import { useLoading } from "../../context/LoadingContext";
 
 import type { RegisterDto } from "../dto/auth/RegisterDto";
 import type { AddCommuteDto } from "../dto/commute/AddCommuteDto";
@@ -25,8 +26,10 @@ type CommuteErrors = Partial<Record<keyof AddCommuteDto, string>>;
 
 export const RegisterPageTwo: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const { startLoading, stopLoading } = useLoading();
   const navigate = useNavigate();
   const location = useLocation();
+  const [loading, setLoading] = useState(false);
 
   const districtOptions = useMemo(() => getDistrictOptions(t), [t, i18n.language]);
   const transportOptions = useMemo(() => getTransportOptions(t), [t, i18n.language]);
@@ -156,6 +159,8 @@ export const RegisterPageTwo: React.FC = () => {
     url.searchParams.set("appUserEmail", registerData.appUserEmail);
 
     try {
+      setLoading(true);
+      startLoading();
       const res = await fetch(url.toString(), {
         method: "POST",
         headers: { "Content-Type": "application/json; charset=UTF-8" },
@@ -174,6 +179,9 @@ export const RegisterPageTwo: React.FC = () => {
     } catch (err) {
       console.error("Fetch error:", err);
       alert(t("validation.networkError"));
+    } finally{
+      setLoading(false);
+      stopLoading();
     }
   };
 
@@ -353,11 +361,12 @@ export const RegisterPageTwo: React.FC = () => {
 
           <div className={styles.centerRow}>
             <Button
-              label={t("register2.register")}
-              icon="pi pi-check"
-              onClick={finalSubmit}
-              className={styles.registerBtnGreen}
-            />
+  label={t("register2.register")}
+  icon="pi pi-check"
+  onClick={finalSubmit}
+  loading={loading}
+  className={styles.registerBtnGreen}
+/>
           </div>
         </div>
       </div>

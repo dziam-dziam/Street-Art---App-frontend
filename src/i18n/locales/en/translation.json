@@ -202,11 +202,11 @@
     "addressNotPoznan": "Found an address, but it doesn't look like Poznań",
     "addressValid": "Address looks valid ✅",
     "successSummary": "Success ✅",
-    "successWithPhotos": "ArtPiece + photos uploaded",
+    "successWithPhotos": "ArtPiece uploaded",
     "successNoPhotos": "ArtPiece has been added",
     "errorSummary": "Error ❌",
     "errorGeneric": "Failed to add ArtPiece",
-    "noIdReturned": "Backend did not return ArtPiece id (ArtPieceDto should include id)"
+    "noIdReturned": "Backend did not return ArtPiece id"
   },
   "addArtpiecePhotos": {
     "title": "Add Photo",

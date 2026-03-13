@@ -13,9 +13,12 @@ import { MultiSelect } from "primereact/multiselect";
 import { ToggleButton } from "primereact/togglebutton";
 import { Divider } from "primereact/divider";
 import { API_BASE } from "../../config/api";
+import { useLoading } from "../../context/LoadingContext";
+
 
 import { getArtStyleOptions, getArtTypeOptions, getLanguageOptions } from "../constants/options";
 import { useTranslation } from "react-i18next";
+import { start } from "repl";
 
 const BASE_URL = API_BASE;
 
@@ -66,6 +69,7 @@ type ApTouched = Partial<Record<keyof ApErrors, boolean>>;
 export const MyArtPiecesPage: React.FC = () => {
   const navigate = useNavigate();
   const toast = useRef<Toast>(null);
+  const { startLoading, stopLoading } = useLoading();
 
   const { t, i18n } = useTranslation();
   const languageOptions = useMemo(() => getLanguageOptions(t), [t, i18n.language]);
@@ -244,6 +248,7 @@ export const MyArtPiecesPage: React.FC = () => {
 
   // ----------------- FETCH LIST -----------------
   const loadMy = useCallback(async () => {
+    startLoading();
     setLoading(true);
     setError(null);
 
@@ -263,13 +268,15 @@ export const MyArtPiecesPage: React.FC = () => {
       setError(e?.message ?? t("common.unknownError"));
     } finally {
       setLoading(false);
+      stopLoading();
     }
-  }, [t]);
+  }, [t, startLoading, stopLoading]);
 
   // ----------------- FETCH DETAILS -----------------
   const loadDetails = useCallback(
     async (id: number) => {
       setLoadingDetails(true);
+      startLoading();
       setDetails(null);
       setDetailsError(null);
 
@@ -288,9 +295,10 @@ export const MyArtPiecesPage: React.FC = () => {
         setDetailsError(e?.message ?? t("common.unknownError"));
       } finally {
         setLoadingDetails(false);
-      }
+        stopLoading();
+      } 
     },
-    [t]
+    [t, startLoading, stopLoading]
   );
 
   useEffect(() => {
@@ -432,6 +440,7 @@ export const MyArtPiecesPage: React.FC = () => {
     }
 
     try {
+      startLoading();
       const body = {
         artPieceCity: "Poznań",
         artPieceAddress: artPieceAddress.trim(),
@@ -475,6 +484,8 @@ export const MyArtPiecesPage: React.FC = () => {
         detail: e?.message ?? t("common.unknownError"),
         life: 3500,
       });
+    } finally{
+      stopLoading();
     }
   }, [
     selectedId,
@@ -984,11 +995,12 @@ export const MyArtPiecesPage: React.FC = () => {
           <div className={styles.dialogActions}>
             <Button label={t("buttons.cancel")} severity="secondary" onClick={() => setEditOpen(false)} />
             <Button
-              label={t("buttons.save")}
-              icon="pi pi-check"
-              onClick={saveEdit}
-              disabled={!canSave || (addressDirty && addressStatus !== "valid")}
-            />
+                label={t("buttons.save")}
+                icon="pi pi-check"
+                onClick={saveEdit}
+                loading={loadingDetails}
+                disabled={!canSave || (addressDirty && addressStatus !== "valid")}
+              />
 
             {!canSave ? (
               <small className="p-error">{t("myArtpieces.fixErrorsToEnableSave")}</small>

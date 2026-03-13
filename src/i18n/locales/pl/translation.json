@@ -178,16 +178,16 @@
     "empty": "(Brak dodanych artpieces)",
     "editHeader": "Edytuj: {{name}}",
     "saveError": "Błąd zapisu",
-    "fixErrorsToEnableSave": "Popraw błędy powyżej, aby odblokować Zapisz",
-    "provideValidAddress": "Podaj poprawny adres (zweryfikowany)",
+    "fixErrorsToEnableSave": "Uzupełnij wymagane pola, aby zapisać",
+    "provideValidAddress": "Podaj poprawny adres",
     "addressChecking": "Sprawdzam adres...",
     "addressVerifyFail": "Nie mogę teraz zweryfikować adresu. Spróbuj ponownie",
     "addressNotFound": "Nie znaleziono adresu. Dodaj numer / bądź bardziej precyzyjny",
     "addressNotPoznan": "Znaleziono adres, ale nie wygląda na Poznań",
-    "addressValid": "Adres wygląda poprawnie ✅"
+    "addressValid": "Poprawny adres"
   },
   "addArtpiece": {
-    "title": "Dodaj ArtPiece",
+    "title": "Dodaj dzieło",
     "placeholders": {
       "name": "Nazwa",
       "address": "Adres (np. Święty Marcin 28)",
@@ -202,11 +202,11 @@
     "addressNotPoznan": "Znaleziono adres, ale nie wygląda na Poznań",
     "addressValid": "Adres wygląda poprawnie ✅",
     "successSummary": "Sukces ✅",
-    "successWithPhotos": "Dodano ArtPiece + zdjęcia",
-    "successNoPhotos": "Dodano ArtPiece",
+    "successWithPhotos": "Dodano dzieło",
+    "successNoPhotos": "Dodano dzieło",
     "errorSummary": "Błąd ❌",
-    "errorGeneric": "Nie udało się dodać ArtPiece",
-    "noIdReturned": "Backend nie zwrócił id ArtPiece (ArtPieceDto powinno zawierać id)"
+    "errorGeneric": "Nie udało się dodać dzieła",
+    "noIdReturned": "Backend nie zwrócił id ArtPiece"
   },
   "addArtpiecePhotos": {
     "title": "Dodaj zdjęcie",

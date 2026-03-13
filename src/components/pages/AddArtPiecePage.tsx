@@ -9,6 +9,7 @@ import { ToggleButton } from "primereact/togglebutton";
 import { useNavigate } from "react-router-dom";
 import { Toast } from "primereact/toast";
 import { API_BASE } from "../../config/api";
+import { useLoading } from "../../context/LoadingContext";
 
 import styles from "../../styles/pages.module.css";
 
@@ -31,6 +32,7 @@ export const AddArtPiecePage: React.FC = () => {
   const toast = useRef<Toast>(null);
 
   const { t, i18n } = useTranslation();
+  const { startLoading, stopLoading } = useLoading();
     const languageOptions = useMemo(() => getLanguageOptions(t), [t, i18n.language]);
     const artTypeOptions = useMemo(() => getArtTypeOptions(t), [t, i18n.language]);
     const artStyleOptions = useMemo(() => getArtStyleOptions(t), [t, i18n.language]);
@@ -220,6 +222,7 @@ export const AddArtPiecePage: React.FC = () => {
     const createUrl = `${API_BASE}/addNew/addArtPiece`;
 
     try {
+      startLoading();
       // 1) create art piece
       const createRes = await fetch(createUrl, {
         method: "POST",
@@ -278,6 +281,8 @@ export const AddArtPiecePage: React.FC = () => {
         detail: error?.message ?? t("addArtpiece.errorGeneric"),
         life: 3200,
       });
+    } finally{
+      stopLoading();
     }
   };
 
