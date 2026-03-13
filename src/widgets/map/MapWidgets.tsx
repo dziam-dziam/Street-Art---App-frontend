@@ -124,7 +124,21 @@ type UserSidebarProps = {
 
 export const UserSidebar: React.FC<UserSidebarProps> = ({ visible, onHide, menuModel, userName, userEmail }) => {
   return (
-    <Sidebar visible={visible} onHide={onHide} position="left" className={styles.sidebar}>
+    <Sidebar
+  visible={visible}
+  onHide={onHide}
+  position="left"
+  className={styles.sidebar}
+  header={
+    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+      <Button
+        icon="pi pi-times"
+        className="p-button-text"
+        onClick={onHide}
+      />
+    </div>
+  }
+>
       <div className={styles.sidebarHeader}>
         <Avatar icon="pi pi-user" size="large" shape="circle" />
         <div>
