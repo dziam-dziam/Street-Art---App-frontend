@@ -104,7 +104,7 @@ export const ProfilePage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [t, startLoading, stopLoading]);
+  }, []);
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
