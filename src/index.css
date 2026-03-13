@@ -31,17 +31,60 @@ code {
 
 @media (max-width: 768px) {
 
-  .p-button {
+  .twoColGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+
+  .tilesGrid2 {
+    grid-template-columns: 1fr;
+  }
+
+  .panel,
+  .formPanel {
+    min-height: auto;
+  }
+
+  .dropZone {
+    height: 220px;
+  }
+
+  .row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+  .labelStrong {
+    min-width: auto;
+  }
+
+  .actionsRight {
+    flex-direction: column;
     width: 100%;
   }
 
-  .p-inputtext,
-  .p-dropdown,
-  .p-multiselect,
-  .p-calendar {
+  .actionsRight button {
     width: 100%;
   }
-  
+
+  .pageCenter {
+    padding: 12px;
+  }
+
+    .cardShell {
+    width: 100%;
+  }
+  .p-multiselect {
+  width: 100%;
+}
+.p-inputtext {
+  width: 100%;
+}
+
 }
 
   .map {
@@ -61,4 +104,16 @@ code {
   align-items: center;
 
   z-index: 9999;
+}
+
+@media (max-width: 480px) {
+
+  .panelTitle {
+    font-size: 18px;
+  }
+
+  .dropZone {
+    height: 180px;
+  }
+
 }

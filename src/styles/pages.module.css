@@ -1,4 +1,8 @@
 /* src/styles/pages.module.css */
+button,
+.p-button {
+  touch-action: manipulation;
+}
 
 .pageCenter {
   min-height: 100vh;
@@ -854,4 +858,104 @@
 .toggleFit {
   justify-self: start;   /* kluczowe przy grid */
   width: fit-content;
+}
+
+/* ===== MOBILE ===== */
+
+@media (max-width: 768px) {
+
+  .commuteCard {
+  padding: 10px;
+}
+
+  .sidebar {
+  width: 100%;
+}
+
+  .twoColGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+
+  .tilesGrid2 {
+    grid-template-columns: 1fr;
+  }
+
+  .authGrid2 {
+    grid-template-columns: 1fr;
+  }
+
+  .registerGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .appLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .iconRail {
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .panel,
+  .formPanel,
+  .mapShell {
+    min-height: auto;
+    padding: 10px;
+  }
+
+  .mapViewport {
+    height: 320px;
+  }
+
+  .dropZone {
+    height: 220px;
+  }
+
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .labelStrong {
+    min-width: auto;
+  }
+
+  .actionsRight {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .actionsRight button {
+    width: 100%;
+  }
+
+  .previewRow {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+}
+
+@media (max-width: 480px) {
+
+  .imageFill420,
+  .imageFill460 {
+    height: 240px;
+  }
+
+  .mapViewport {
+    height: 260px;
+  }
+
+  .headline {
+    font-size: 16px;
+  }
+
 }
