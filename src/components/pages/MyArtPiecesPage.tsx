@@ -18,7 +18,6 @@ import { useLoading } from "../../context/LoadingContext";
 
 import { getArtStyleOptions, getArtTypeOptions, getLanguageOptions } from "../constants/options";
 import { useTranslation } from "react-i18next";
-import { start } from "repl";
 
 const BASE_URL = API_BASE;
 
@@ -270,7 +269,7 @@ export const MyArtPiecesPage: React.FC = () => {
       setLoading(false);
       stopLoading();
     }
-  }, [t, startLoading, stopLoading]);
+  }, []);
 
   // ----------------- FETCH DETAILS -----------------
   const loadDetails = useCallback(
@@ -298,7 +297,7 @@ export const MyArtPiecesPage: React.FC = () => {
         stopLoading();
       } 
     },
-    [t, startLoading, stopLoading]
+    []
   );
 
   useEffect(() => {
