@@ -240,7 +240,7 @@ export const AppView: React.FC = () => {
   const navigate = useNavigate();
   const toast = useRef<Toast>(null);
 
-  const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
   const [selected, setSelected] = useState<ArtPoint | null>(null);
 
   const onLogout = useCallback(async () => {
