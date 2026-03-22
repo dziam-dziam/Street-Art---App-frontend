@@ -18,8 +18,7 @@ function App() {
   return (
     <>
       <LoadingOverlay visible={loading} />
-      <div className="app-container">
-          <Routes>
+    <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/app" element={<AppView />} />
@@ -46,9 +45,8 @@ function App() {
       />
 
       <Route path="*" element={<h2>404 - Not found</h2>} />
-      </Routes>
-      </div>
-        </>
+    </Routes>
+    </>
   );
 }
 

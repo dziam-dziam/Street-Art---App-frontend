@@ -1,5 +1,3 @@
-/* ===== GLOBAL RESET ===== */
-
 * {
   box-sizing: border-box;
 }
@@ -11,7 +9,13 @@ html, body, #root {
   min-height: 100%;
 }
 
+img {
+  max-width: 100%;
+  height: auto;
+}
+
 body {
+  margin: 0;
   overflow-x: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -20,111 +24,35 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-img {
-  max-width: 100%;
-  height: auto;
-}
-
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
 }
-
-
-/* ===== MAIN APP CONTAINER (MOBILE CENTERED LAYOUT) ===== */
-
-.app-container {
-  max-width: 420px;
-  margin: 0 auto;
-  padding: 16px;
-  width: 100%;
-}
-
-
-/* ===== FORM ELEMENTS ===== */
-
-button {
-  width: 100%;
-  max-width: 100%;
-}
-
-input,
-textarea,
-select {
-  width: 100%;
-}
-
-
-/* ===== PRIMEREACT FIXES ===== */
-
-.p-dropdown,
-.p-multiselect,
-.p-inputtext,
-.p-password,
-.p-inputnumber {
-  width: 100%;
-}
-
-
-/* ===== MAP ===== */
-
-.map {
-  width: 100%;
-  height: 60vh;
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-
-/* ===== SIDEBAR ===== */
-
-.sidebar {
-  width: 280px;
-  max-width: 80vw;
-  transition: transform 0.3s ease;
-}
-
-
-/* ===== PANELS / CARDS ===== */
-
-.panel,
-.formPanel,
-.cardShell {
-  width: 100%;
-}
-
-
-/* ===== LOADING OVERLAY ===== */
-
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255,255,255,0.7);
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  z-index: 9999;
-}
-
-
-/* ===== TABLET & SMALL LAPTOP ===== */
 
 @media (max-width: 768px) {
+  .app-container {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
 
-  .twoColGrid,
-  .grid2,
+  .twoColGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+
   .tilesGrid2 {
     grid-template-columns: 1fr;
   }
 
   .panel,
   .formPanel {
-    padding: 20px;
-    border-radius: 16px;
+    min-height: auto;
   }
 
   .dropZone {
@@ -157,25 +85,37 @@ select {
   .cardShell {
     width: 100%;
   }
-}
 
-
-/* ===== SMALL PHONES ===== */
-
-@media (max-width: 480px) {
-
-  .row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .actionsRight {
-    flex-direction: column;
-  }
-
-  .actionsRight button {
+  .p-multiselect {
     width: 100%;
   }
+
+  .p-inputtext {
+    width: 100%;
+  }
+}
+
+.map {
+  width: 100%;
+  height: 60vh;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.7);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 9999;
+}
+
+@media (max-width: 480px) {
 
   .panelTitle {
     font-size: 18px;
