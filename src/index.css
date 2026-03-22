@@ -30,6 +30,13 @@ code {
 }
 
 @media (max-width: 768px) {
+  .app-container {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
 
   .twoColGrid {
     grid-template-columns: 1fr;
