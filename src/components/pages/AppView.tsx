@@ -241,6 +241,15 @@ export const AppView: React.FC = () => {
   const toast = useRef<Toast>(null);
 
   const [sidebarVisible, setSidebarVisible] = useState(false);
+
+    useEffect(() => {
+      if (window.innerWidth > 768) {
+        setSidebarVisible(true);
+      } else {
+        setSidebarVisible(false);
+      }
+    }, []);
+    
   const [selected, setSelected] = useState<ArtPoint | null>(null);
 
   const onLogout = useCallback(async () => {
