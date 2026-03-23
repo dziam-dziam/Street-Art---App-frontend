@@ -864,11 +864,25 @@ button,
 
 @media (max-width: 768px) {
 
-  .commuteCard {
+  .cardShell {
+    width: 94vw;
+    margin: 0 auto;
+  }
+
+  .pageCenter {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    background: #7b83cf;
+  }
+
+.commuteCard {
   padding: 10px;
 }
 
-  .sidebar {
+.sidebar {
   width: 100%;
 }
 
