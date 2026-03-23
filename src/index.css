@@ -35,27 +35,27 @@ code {
 /* Leaflet MarkerCluster style fix */
 
 .marker-cluster-small {
-  background-color: rgba(181, 226, 140, 0.6);
+  background: rgba(181, 226, 140, 0.6);
 }
 
 .marker-cluster-small div {
-  background-color: rgba(110, 204, 57, 0.6);
+  background: rgba(110, 204, 57, 0.9);
 }
 
 .marker-cluster-medium {
-  background-color: rgba(241, 211, 87, 0.6);
+  background: rgba(241, 211, 87, 0.6);
 }
 
 .marker-cluster-medium div {
-  background-color: rgba(240, 194, 12, 0.6);
+  background: rgba(240, 194, 12, 0.9);
 }
 
 .marker-cluster-large {
-  background-color: rgba(253, 156, 115, 0.6);
+  background: rgba(253, 156, 115, 0.6);
 }
 
 .marker-cluster-large div {
-  background-color: rgba(241, 128, 23, 0.6);
+  background: rgba(241, 128, 23, 0.9);
 }
 
 .marker-cluster {
@@ -67,8 +67,8 @@ code {
   width: 40px;
   height: 40px;
 
-  margin-left: 5px;
-  margin-top: 5px;
+  margin-left: 0;
+  margin-top: 0;
 
   display: flex;
   align-items: center;
@@ -81,7 +81,7 @@ code {
 }
 
 .marker-cluster span {
-  line-height: 30px;
+  line-height: 1;
 }
 
 @media (max-width: 768px) {
