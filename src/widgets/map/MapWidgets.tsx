@@ -9,6 +9,7 @@ import { Sidebar } from "primereact/sidebar";
 import { Avatar } from "primereact/avatar";
 import { Divider } from "primereact/divider";
 import { Menu } from "primereact/menu";
+import MarkerClusterGroup from "react-leaflet-cluster";
 
 import type { DistrictName } from "../../components/constants/options";
 import { useTranslation } from "react-i18next";
@@ -72,18 +73,26 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ boundary, points, loading,
         />
         <FitAndLockToGeoJson data={boundary} />
 
-        {!loading &&
-          points.map((p) => (
-            <CircleMarker key={p.id} center={[p.lat, p.lng]} radius={7} eventHandlers={{ click: () => onPickPoint(p) }}>
-              <Popup>
-                <b>{p.title}</b>
-                <br />
-                {p.address}
-                <br />
-                {p.district}
-              </Popup>
-            </CircleMarker>
-          ))}
+        {!loading && (
+          <MarkerClusterGroup chunkedLoading>
+            {points.map((p) => (
+              <CircleMarker
+                key={p.id}
+                center={[p.lat, p.lng]}
+                radius={7}
+                eventHandlers={{ click: () => onPickPoint(p) }}
+              >
+                <Popup>
+                  <b>{p.title}</b>
+                  <br />
+                  {p.address}
+                  <br />
+                  {p.district}
+                </Popup>
+              </CircleMarker>
+            ))}
+          </MarkerClusterGroup>
+        )}
       </MapContainer>
     </div>
   );
