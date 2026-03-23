@@ -865,6 +865,20 @@ button,
 @media (max-width: 768px) {
 
   .authBg {
+    padding: 16px;
+  }
+
+  .authCardRegister {
+    width: 94vw;
+    margin: 0 auto;
+  }
+
+  .registerGrid {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .authBg {
     display: flex;
     justify-content: center;
     align-items: flex-start;
