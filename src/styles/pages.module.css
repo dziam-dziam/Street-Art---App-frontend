@@ -4,6 +4,10 @@ button,
   touch-action: manipulation;
 }
 
+.filterSidebar {
+  width: 360px;
+}
+
 .pageCenter {
   min-height: 100vh;
   display: grid;
@@ -23,6 +27,12 @@ button,
   display: grid;
   grid-template-columns: 0.95fr 1.05fr;
   gap: 16px;
+}
+
+.filterButtons {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
 }
 
 .panel {
@@ -863,11 +873,46 @@ button,
 /* ===== MOBILE ===== */
 
 @media (max-width: 768px) {
+
+  .filterButtons {
+    flex-direction: column;
+  }
+  
+  .filterButtons .p-button {
+    width: 100%;
+  }
+
+  .filterSidebar {
+    width: 60vw;
+  }
+
+  .mapViewport {
+    height: 420px;
+  }
+
+  .floatingActions {
+    position: static;
+    margin-top: 12px;
+
+    flex-direction: column;
+    align-items: stretch;
+
+    width: 100%;
+  }
+
+  .authBg {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 16px;
+  }
+  
   .formRegister {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 0 6px;
+    padding-right: 30px;
+    width: 100%;
   }
 
   .authBg {
@@ -881,6 +926,7 @@ button,
 
   .registerGrid {
     grid-template-columns: 1fr;
+    justify-items: center;
     width: 100%;
   }
 
@@ -914,8 +960,8 @@ button,
 }
 
 .sidebar {
-  width: 100%;
-}
+    width: 60vw;
+  }
 
   .twoColGrid {
     grid-template-columns: 1fr;
@@ -933,10 +979,6 @@ button,
     grid-template-columns: 1fr;
   }
 
-  .registerGrid {
-    grid-template-columns: 1fr;
-  }
-
   .appLayout {
     grid-template-columns: 1fr;
   }
@@ -944,18 +986,20 @@ button,
   .iconRail {
     flex-direction: row;
     justify-content: center;
+    padding: 2px;
     gap: 10px;
+  }
+  
+  .iconRail button {
+    width: 34px;
+    height: 34px;
   }
 
   .panel,
   .formPanel,
   .mapShell {
     min-height: auto;
-    padding: 10px;
-  }
-
-  .mapViewport {
-    height: 320px;
+    padding: 4px;
   }
 
   .dropZone {
@@ -996,7 +1040,7 @@ button,
   }
 
   .mapViewport {
-    height: 260px;
+    height: 380px;
   }
 
   .headline {

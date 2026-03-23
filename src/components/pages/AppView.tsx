@@ -350,10 +350,10 @@ export const AppView: React.FC = () => {
 
       {/* ✅ tylko district */}
       <Sidebar
-        visible={filtersVisible}
-        position="right"
-        onHide={() => setFiltersVisible(false)}
-        style={{ width: "min(360px, 92vw)" }}
+          visible={filtersVisible}
+          position="right"
+          onHide={() => setFiltersVisible(false)}
+          className={styles.filterSidebar}
       >
         <h3 style={{ marginTop: 0 }}>{t("appView.filtersTitle")}</h3>
         <Divider />
@@ -373,25 +373,26 @@ export const AppView: React.FC = () => {
             />
           </div>
 
-          <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-            <Button
-              label={t("appView.apply")}
-              icon="pi pi-check"
-              onClick={() => {
-                void loadPoints();
-                setFiltersVisible(false);
-              }}
-            />
-            <Button
-              label={t("appView.reset")}
-              icon="pi pi-refresh"
-              outlined
-              onClick={() => {
-                setFilterDistrict(null);
-                setTimeout(() => void loadPoints(), 0);
-              }}
-            />
-          </div>
+          <div className={styles.filterButtons}>
+              <Button
+                label={t("appView.apply")}
+                icon="pi pi-check"
+                onClick={() => {
+                  void loadPoints();
+                  setFiltersVisible(false);
+                }}
+              />
+
+              <Button
+                label={t("appView.reset")}
+                icon="pi pi-refresh"
+                outlined
+                onClick={() => {
+                  setFilterDistrict(null);
+                  setTimeout(() => void loadPoints(), 0);
+                }}
+              />
+            </div>
         </div>
       </Sidebar>
 
