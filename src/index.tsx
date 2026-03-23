@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import "leaflet/dist/leaflet.css";
-import "leaflet.markercluster/dist/MarkerCluster.css";
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { PrimeReactProvider } from "primereact/api";
@@ -13,7 +12,6 @@ import "primeicons/primeicons.css";
 import "./i18n";
 import { LoadingProvider } from "./context/LoadingContext";
 import "./styles/myOwnLeafletStyle.css";
-
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 

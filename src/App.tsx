@@ -12,7 +12,6 @@ import { MyArtPiecesPage } from "./components/pages/MyArtPiecesPage";
 import { useLoading } from "./context/LoadingContext";
 import LoadingOverlay from "./components/LoadingOverlay";
 
-
 function App() {
 
   const { loading } = useLoading();
