@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import styles from "../../styles/pages.module.css";
 
 import L from "leaflet";
-import { MapContainer, TileLayer, CircleMarker, Popup, GeoJSON, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, CircleMarker,Marker, Popup, GeoJSON, useMap } from "react-leaflet";
 import { Button } from "primereact/button";
 import { Sidebar } from "primereact/sidebar";
 import { Avatar } from "primereact/avatar";
@@ -76,10 +76,9 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ boundary, points, loading,
         {!loading && (
           <MarkerClusterGroup chunkedLoading>
             {points.map((p) => (
-              <CircleMarker
+              <Marker
                 key={p.id}
-                center={[p.lat, p.lng]}
-                radius={7}
+                position={[p.lat, p.lng]}
                 eventHandlers={{ click: () => onPickPoint(p) }}
               >
                 <Popup>
@@ -89,10 +88,11 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ boundary, points, loading,
                   <br />
                   {p.district}
                 </Popup>
-              </CircleMarker>
+              </Marker>
             ))}
           </MarkerClusterGroup>
         )}
+        
       </MapContainer>
     </div>
   );
