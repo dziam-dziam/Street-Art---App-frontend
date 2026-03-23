@@ -863,6 +863,12 @@ button,
 /* ===== MOBILE ===== */
 
 @media (max-width: 768px) {
+  .formRegister {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-inline: 6px;
+  }
 
   .authBg {
     padding: 16px;
