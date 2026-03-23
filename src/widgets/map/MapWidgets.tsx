@@ -9,9 +9,22 @@ import { Avatar } from "primereact/avatar";
 import { Divider } from "primereact/divider";
 import { Menu } from "primereact/menu";
 import MarkerClusterGroup from "react-leaflet-markercluster";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
 import type { DistrictName } from "../../components/constants/options";
 import { useTranslation } from "react-i18next";
+
+if ((L.Icon.Default.prototype as any)._getIconUrl) {
+  delete (L.Icon.Default.prototype as any)._getIconUrl;
+
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: markerIcon2x,
+    iconUrl: markerIcon,
+    shadowUrl: markerShadow,
+  });
+}
 
 export type ArtPoint = {
   id: string;
