@@ -867,7 +867,7 @@ button,
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding-inline: 6px;
+    padding: 0 6px;
   }
 
   .authBg {
