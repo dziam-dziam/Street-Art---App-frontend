@@ -1,0 +1,57 @@
+/* ===============================
+   Leaflet Marker Cluster Style
+   =============================== */
+
+.marker-cluster {
+  background: rgba(0,0,0,0.35);
+  border-radius: 50%;
+  backdrop-filter: blur(2px);
+}
+
+.marker-cluster div {
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  font-weight: 700;
+  font-size: 14px;
+
+  color: white;
+
+  border: 3px solid white;
+
+  box-shadow:
+    0 0 8px rgba(0,0,0,0.6),
+    0 0 12px rgba(255,0,128,0.6);
+
+  transition: transform 0.15s ease;
+}
+
+.marker-cluster div:hover {
+  transform: scale(1.1);
+}
+
+/* cluster sizes */
+
+.marker-cluster-small div {
+  background: linear-gradient(135deg,#00c853,#64dd17);
+}
+
+.marker-cluster-medium div {
+  background: linear-gradient(135deg,#ffab00,#ff6f00);
+}
+
+.marker-cluster-large div {
+  background: linear-gradient(135deg,#ff1744,#d50000);
+}
+
+/* number inside */
+
+.marker-cluster span {
+  line-height: 1;
+}
