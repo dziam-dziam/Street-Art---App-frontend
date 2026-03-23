@@ -1,44 +1,53 @@
-/* ===== Leaflet Cluster Style ===== */
+/* ===== HARD RESET CLUSTER STYLES ===== */
 
-.marker-cluster {
-  background: rgba(0,0,0,0.25);
-  border-radius: 50%;
+.marker-cluster,
+.marker-cluster-small,
+.marker-cluster-medium,
+.marker-cluster-large {
+  background: none !important;
+  background-image: none !important;
+  border-radius: 50% !important;
 }
 
+/* właściwe kółko */
+
 .marker-cluster div {
-  background: #1976d2;
-  border-radius: 50%;
-
-  width: 34px;
-  height: 34px;
-
-  margin: 3px;
+  width: 36px;
+  height: 36px;
+  margin: 0 !important;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
+  border-radius: 50%;
+
+  background: #1976d2 !important;
   color: white;
+
   font-weight: bold;
-  font-size: 13px;
+  font-size: 14px;
 
   border: 2px solid white;
 }
 
-/* cluster sizes */
+/* wielkości */
 
 .marker-cluster-small div {
-  background: #4CAF50;
+  background: #4CAF50 !important;
 }
 
 .marker-cluster-medium div {
-  background: #FF9800;
+  background: #FF9800 !important;
 }
 
 .marker-cluster-large div {
-  background: #F44336;
+  background: #F44336 !important;
 }
 
-.marker-cluster span {
-  line-height: 1;
+/* reset sprite */
+
+.marker-cluster::before,
+.marker-cluster::after {
+  display: none !important;
 }
