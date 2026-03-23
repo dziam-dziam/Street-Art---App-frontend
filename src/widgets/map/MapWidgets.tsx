@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import styles from "../../styles/pages.module.css";
 
 import L from "leaflet";
+import "leaflet.markercluster";
 import { MapContainer, TileLayer,Marker, Popup, GeoJSON, useMap } from "react-leaflet";
 import { Button } from "primereact/button";
 import { Sidebar } from "primereact/sidebar";
