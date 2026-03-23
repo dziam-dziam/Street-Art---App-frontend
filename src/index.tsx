@@ -11,8 +11,7 @@ import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import "./i18n";
 import { LoadingProvider } from "./context/LoadingContext";
-import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
-import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
+import "react-leaflet-markercluster/dist/styles.min.css";
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 

@@ -1,15 +1,14 @@
-// src/widgets/map/MapWidgets.tsx
 import React, { useEffect } from "react";
 import styles from "../../styles/pages.module.css";
 
 import L from "leaflet";
-import { MapContainer, TileLayer, CircleMarker,Marker, Popup, GeoJSON, useMap } from "react-leaflet";
+import { MapContainer, TileLayer,Marker, Popup, GeoJSON, useMap } from "react-leaflet";
 import { Button } from "primereact/button";
 import { Sidebar } from "primereact/sidebar";
 import { Avatar } from "primereact/avatar";
 import { Divider } from "primereact/divider";
 import { Menu } from "primereact/menu";
-import MarkerClusterGroup from "react-leaflet-cluster";
+import MarkerClusterGroup from "react-leaflet-markercluster";
 
 import type { DistrictName } from "../../components/constants/options";
 import { useTranslation } from "react-i18next";
@@ -92,7 +91,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ boundary, points, loading,
             ))}
           </MarkerClusterGroup>
         )}
-        
+
       </MapContainer>
     </div>
   );
