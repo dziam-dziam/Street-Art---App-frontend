@@ -3,6 +3,10 @@
   max-width: 100%;
 }
 
+.leaflet-container img {
+  max-width: none !important;
+}
+
 html, body, #root {
   margin: 0;
   padding: 0;
