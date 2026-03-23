@@ -864,6 +864,17 @@ button,
 
 @media (max-width: 768px) {
 
+  .authBg {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .authCardLogin {
+    width: 94vw;
+    margin: 0 auto;
+  }
+
   .cardShell {
     width: 94vw;
     margin: 0 auto;
