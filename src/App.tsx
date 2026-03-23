@@ -11,8 +11,7 @@ import { ProfilePage } from "./components/pages/ProfilePage";
 import { MyArtPiecesPage } from "./components/pages/MyArtPiecesPage";
 import { useLoading } from "./context/LoadingContext";
 import LoadingOverlay from "./components/LoadingOverlay";
-import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
-import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
+
 
 function App() {
 
