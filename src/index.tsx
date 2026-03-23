@@ -5,13 +5,13 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { PrimeReactProvider } from "primereact/api";
 import { BrowserRouter } from "react-router-dom";
-import "leaflet/dist/leaflet.css";
 import "primereact/resources/themes/lara-light-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import "./i18n";
 import { LoadingProvider } from "./context/LoadingContext";
-import "react-leaflet-markercluster/dist/styles.min.css";
+import "leaflet/dist/leaflet.css";
+import 'react-leaflet-markercluster/styles';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
