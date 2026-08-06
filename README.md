@@ -59,6 +59,4 @@ This repository contains the frontend part of StreetApp.
 The corresponding backend repository is available on my GitHub profile.
 
 ## Status
-Finished
-
-The application is functional and continues to be improved, with planned work focused on testing, documentation, deployment automation and further development of the research workflow.
+The application is functional and works are finished
