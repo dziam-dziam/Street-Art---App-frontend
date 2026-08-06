@@ -1,46 +1,64 @@
-# Getting Started with Create React App
+# StreetApp
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-stack research platform for documenting and analysing street art through geolocated user submissions.
 
-## Available Scripts
+StreetApp was developed as a digital research tool supporting the collection of structured data about street art. Users can document artworks, associate them with geographical locations and explore submitted content through an interactive map-based interface.
 
-In the project directory, you can run:
+The application was originally created to support academic research into the social perception of street art as part of the linguistic landscape.
 
-### `npm start`
+## Key Features
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+* Interactive map displaying documented street-art locations
+* Creation and management of geolocated submissions
+* Collection of structured information about individual artworks
+* Integration with geocoding services
+* User authentication and protected application functionality
+* Multilingual user interface
+* REST-based communication between frontend and backend
+* Containerised backend deployment
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Technology Stack
 
-### `npm test`
+### Backend
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+* Java 21
+* Spring Boot
+* Spring Security
+* Spring Data JPA
+* JWT and OAuth2
+* REST API
+* Relational database
+* Maven
+* Docker
 
-### `npm run build`
+### Frontend
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+* React
+* TypeScript
+* React Router
+* Leaflet and React Leaflet
+* PrimeReact
+* i18next
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Architecture
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+StreetApp uses a separated frontend and backend architecture. The backend provides REST endpoints responsible for authentication, data management and geocoding integration, while the React application provides the map-based user interface.
 
-### `npm run eject`
+The backend follows a layered structure based on controllers, services, repositories, DTOs, mappers and domain entities.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## Project Background
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+StreetApp combines software development with applied linguistic research. It was used as part of a master’s research project and presented at an academic conference at Adam Mickiewicz University in Poznań.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+The project demonstrates how custom software can support the collection and analysis of research data that would be difficult to obtain through a traditional survey alone.
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## Repository Structure
 
-## Learn More
+This repository contains the frontend part of StreetApp.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+The corresponding backend repository is available on my GitHub profile.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Status
+Finished
+
+The application is functional and continues to be improved, with planned work focused on testing, documentation, deployment automation and further development of the research workflow.
